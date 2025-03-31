@@ -18,6 +18,7 @@ SET(SOURCE
   src/pseudo_loop.cpp 
   src/CCJ.cc
   src/cmdline.cc
+  src/common.cc
   src/s_energy_matrix.cpp	
   src/sparse_tree.cc
 )

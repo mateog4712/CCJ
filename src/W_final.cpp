@@ -510,30 +510,30 @@ void W_final::backtrack(seq_interval *cur_interval){
 					break;
 				// Hosna: June 28, 2007
 				// the last branch of W, which is WMB_i,j
-				case 5:
-					//printf("W(%d) case 5: inserting WMB(%d,%d) and Free (0,%d)\n",j,best_i,j,best_i-1);
-					insert_node (best_i, j, P_WMB);
-					if (best_i-1 > 1)     // it was TURN instead of 0  - not sure if TURN shouldn't be here
-						insert_node (1, best_i-1, FREE);
-					break;
-				case 6:
-					//printf("W(%d) case 6: inserting WMB(%d,%d) and Free (0,%d)\n",j,best_i+1,j,best_i);
-					insert_node (best_i+1, j, P_WMB);
-					if (best_i >= 1) // Hosna, March 26, 2012, was best_i-1 instead of best_i
-						insert_node (1, best_i, FREE);
-					break;
-				case 7:
-					//printf("W(%d) case 7: inserting WMB(%d,%d) and Free (0,%d)\n",j,best_i,j-1,best_i-1);
-					insert_node (best_i, j-1, P_WMB);
-					if (best_i-1 > 1)
-						insert_node (1, best_i-1, FREE);
-					break;
-				case 8:
-					//printf("W(%d) case 8: inserting WMB(%d,%d) and Free (0,%d)\n",j,best_i+1,j-1,best_i);
-					insert_node (best_i+1, j-1, P_WMB);
-					if (best_i >= 1) // Hosna, March 26, 2012, was best_i-1 instead of best_i
-						insert_node (1, best_i, FREE);
-					break;
+				// case 5:
+				// 	//printf("W(%d) case 5: inserting WMB(%d,%d) and Free (0,%d)\n",j,best_i,j,best_i-1);
+				// 	insert_node (best_i, j, P_WMB);
+				// 	if (best_i-1 > 1)     // it was TURN instead of 0  - not sure if TURN shouldn't be here
+				// 		insert_node (1, best_i-1, FREE);
+				// 	break;
+				// case 6:
+				// 	//printf("W(%d) case 6: inserting WMB(%d,%d) and Free (0,%d)\n",j,best_i+1,j,best_i);
+				// 	insert_node (best_i+1, j, P_WMB);
+				// 	if (best_i >= 1) // Hosna, March 26, 2012, was best_i-1 instead of best_i
+				// 		insert_node (1, best_i, FREE);
+				// 	break;
+				// case 7:
+				// 	//printf("W(%d) case 7: inserting WMB(%d,%d) and Free (0,%d)\n",j,best_i,j-1,best_i-1);
+				// 	insert_node (best_i, j-1, P_WMB);
+				// 	if (best_i-1 > 1)
+				// 		insert_node (1, best_i-1, FREE);
+				// 	break;
+				// case 8:
+				// 	//printf("W(%d) case 8: inserting WMB(%d,%d) and Free (0,%d)\n",j,best_i+1,j-1,best_i);
+				// 	insert_node (best_i+1, j-1, P_WMB);
+				// 	if (best_i >= 1) // Hosna, March 26, 2012, was best_i-1 instead of best_i
+				// 		insert_node (1, best_i, FREE);
+				// 	break;
 			}
 		}
 			break;
@@ -657,28 +657,28 @@ void W_final::backtrack(seq_interval *cur_interval){
 				best_row = 2;
 			}
 			switch (best_row){
-				case 1: insert_node (i, j, P_WMB); break;
+				// case 1: insert_node (i, j, P_WMB); break;
 				case 2: insert_node (i, j-1, M_WMp); break;
 			}
 		}
 		break;
-		case P_WMB:
-		case P_WMBP:
-		case P_WMBW:
-		case P_VP:
-		case P_VPR:
-		case P_VPL:
-		case P_WI:
-		case P_BE:
-		case P_WIP:
-		{
-			P->set_stack_interval(stack_interval);
-			// P->back_track(structure,f,cur_interval);
-			stack_interval = P->get_stack_interval();
-			structure = P->get_structure();
-			f = P->get_minimum_fold();
-		}
-			break;
+		// case P_WMB:
+		// case P_WMBP:
+		// case P_WMBW:
+		// case P_VP:
+		// case P_VPR:
+		// case P_VPL:
+		// case P_WI:
+		// case P_BE:
+		// case P_WIP:
+		// {
+		// 	P->set_stack_interval(stack_interval);
+		// 	// P->back_track(structure,f,cur_interval);
+		// 	stack_interval = P->get_stack_interval();
+		// 	structure = P->get_structure();
+		// 	f = P->get_minimum_fold();
+		// }
+			// break;
 		default:
 			printf("Should not be here!\n");
 	}

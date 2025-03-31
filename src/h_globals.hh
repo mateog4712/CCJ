@@ -27,20 +27,21 @@ int cp_penalty = 12; //0;			//penalty for unpaired base in a multiloop that span
 // Hosna, April 2, 2014
 // adding the energy parameters for CCJ
 // int alpha0P = (int) round(start_internal_size *e_intP_penalty);				// penalty for internal loop that spans a band
+int alphaoP = INF;
 // Hosna, April 2, 2014, for now the value of alpha0P has been set to regular internal loop penalty by size *0.74 for internal loop that spans a band
 
 int beta0 = a_penalty;							// penalty for initiation of an ordinary multiloop
 int beta0P = ap_penalty;							//penalty for initiation of a multiloop that spans a band
 int beta1 = c_penalty;							// penalty for unpaired base of an ordinary multiloop
 int beta1P = cp_penalty;							// penalty for unpaired base of a multiloop that spans a band
-int beta2P = bp_penalty;							//base pair penalty for a multiloop that spans a band (0.4 Kcal/mol)
+// int beta2P = bp_penalty;							//base pair penalty for a multiloop that spans a band (0.4 Kcal/mol)
 
 
 int gamma0 = PS_penalty;							//penalty for initiation of an external pseudoloop
 int gamma0m = PSM_penalty;						// penalty for initiation of a pseudoloop in a multiloop
 int gamma0P = PSP_penalty;						// penalty for initiation of a pseudoloop in a pseudoloop
 int gamma1 = PUP_penalty;						// penalty for unpaired base of a pseudoloop
-int gamma2 = 1;						            // penalty 
+// int gamma2 = 1;						            // penalty 
 
 
 int nestedsubstr_penalty = 96;									//Penalty for nested substructure in a pseudoknot (0.96 Kcal/mol)
