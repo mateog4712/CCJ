@@ -11,14 +11,13 @@ endif()
 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -flto")
+set(CMAKE_CXX_FLAGS_RELEASE "-g")
 
 SET(SOURCE
   src/W_final.cpp 
   src/pseudo_loop.cpp 
   src/CCJ.cc
   src/cmdline.cc
-  src/common.cc
   src/s_energy_matrix.cpp	
   src/sparse_tree.cc
 )

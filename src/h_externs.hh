@@ -20,19 +20,17 @@ extern int ap_penalty;
 extern int bp_penalty;
 extern int cp_penalty;
 
-extern int alpha0P ;
+extern int alpha0P;
 
-extern int beta0 ;
-extern int beta0P ;
+extern int beta0;
+extern int beta0P;
 extern int beta1;
 extern int beta1P;
-// extern int beta2P;
 
-extern int gamma0 ;
-extern int gamma0m ;
+extern int gamma0;
+extern int gamma0m;
 extern int gamma0P;
 extern int gamma1;
-// extern int gamma2;
 
 extern int nestedsubstr_penalty;
 

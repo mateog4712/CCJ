@@ -58,10 +58,12 @@ double W_final::ccj(){
 	for (int i = n; i >=1; --i){	
 		for (int j =i; j<=n; ++j){
 			V->compute_energy (i,j);
-			V->compute_WMv_WMp(i,j,P->get_WMB(i,j));
-			V->compute_energy_WM(i,j,P->WMB);
+			P->compute_energies(i,j);
+			V->compute_WMv_WMp(i,j,P->get_energy(i,j));
+			V->compute_energy_WM(i,j,P->P);
 		}
 	}
+	std::cout << P->get_energy(1,n) << std::endl;
 
 	for (cand_pos_t j= TURN+1; j <= n; j++){
 		energy_t m1 = INF, m2 = INF, m3 = INF;
@@ -69,7 +71,7 @@ double W_final::ccj(){
 		for (cand_pos_t k=1; k<=j-TURN-1; ++k){
 			energy_t acc = (k>1) ? W[k-1]: 0;
 			m2 = std::min(m2,acc + E_ext_Stem(V->get_energy(k,j),V->get_energy(k+1,j),V->get_energy(k,j-1),V->get_energy(k+1,j-1),S_,params_,k,j,n));
-			// if (k == 1 || (tree.weakly_closed(1,k-1) && tree.weakly_closed(k,j))) m3 = std::min(m3,acc + P->get_WMB(k,j) + PS_penalty);
+			m3 = std::min(m3,acc + P->get_energy(k,j) + PS_penalty);
 		}
 		W[j] = std::min({m1,m2,m3});
 	}
@@ -649,7 +651,7 @@ void W_final::backtrack(seq_interval *cur_interval){
 			int min = INF;
 			int best_row;
 
-			min = P->get_WMB(i,j) + PSM_penalty + b_penalty;
+			min = P->get_energy(i,j) + PSM_penalty + b_penalty;
 			best_row = 1;
 			energy_t tmp = V->get_energy_WMp(i,j-1) + params_->MLbase;
 			if(tmp< min){

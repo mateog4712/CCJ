@@ -1,6 +1,5 @@
 #include "pseudo_loop.hh"
 #include "h_externs.hh"
-#include "common.hh"
 #include <stdio.h>
 #include <string>
 #include <stdlib.h>
@@ -33,9 +32,17 @@ void pseudo_loop::allocate_space()
 	WPP.resize(total_length,INF);
 	P.resize(total_length,INF);
 
+	std::vector<energy_t> row;
+	row.resize(total_length,INF);
+
+	std::vector<energy_t> row_5;
+	row_5.resize(MAXLOOP,INF);
+
+	std::vector< std::vector< energy_t> > row_row;
 	for(cand_pos_t i = 1; i <= total_length; ++i) {
-		std::vector<energy_t> row;
-		row.resize(total_length,INF);
+		row_row.push_back(row_5);
+	}
+	for(cand_pos_t i = 1; i <= total_length; ++i) {
 		PK.push_back(row);
 		PL.push_back(row);
 		PR.push_back(row);
@@ -67,27 +74,19 @@ void pseudo_loop::allocate_space()
 		POmloop0.push_back(row);
 		POmloop1.push_back(row);
 
-		std::vector< std::vector< energy_t> > row_row;
-		for (cand_pos_t j=1; j<=MAXLOOP; ++j){
-			std::vector<energy_t> row_5;
-			row_5.resize(MAXLOOP,INF);
-			row_row.push_back(row_5);
-		}
-
 		PLiloop5.push_back(row_row);
 		PRiloop5.push_back(row_row);
 		PMiloop5.push_back(row_row);
 		POiloop5.push_back(row_row);
 
 	}
-	WMB.resize(total_length,INF);
 }
 
 pseudo_loop::~pseudo_loop()
 {
 }
 
-void pseudo_loop::compute_energies(int i, int l)
+void pseudo_loop::compute_energies(cand_pos_t i, cand_pos_t l)
 {
 
 	// 1) compute all energies over region [i,l]
@@ -98,13 +97,13 @@ void pseudo_loop::compute_energies(int i, int l)
 	compute_WPP(i,l);
 
 	//2) compute all energies over gapped region [i,j]U[k,l]
-	for(int j = i; j<l; j++){
+	for(cand_pos_t j = i; j<l; ++j){
 		// Hosna, July 8, 2014
 		// in original recurrences we have j< k-1, so I am changing k=j+1 to k=j+2
-		for(int k = l; k>=j+2; k--){//for(int k = j+2; k<=l; k++){
+		for(cand_pos_t k = l; k>=j+2; k--){//for(int k = j+2; k<=l; k++){
 
 			// 3) compute all energies PXiloop5 for all s
-			for(int s=0; s<MAXLOOP; s++){
+			for(cand_pos_t s=1; s<=MAXLOOP; ++s){
 
 				compute_PLiloop5(i,j,k,l,s);
 
@@ -174,7 +173,8 @@ void pseudo_loop::compute_WBP(int i, int l){
 	energy_t min_energy= INF, b1 = INF, b2=INF;
 
 	cand_pos_t il = index[i]+l-i;
-	for(cand_pos_t d=i; d< l; d++){
+	// Mateo 2025 Changed i to i+1 as get_WB(i,i-1) is wrong
+	for(cand_pos_t d=i+1; d< l; d++){
 		for(cand_pos_t e = d+1; e<= l; e++){
 			// Hosna, August 26, 2014
 			// comparing calculation of WI in HFold and WPP in CCJ, I found that
@@ -194,7 +194,7 @@ void pseudo_loop::compute_WPP(cand_pos_t i, cand_pos_t l){
 	energy_t min_energy = INF, b1 = INF, b2=INF;
 
 	cand_pos_t il = index[i]+l-i;
-	for(cand_pos_t d=i; d< l; d++){
+	for(cand_pos_t d=i+1; d< l; d++){
 		for(cand_pos_t e = d+1; e<= l; e++){
 			// Hosna, August 26, 2014
 			// comparing calculation of WI in HFold and WPP in CCJ, I found that
@@ -523,7 +523,7 @@ void pseudo_loop::compute_PLiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	int ptype_closing = pair[S_[i]][S_[j]];
 	if (ptype_closing>0){
 
-		if (i+1 < n && j-1 >= 0){
+		if (i+1 <= n && j-1 > 0){
 			b1 = get_PL(i+1,j-1,k,l) + get_e_stP(i,j);
 			// Hosna, August 21, 2014
 			// revising the max_s value
@@ -531,15 +531,14 @@ void pseudo_loop::compute_PLiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 			//int max_s = MIN(MAX(j-i-5,0),MAXLOOP-1);
 			cand_pos_t max_s = std::min(std::max(j-i-4,0),MAXLOOP-1);
 			// Hosna April 11, 2014 changed s=0 to s=1 to avoid considering stack as internal loop
-			for(int s = 1; s <= max_s; s++){
+			for(cand_pos_t s = 1; s <= max_s; ++s){
 				// Hosna, April 2, 2014
 				// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
 				//int temp = get_PLiloop5(i,j,k,l,s) + alpha0P + alpha2P(j,i);
 				// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
 				// so the order of alpha2P(i,l,i+1,l-1)
 				//int temp = get_PLiloop5(i,j,k,l,s) + alpha0P + alpha2P(int_sequence[j],int_sequence[i],int_sequence[j-1],int_sequence[i+1]);
-				// energy_t tmp = get_PLiloop5(i,j,k,l,s) + alpha0P + alpha2P(int_sequence[i],int_sequence[j],int_sequence[i+1],int_sequence[j-1]);
-				energy_t tmp = get_PLiloop5(i,j,k,l,s) + get_e_stP(i,j); // Mateo - This is wrong. It's confusing why this is all done separately but this is essentially the dangle energy for an internal loop for the outer base pair. PliLoop5 does inner. Why not have both in the regular e_intP function?
+				energy_t tmp = get_PLiloop5(i,j,k,l,s) + alpha0P + alpha2P(i,j);
 				b2 = std::min(b2,tmp);
 			}
 		}
@@ -557,31 +556,29 @@ void pseudo_loop::compute_PLiloop5(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
-	if (s >= 2 && (i+1) < n && (j-1)>=0){
-		b1 = get_PLiloop5(i+1,j-1,k,l,s-2) + alpha1P(2); // Fix here Mateo
+	if (s >= 2 && (i+1) <= n && (j-1)>0){
+		b1 = get_PLiloop5(i+1,j-1,k,l,s-2) + alpha1P(2);
 
 	}
 	// Hosna, April 2, 2014
 	// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
 	//b2 = get_PL(i+s+1,j-1,k,l) + alpha1P(s) + alpha3P(3) + alpha2P(j-1,i+s+1);
-	if((j-2) >= 0 && (i+s+2) < n){
+	if((j-2) > 0 && (i+s+2) <= n){
 		// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
 		// so the order of alpha2P(i,l,i+1,l-1)
 		//b2 = get_PL(i+s+1,j-1,k,l) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[j-1],int_sequence[i+s+1],int_sequence[j-2],int_sequence[i+s+2]);
-		// b2 = get_PL(i+s+1,j-1,k,l) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[i+s+1],int_sequence[j-1],int_sequence[i+s+2],int_sequence[j-2]);
-		b2 = get_PL(i+s+1,j-1,k,l) + get_e_intP(i+s+1,i+s+2,j-2,j-1);
+		b2 = get_PL(i+s+1,j-1,k,l) + alpha1P(s) + alpha3P(s) + alpha2P(i+s+1,j-1);
 	}
 
 
 	// Hosna, April 2, 2014
 	// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
 	//b3 = get_PL(i+1,j-s-1,k,l) + alpha1P(s) + alpha3P(3) + alpha2P(j-s-1,i+1);
-	if ((j-s-2) >= 0 && (i+2) < n){
+	if ((j-s-2) > 0 && (i+2) <= n){
 		// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
 		// so the order of alpha2P(i,l,i+1,l-1)
 		//b3 = get_PL(i+1,j-s-1,k,l) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[j-s-1],int_sequence[i+1],int_sequence[j-s-2],int_sequence[i+2]);
-		// b3 = get_PL(i+1,j-s-1,k,l) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[i+1],int_sequence[j-s-1],int_sequence[i+2],int_sequence[j-s-1]);
-		b3 = get_PL(i+1,j-s-1,k,l) + get_e_intP(i+1,i+2,j-s-1,j-s-1);
+		b3 = get_PL(i+1,j-s-1,k,l) + alpha1P(s) + alpha3P(s) + alpha2P(i+1,j-s-1);
 	}
 
 	min_energy = std::min({min_energy,b1,b2,b3});
@@ -653,7 +650,7 @@ void pseudo_loop::compute_PRiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	cand_pos_t kl = index[k]+l-k;
 	int ptype_closing = pair[S_[k]][S_[l]];
 	if (ptype_closing>0){
-		if (k+1 < n && l-1 >= 0){
+		if (k+1 <= n && l-1 > 0){
 			b1 = get_PR(i,j,k+1,l-1) + get_e_stP(k,l);
 			// Hosna, August 21, 2014
 			// revising the max_s value
@@ -662,14 +659,13 @@ void pseudo_loop::compute_PRiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 			cand_pos_t max_s = std::min(std::max(l-k-4,0),MAXLOOP-1);
 			// Hosna April 11, 2014 changed s=0 to s=1 to avoid considering stack as internal loop
 			for(cand_pos_t s = 1; s <= max_s; s++){
-			// Hosna, April 2, 2014
-			// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
-			//int temp = get_PRiloop5(i,j,k,l,s) + alpha0P + alpha2P(l,k);
+				// Hosna, April 2, 2014
+				// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
+				//int temp = get_PRiloop5(i,j,k,l,s) + alpha0P + alpha2P(l,k);
 				// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
 				// so the order of alpha2P(i,l,i+1,l-1)
 				//int temp = get_PRiloop5(i,j,k,l,s) + alpha0P + alpha2P(int_sequence[l],int_sequence[k],int_sequence[l-1],int_sequence[k+1]);
-				// energy_t tmp = get_PRiloop5(i,j,k,l,s) + alpha0P + alpha2P(int_sequence[k],int_sequence[l],int_sequence[k+1],int_sequence[l-1]);
-				energy_t tmp = get_PRiloop5(i,j,k,l,s);
+				energy_t tmp = get_PRiloop5(i,j,k,l,s) + alpha0P + alpha2P(k,l);
 				b2 = std::min(b2,tmp);
 			}
 		}
@@ -687,7 +683,7 @@ void pseudo_loop::compute_PRiloop5(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
-	if (s >= 2 && (k+1) <n && (l-1)>=0){
+	if (s >= 2 && (k+1) <=n && (l-1)>0){
 		b1 = get_PRiloop5(i,j,k+1,l-1,s-2) + alpha1P(2);
 		min_energy = std::min(min_energy,b1);
 
@@ -695,11 +691,11 @@ void pseudo_loop::compute_PRiloop5(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 	// Hosna, April 2, 2014
 	// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
 	//b2 = get_PR(i,j,k+s+1,l-1) + alpha1P(s) + alpha3P(s) + alpha2P(l-1,k+s+1);
-	if ((l-2) >= 0 && (k+s+2) < n){
+	if ((l-2) > 0 && (k+s+2) <= n){
 		// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
 		// so the order of alpha2P(i,l,i+1,l-1)
 		//b2 = get_PR(i,j,k+s+1,l-1) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[l-1],int_sequence[k+s+1],int_sequence[l-2],int_sequence[k+s+2]);
-		// b2 = get_PR(i,j,k+s+1,l-1) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[k+s+1],int_sequence[l-1],int_sequence[k+s+2],int_sequence[l-2]);
+		b2 = get_PR(i,j,k+s+1,l-1) + alpha1P(s) + alpha3P(s) + alpha2P(k+s+1,l-1);
 		min_energy = std::min(min_energy,b2);
 	}
 
@@ -707,11 +703,11 @@ void pseudo_loop::compute_PRiloop5(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 	// Hosna, April 2, 2014
 	// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
 	//b3 = get_PR(i,j,k+1,l-s-1) + alpha1P(s) + alpha3P(s) + alpha2P(l-s-1,k+1);
-	if ((l-s-2)>=0 && (k+2)< n){
+	if ((l-s-2)>0 && (k+2)<= n){
 		// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
 		// so the order of alpha2P(i,l,i+1,l-1)
 		//b3 = get_PR(i,j,k+1,l-s-1) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[l-s-1],int_sequence[k+1],int_sequence[l-s-2],int_sequence[k+2]);
-		// b3 = get_PR(i,j,k+1,l-s-1) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[k+1],int_sequence[l-s-1],int_sequence[k+2],int_sequence[l-s-2]);
+		b3 = get_PR(i,j,k+1,l-s-1) + alpha1P(s) + alpha3P(s) + alpha2P(k+1,l-s-1);
 		min_energy = std::min(min_energy,b3);
 
 	}
@@ -784,7 +780,7 @@ void pseudo_loop::compute_PMiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 
 	if (ptype_closing>0){
 
-		if (j-1 >= 0 && k+1 < n){
+		if (j-1 > 0 && k+1 <= n){
 			b1 = get_PM(i,j-1,k+1,l) + get_e_stP(j-1,k+1);
 
 			cand_pos_t max_s = std::min(std::max({j-i,l-k,0}),MAXLOOP-1);
@@ -796,8 +792,7 @@ void pseudo_loop::compute_PMiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 				// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
 				// so the order of alpha2P(i,l,i+1,l-1)
 				//int temp = get_PMiloop5(i,j,k,l,s) + alpha0P + alpha2P(int_sequence[j],int_sequence[k],int_sequence[j-1],int_sequence[k+1]);
-				// energy_t tmp = get_PMiloop5(i,j,k,l,s) + alpha0P + alpha2P(int_sequence[j],int_sequence[k],int_sequence[j+1],int_sequence[k-1]);
-				energy_t tmp = get_PMiloop5(i,j,k,l,s);
+				energy_t tmp = get_PMiloop5(i,j,k,l,s) + alpha0P + alpha2P(j,k);
 				b2 = std::min(b2,tmp);				
 			}
 		}
@@ -815,28 +810,25 @@ void pseudo_loop::compute_PMiloop5(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
-	if (s >= 2 && (j-1)>= 0 && (k+1)<n){
+	if (s >= 2 && (j-1)> 0 && (k+1)<=n){
 		b1 = get_PMiloop5(i,j-1,k+1,l,s-2)+alpha1P(2);
-		/*if (debug){
-			printf("inside PMiloop5(%d,%d,%d,%d,%d): b1 = %d\n",i,j,k,l,s, b1);
-		}*/
 		min_energy = std::min(min_energy,b1);
 
 	}
 	
-	if ((j-s-1) >=0 && (k+1) < n){
+	if ((j-s-1) >0 && (k+1) <= n){
 		// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
 		// so the order of alpha2P(i,l,i+1,l-1)
 		//b2 = get_PM(i,j-s-1,k+1,l) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[k+1],int_sequence[j-s-1],int_sequence[k],int_sequence[j-s]);
-		// b2 = get_PM(i,j-s-1,k+1,l) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[j-s-1],int_sequence[k+1],int_sequence[j-s],int_sequence[k]);
+		b2 = get_PM(i,j-s-1,k+1,l) + alpha1P(s) + alpha3P(s) + alpha2P(j-s-1,k+1);
 		min_energy = std::min(min_energy,b2);
 	}
 
-	if ((j-1) >=0 && (k+s+1) < n ){
+	if ((j-1) >0 && (k+s+1) <= n ){
 		// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
 		// so the order of alpha2P(i,l,i+1,l-1)
 		//b3 = get_PM(i,j-1,k+s+1,l) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[k+s+1],int_sequence[j-1],int_sequence[k+s],int_sequence[j]);
-		// b3 = get_PM(i,j-1,k+s+1,l) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[j-1],int_sequence[k+s+1],int_sequence[j],int_sequence[k+s]);
+		b3 = get_PM(i,j-1,k+s+1,l) + alpha1P(s) + alpha3P(s) + alpha2P(j-1,k+s+1);
 		min_energy = std::min(min_energy,b3);
 	}
 
@@ -907,7 +899,7 @@ void pseudo_loop::compute_POiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	cand_pos_t kl = index[k]+l-k;
 	int ptype_closing = pair[S_[i]][S_[l]];
 
-	if (ptype_closing>0 && i+1 < n && l-1 >= 0){
+	if (ptype_closing>0 && i+1 <= n && l-1 > 0){
 		b1 = get_PO(i+1,j,k,l-1) + get_e_stP(i,l);
 		// Hosna, August 21, 2014
 		// revising the max_s value
@@ -922,8 +914,7 @@ void pseudo_loop::compute_POiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 			// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
 			// so the order of alpha2P(i,l,i+1,l-1)
 			//int temp = get_POiloop5(i,j,k,l,s) + alpha0P + alpha2P(int_sequence[l],int_sequence[i],int_sequence[l-1],int_sequence[i+1]);
-			// energy_t tmp = get_POiloop5(i,j,k,l,s) + alpha0P + alpha2P(int_sequence[i],int_sequence[l],int_sequence[i+1],int_sequence[l-1]);
-			energy_t tmp = get_POiloop5(i,j,k,l,s);
+			energy_t tmp = get_POiloop5(i,j,k,l,s) + alpha0P + alpha2P(i,l);
 			b2 = std::min(b2,tmp);
 		}
 		min_energy = std::min(b1,b2);
@@ -947,22 +938,22 @@ void pseudo_loop::compute_POiloop5(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 	// Hosna, April 2, 2014
 	// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
 	//b2 = get_PO(i+s+1,j,k,l-1) + alpha1P(s) + alpha3P(s) + alpha2P(l-1,i+s+1);
-	if (l-2 >= 0 && i+s+2 < n){
+	if (l-2 > 0 && i+s+2 <= n){
 		// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
 		// so the order of alpha2P(i,l,i+1,l-1)
 		//b2 = get_PO(i+s+1,j,k,l-1) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[l-1],int_sequence[i+s+1],int_sequence[l-2],int_sequence[i+s+2]);
-		// b2 = get_PO(i+s+1,j,k,l-1) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[i+s+1],int_sequence[l-1],int_sequence[i+s+2],int_sequence[l-2]);
+		b2 = get_PO(i+s+1,j,k,l-1) + alpha1P(s) + alpha3P(s) + alpha2P(i+s+1,l-1);
 		min_energy = std::min(min_energy,b2);
 	}
 
 	// Hosna, April 2, 2014
 	// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
 	//b3 = get_PO(i+1,j,k,l-s-1) + alpha1P(s) + alpha3P(s) + alpha2P(l-s-1,i+1);
-	if (l-s-2 >= 0 && i+2 < n){
+	if (l-s-2 > 0 && i+2 <= n){
 		// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
 		// so the order of alpha2P(i,l,i+1,l-1)
 		//b3 = get_PO(i+1,j,k,l-s-1) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[l-s-1],int_sequence[i+1],int_sequence[l-s-2],int_sequence[i+2]);
-		// b3 = get_PO(i+1,j,k,l-s-1) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[i+1],int_sequence[l-s-1],int_sequence[i+2],int_sequence[l-s-2]);
+		b3 = get_PO(i+1,j,k,l-s-1) + alpha1P(s) + alpha3P(s) + alpha2P(i+1,l-s-1);
 		min_energy = std::min(min_energy,b3);
 	}
 
@@ -1342,6 +1333,65 @@ energy_t pseudo_loop::get_e_intP(cand_pos_t i, cand_pos_t ip, cand_pos_t jp, can
 	return energy;
 }
 
+//penalty for z unpaired bases in an internal loop that spans a band
+energy_t pseudo_loop::alpha1P(cand_pos_t z){
+	// Hosna, April 2nd, 2014
+	// for simplicity I am not checking to see what type of internal loop (i.e. I, B, or H) I have that spans a band, and I am assuming it is an intetnal loop of type I
+	// Hosna, August 21, 2014
+	// penalty by size returns inf for size 1
+	if (z== 0) return 0;
+	if (z == 1 || z==2){
+		return (cand_pos_t) lrint(params_->bulge[z]*e_intP_penalty);
+	}else{
+		return (cand_pos_t) lrint(params_->internal_loop[z]*e_intP_penalty);
+	}
+}
+
+// penalty for closing pair i.l of an internal loop that spans a band
+energy_t pseudo_loop::alpha2P( cand_pos_t i, cand_pos_t l){
+	// Hosna April 2, 2014
+	// I added this similar to calculation of closing base pair contribution in a general internal loop in simfold and
+	// multiplied that to the intP_penalty for an internal loop that spans a band
+	int ptype_closing = pair[S_[i]][S_[l]];
+	params_->mismatchI[ptype_closing][S_[i+1]][S_[l-1]];
+	return (cand_pos_t) lrint(params_->mismatchI[ptype_closing][S_[i+1]][S_[l-1]]*e_intP_penalty);
+}
+
+//penalty for asymmetry of z in an internal loop that spans a band
+energy_t pseudo_loop::alpha3P(cand_pos_t z){
+	if (z== 0) return 0;
+
+	return (energy_t) lrint(std::min(MAX_NINIO,params_->ninio[2]*z)*e_intP_penalty);
+}
+
+// penalty for closing pair i.l or l.i of an ordinary multiloop
+energy_t pseudo_loop::beta2(cand_pos_t i, cand_pos_t l){
+	// Hosna, April 2, 2014
+	// I don't think this is the complete value, but since HFold's WM and CCJ's Vmloop recurrences are the same I am not changing this value here, unless I find out it is needed
+	// the correct value should be: Non-GC-penalty(i,l)+b_penalty
+	return b_penalty;
+}
+
+// penalty for closing pair i.l or l.i of a multiloop that spans a band
+energy_t pseudo_loop::beta2P(cand_pos_t i, cand_pos_t l){
+	// Hosna, April 2, 2014
+	// I don't think this is the complete value, but since HFold's WM and CCJ's Vmloop recurrences are the same I am not changing this value here, unless I find out it is needed
+	// the correct value should be: Non-GC-penalty(i,l) *0.74 + bp_penalty
+	return bp_penalty;
+}
+
+// penalty for closing pair i.l or l.i of a pseudoloop
+energy_t pseudo_loop::gamma2(cand_pos_t i, cand_pos_t l){
+	// Hosna, April 2, 2014
+	// I changed this value to be 0 as I can't find its correct value
+	// the correct value for this penalty should be similar to what we have in case of an internal loop or a multiloop, but the value is missing here
+	//return 0;
+	// Hosna July 17, 2014
+	// To avoid addition of single base pair bands I am giving a very small non-zero value to gamma2
+	return 1;
+}
+
+
 void pseudo_loop::insert_node(int i, int j, char type)
 {
 	seq_interval *tmp;
@@ -1352,9 +1402,6 @@ void pseudo_loop::insert_node(int i, int j, char type)
     tmp->next = stack_interval;
     stack_interval = tmp;
 
-}
-energy_t pseudo_loop::get_WMB(cand_pos_t i, cand_pos_t j){
-	return INF+i+j;
 }
 
 void pseudo_loop::set_stack_interval(seq_interval *stack_interval){
