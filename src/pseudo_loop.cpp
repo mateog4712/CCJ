@@ -36,13 +36,13 @@ void pseudo_loop::allocate_space()
 	row.resize(total_length,INF);
 
 	std::vector<energy_t> row_5;
-	row_5.resize(MAXLOOP,INF);
+	row_5.resize(MAXLOOP+1,INF);
 
 	std::vector< std::vector< energy_t> > row_row;
 	for(cand_pos_t i = 1; i <= total_length; ++i) {
 		row_row.push_back(row_5);
 	}
-	for(cand_pos_t i = 1; i <= total_length; ++i) {
+	for(cand_pos_t i = 0; i < total_length; ++i) {
 		PK.push_back(row);
 		PL.push_back(row);
 		PR.push_back(row);
@@ -1020,30 +1020,54 @@ void pseudo_loop::compute_POmloop1(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 
 
 energy_t pseudo_loop::get_WB(cand_pos_t i, cand_pos_t j){
+	if (i >= j  || i<=0 || j<=0 || i>n || j>n){
+		return INF;
+	}
 	return (std::min(beta1P*(j-i+1),get_WBP(i,j)));
 }
 
 energy_t pseudo_loop::get_WBP(cand_pos_t i, cand_pos_t j){
+	if (i >= j  || i<=0 || j<=0 || i>n || j>n){
+		return INF;
+	}
 	cand_pos_t ij = index[i]+j-i;
 	return WBP[ij];
 }
 
 energy_t pseudo_loop::get_WP(cand_pos_t i, cand_pos_t j){
+	if (i >= j  || i<=0 || j<=0 || i>n || j>n){
+		return INF;
+	}
 	return (std::min(gamma1*(j-i+1),get_WPP(i,j)));
 }
 
 energy_t pseudo_loop::get_WPP(cand_pos_t i, cand_pos_t j){
+	if (i >= j  || i<=0 || j<=0 || i>n || j>n){
+		return INF;
+	}
 	cand_pos_t ij = index[i]+j-i;
 	return WPP[ij];
 }
 
 energy_t pseudo_loop::get_P(cand_pos_t i, cand_pos_t j){
+	if (i >= j  || i<=0 || j<=0 || i>n || j>n){
+		return INF;
+	}
 	cand_pos_t ij = index[i]+j-i;
 	return P[ij];
 }
 
 energy_t pseudo_loop::get_PK(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+		return INF;
+	}
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
@@ -1051,7 +1075,16 @@ energy_t pseudo_loop::get_PK(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 }
 
 energy_t pseudo_loop::get_PL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+		return INF;
+	}
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
@@ -1059,7 +1092,16 @@ energy_t pseudo_loop::get_PL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 }
 
 energy_t pseudo_loop::get_PR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+		return INF;
+	}
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
@@ -1067,7 +1109,20 @@ energy_t pseudo_loop::get_PR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 }
 
 energy_t pseudo_loop::get_PM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+		return INF;
+	}
+	int ptype_closing = pair[S_[j]][S_[k]];
+	if (ptype_closing == 0){
+		return INF;
+	}
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 	if (i ==j && k ==l){
@@ -1078,7 +1133,16 @@ energy_t pseudo_loop::get_PM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 }
 
 energy_t pseudo_loop::get_PO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+		return INF;
+	}
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
@@ -1086,7 +1150,16 @@ energy_t pseudo_loop::get_PO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 }
 
 energy_t pseudo_loop::get_PfromL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+		return INF;
+	}
 	if (i==j && k==l){
 		// Hosna, August 13, 2014
 		// in some cases it used P_fromM to exit from a case with no band!
@@ -1101,7 +1174,16 @@ energy_t pseudo_loop::get_PfromL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 }
 
 energy_t pseudo_loop::get_PfromR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+		return INF;
+	}
 	if (i==j && k==l){
 		// Hosna, August 13, 2014
 		// in some cases it used P_fromM to exit from a case with no band!
@@ -1116,7 +1198,16 @@ energy_t pseudo_loop::get_PfromR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 }
 
 energy_t pseudo_loop::get_PfromM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+		return INF;
+	}
 	if (i==j && k==l){
 		// Hosna, August 13, 2014
 		// in some cases it used P_fromM to exit from a case with no band!
@@ -1131,7 +1222,16 @@ energy_t pseudo_loop::get_PfromM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 }
 
 energy_t pseudo_loop::get_PfromO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+		return INF;
+	}
 	if (i==j && k==l){
 		// Hosna, August 13, 2014
 		// in some cases it used P_fromM to exit from a case with no band!
@@ -1146,6 +1246,16 @@ energy_t pseudo_loop::get_PfromO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 }
 
 energy_t pseudo_loop::get_PLiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+		return INF;
+	}
 	const int ptype_closing = pair[S_[i]][S_[j]];
 	if(ptype_closing == 0) return INF;
 
@@ -1156,7 +1266,16 @@ energy_t pseudo_loop::get_PLiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 }
 
 energy_t pseudo_loop::get_PLiloop5(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, cand_pos_t s){
-
+	if (!(i <= j && j < k-1 && k <= l && s>0 && s<=MAXLOOP)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+		return INF;
+	}
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
@@ -1164,7 +1283,16 @@ energy_t pseudo_loop::get_PLiloop5(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 }
 
 energy_t pseudo_loop::get_PLmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+		return INF;
+	}
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
@@ -1172,7 +1300,16 @@ energy_t pseudo_loop::get_PLmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 }
 
 energy_t pseudo_loop::get_PLmloop0(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+		return INF;
+	}
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
@@ -1180,7 +1317,16 @@ energy_t pseudo_loop::get_PLmloop0(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 }
 
 energy_t pseudo_loop::get_PLmloop1(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+		return INF;
+	}
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
@@ -1188,6 +1334,16 @@ energy_t pseudo_loop::get_PLmloop1(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 }
 
 energy_t pseudo_loop::get_PRiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+		return INF;
+	}
 	const int ptype_closing = pair[S_[i]][S_[j]];
 	if(ptype_closing == 0) return INF;
 
@@ -1198,7 +1354,16 @@ energy_t pseudo_loop::get_PRiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 }
 
 energy_t pseudo_loop::get_PRiloop5(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, cand_pos_t s){
-
+	if (!(i <= j && j < k-1 && k <= l && s>0 && s<=MAXLOOP)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+		return INF;
+	}
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
@@ -1206,7 +1371,16 @@ energy_t pseudo_loop::get_PRiloop5(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 }
 
 energy_t pseudo_loop::get_PRmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+		return INF;
+	}
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
@@ -1214,7 +1388,16 @@ energy_t pseudo_loop::get_PRmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 }
 
 energy_t pseudo_loop::get_PRmloop0(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+		return INF;
+	}
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
@@ -1222,7 +1405,16 @@ energy_t pseudo_loop::get_PRmloop0(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 }
 
 energy_t pseudo_loop::get_PRmloop1(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+		return INF;
+	}
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
@@ -1230,6 +1422,16 @@ energy_t pseudo_loop::get_PRmloop1(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 }
 
 energy_t pseudo_loop::get_PMiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+		return INF;
+	}
 	const int ptype_closing = pair[S_[i]][S_[j]];
 	if(ptype_closing == 0) return INF;
 
@@ -1240,7 +1442,16 @@ energy_t pseudo_loop::get_PMiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 }
 
 energy_t pseudo_loop::get_PMiloop5(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, cand_pos_t s){
-
+	if (!(i <= j && j < k-1 && k <= l && s>0 && s<= MAXLOOP)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+		return INF;
+	}
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
@@ -1248,7 +1459,16 @@ energy_t pseudo_loop::get_PMiloop5(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 }
 
 energy_t pseudo_loop::get_PMmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+		return INF;
+	}
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
@@ -1256,6 +1476,16 @@ energy_t pseudo_loop::get_PMmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 }
 
 energy_t pseudo_loop::get_PMmloop0(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+		return INF;
+	}
 
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
@@ -1264,7 +1494,16 @@ energy_t pseudo_loop::get_PMmloop0(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 }
 
 energy_t pseudo_loop::get_PMmloop1(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+		return INF;
+	}
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
@@ -1272,6 +1511,16 @@ energy_t pseudo_loop::get_PMmloop1(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 }
 
 energy_t pseudo_loop::get_POiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+		return INF;
+	}
 	const int ptype_closing = pair[S_[i]][S_[j]];
 	if(ptype_closing == 0) return INF;
 
@@ -1282,7 +1531,16 @@ energy_t pseudo_loop::get_POiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 }
 
 energy_t pseudo_loop::get_POiloop5(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, cand_pos_t s){
-
+	if (!(i <= j && j < k-1 && k <= l && s>0 && s<= MAXLOOP)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+		return INF;
+	}
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
@@ -1290,7 +1548,16 @@ energy_t pseudo_loop::get_POiloop5(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 }
 
 energy_t pseudo_loop::get_POmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+		return INF;
+	}
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
@@ -1298,7 +1565,16 @@ energy_t pseudo_loop::get_POmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 }
 
 energy_t pseudo_loop::get_POmloop0(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+		return INF;
+	}
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
@@ -1306,7 +1582,16 @@ energy_t pseudo_loop::get_POmloop0(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 }
 
 energy_t pseudo_loop::get_POmloop1(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+		return INF;
+	}
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
