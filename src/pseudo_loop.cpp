@@ -216,7 +216,7 @@ void pseudo_loop::compute_P(cand_pos_t i, cand_pos_t l){
 	for(cand_pos_t j=i; j< l; j++){
 		for (cand_pos_t d=j+1; d<l; d++){
 			for (cand_pos_t k=d+1; k<l; k++){
-				b1 = get_PK(i,j,d+1,k) +get_PK(j+1,d,k+1,l);
+				b1 = get_PK(i,j-1,d+1,k-1) + get_PK(j,d,k,l);
 				min_energy = std::min(min_energy,b1);
 			}
 		}
@@ -236,7 +236,7 @@ void pseudo_loop::compute_PK(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	// based on original recurrences we should have i<d, and
 	// it is not clear to me why we have i<=d here, so I am changing this back to original
 	// by changing d=i to d=i+1
-	for(cand_pos_t d=i+1; d< j; d++){
+	for(cand_pos_t d=i+1; d< j; ++d){
 		energy_t tmp = get_PK(i,d,k,l) + get_WP(d+1,j);
 		b1=std::min(b1,tmp);
 	}
@@ -245,7 +245,7 @@ void pseudo_loop::compute_PK(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	// based on original recurrences we should have d<l, and
 	// it is not clear to me why we have d<=l here, so I am changing this back to original
 	// by changing d<=l to d<l
-	for(int d=k+1; d< l; d++){
+	for(int d=k+1; d< l; ++d){
 		energy_t tmp = get_PK(i,j,d,l) + get_WP(k,d-1);
 		b2=std::min(b2,tmp);
 	}
@@ -254,9 +254,7 @@ void pseudo_loop::compute_PK(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	b4 = get_PM(i,j,k,l) + gamma2(j,k)+PB_penalty;
 	b5 = get_PR(i,j,k,l) + gamma2(l,k)+PB_penalty;
 	b6 = get_PO(i,j,k,l) + gamma2(l,i)+PB_penalty;
-
 	min_energy = std::min({min_energy,b1,b2,b3,b4,b5,b6});
-
 	if (min_energy < INF/2){
 		PK[ij][kl]=min_energy;
 	}
@@ -334,10 +332,8 @@ void pseudo_loop::compute_PM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	cand_pos_t kl = index[k]+l-k;
 
 	const int ptype_closing = pair[S_[j]][S_[k]];
-
 	if (ptype_closing>0){
 		b1 = get_PMiloop(i,j,k,l);
-
 		// Hosna, April 11, 2014
 		// we need to add a branch penalty for multiloop that spans a band
 		b2 = get_PMmloop(i,j,k,l) + bp_penalty;
@@ -1020,14 +1016,14 @@ void pseudo_loop::compute_POmloop1(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 
 
 energy_t pseudo_loop::get_WB(cand_pos_t i, cand_pos_t j){
-	if (i >= j  || i<=0 || j<=0 || i>n || j>n){
+	if (i<=0 || j<=0 || i>n || j>n){
 		return INF;
 	}
 	return (std::min(beta1P*(j-i+1),get_WBP(i,j)));
 }
 
 energy_t pseudo_loop::get_WBP(cand_pos_t i, cand_pos_t j){
-	if (i >= j  || i<=0 || j<=0 || i>n || j>n){
+	if (i > j || i<=0 || j<=0 || i>n || j>n){
 		return INF;
 	}
 	cand_pos_t ij = index[i]+j-i;
@@ -1035,14 +1031,15 @@ energy_t pseudo_loop::get_WBP(cand_pos_t i, cand_pos_t j){
 }
 
 energy_t pseudo_loop::get_WP(cand_pos_t i, cand_pos_t j){
-	if (i >= j  || i<=0 || j<=0 || i>n || j>n){
+	if (i<=0 || j<=0 || i>n || j>n){
 		return INF;
 	}
+	if (i>j) return 0; // needed as this will happen 
 	return (std::min(gamma1*(j-i+1),get_WPP(i,j)));
 }
 
 energy_t pseudo_loop::get_WPP(cand_pos_t i, cand_pos_t j){
-	if (i >= j  || i<=0 || j<=0 || i>n || j>n){
+	if (i > j  || i<=0 || j<=0 || i>n || j>n){
 		return INF;
 	}
 	cand_pos_t ij = index[i]+j-i;
@@ -1344,7 +1341,7 @@ energy_t pseudo_loop::get_PRiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
 		return INF;
 	}
-	const int ptype_closing = pair[S_[i]][S_[j]];
+	const int ptype_closing = pair[S_[k]][S_[l]];
 	if(ptype_closing == 0) return INF;
 
 	cand_pos_t ij = index[i]+j-i;
@@ -1432,7 +1429,7 @@ energy_t pseudo_loop::get_PMiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
 		return INF;
 	}
-	const int ptype_closing = pair[S_[i]][S_[j]];
+	const int ptype_closing = pair[S_[j]][S_[k]];
 	if(ptype_closing == 0) return INF;
 
 	cand_pos_t ij = index[i]+j-i;
@@ -1521,7 +1518,7 @@ energy_t pseudo_loop::get_POiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
 		return INF;
 	}
-	const int ptype_closing = pair[S_[i]][S_[j]];
+	const int ptype_closing = pair[S_[i]][S_[l]];
 	if(ptype_closing == 0) return INF;
 
 	cand_pos_t ij = index[i]+j-i;
@@ -1627,9 +1624,9 @@ energy_t pseudo_loop::alpha1P(cand_pos_t z){
 	if (z== 0) return 0;
 	if (z == 1 || z==2){
 		return (cand_pos_t) lrint(params_->bulge[z]*e_intP_penalty);
-	}else{
-		return (cand_pos_t) lrint(params_->internal_loop[z]*e_intP_penalty);
 	}
+	return (cand_pos_t) lrint(params_->internal_loop[z]*e_intP_penalty);
+	
 }
 
 // penalty for closing pair i.l of an internal loop that spans a band
@@ -1638,7 +1635,6 @@ energy_t pseudo_loop::alpha2P( cand_pos_t i, cand_pos_t l){
 	// I added this similar to calculation of closing base pair contribution in a general internal loop in simfold and
 	// multiplied that to the intP_penalty for an internal loop that spans a band
 	int ptype_closing = pair[S_[i]][S_[l]];
-	params_->mismatchI[ptype_closing][S_[i+1]][S_[l-1]];
 	return (cand_pos_t) lrint(params_->mismatchI[ptype_closing][S_[i+1]][S_[l-1]]*e_intP_penalty);
 }
 
@@ -1674,6 +1670,22 @@ energy_t pseudo_loop::gamma2(cand_pos_t i, cand_pos_t l){
 	// Hosna July 17, 2014
 	// To avoid addition of single base pair bands I am giving a very small non-zero value to gamma2
 	return 1;
+}
+
+// Hosna, Feb 18, 2014
+// I am changing the backtrack function such that it does not deal with structure
+// instead it only fills the minimum_fold array, f, and passes it to W_final
+// then in W_final one pass over f, will create the structure in dot bracket format
+// This is the solution I found for the problem of not knowing what kind of brackets and
+// how many different brackets to use when fillinf f and structure at the same time in pseudoloop.cpp
+//void pseudo_loop::back_track(char *structure, minimum_fold *f, seq_interval *cur_interval)
+void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
+
+	// this->structure = structure;
+	this->f = f;
+	switch (cur_interval->type)
+	{
+	}
 }
 
 

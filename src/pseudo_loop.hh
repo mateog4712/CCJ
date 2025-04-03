@@ -20,6 +20,7 @@ public:
 
     void compute_energies(cand_pos_t i, cand_pos_t j);
 
+	void backtrack(minimum_fold *f, seq_interval *cur_interval);
     void set_stack_interval(seq_interval *stack_interval);
     seq_interval *get_stack_interval(){return stack_interval;}
     std::string get_structure(){return structure;}

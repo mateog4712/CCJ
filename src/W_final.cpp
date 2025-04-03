@@ -63,7 +63,6 @@ double W_final::ccj(){
 			V->compute_energy_WM(i,j,P->P);
 		}
 	}
-	std::cout << P->get_energy(1,n) << std::endl;
 
 	for (cand_pos_t j= TURN+1; j <= n; j++){
 		energy_t m1 = INF, m2 = INF, m3 = INF;
@@ -71,7 +70,7 @@ double W_final::ccj(){
 		for (cand_pos_t k=1; k<=j-TURN-1; ++k){
 			energy_t acc = (k>1) ? W[k-1]: 0;
 			m2 = std::min(m2,acc + E_ext_Stem(V->get_energy(k,j),V->get_energy(k+1,j),V->get_energy(k,j-1),V->get_energy(k+1,j-1),S_,params_,k,j,n));
-			m3 = std::min(m3,acc + P->get_energy(k,j) + PS_penalty);
+			m3 = std::min(m3,acc + std::min({P->get_energy(k,j),P->get_energy(k+1,j),P->get_energy(k,j-1),P->get_energy(k+1,j-1)}) + PS_penalty);
 		}
 		W[j] = std::min({m1,m2,m3});
 	}
@@ -413,74 +412,70 @@ void W_final::backtrack(seq_interval *cur_interval){
 		// Hosna June 30, 2007
 		// The following would not take care of when
 		// we have some unpaired bases before the start of the WMB
-		// for (cand_pos_t i=1; i<=j-1; i++)
-		// {
-		// 	// Hosna: July 9, 2007
-		// 	// We only chop W to W + WMB when the bases before WMB are free
-		// 	if (i == 1 || (tree.weakly_closed(1,i-1) && tree.weakly_closed(i,j))){
+		for (cand_pos_t i=1; i<=j-1; i++){
+			// Hosna: July 9, 2007
+			// We only chop W to W + WMB when the bases before WMB are free
 
-		// 		acc = (i-1>0) ? W[i-1]: 0;
+			acc = (i-1>0) ? W[i-1]: 0;
 
-		// 		energy_ij = WMB->get_WMB(i,j);
+			energy_ij = P->get_energy(i,j);
 
-		// 		if (energy_ij < INF)
-		// 		{
-		// 			tmp = energy_ij + PS_penalty + acc;
+			if (energy_ij < INF)
+			{
+				tmp = energy_ij + PS_penalty + acc;
 
-		// 			if (tmp < min)
-		// 			{
-		// 				min = tmp;
-		// 				best_row = 5;
-		// 				best_i = i;
-		// 			}
-		// 		}
+				if (tmp < min)
+				{
+					min = tmp;
+					best_row = 5;
+					best_i = i;
+				}
+			}
 
-		// 		if (tree.tree[i].pair <= -1 && i+1 < j)
-		// 		{
-		// 			energy_ij = WMB->get_WMB(i+1,j);
-		// 			if (energy_ij < INF)
-		// 			{
-		// 				tmp = energy_ij + PS_penalty + acc;
-		// 				if (tmp < min)
-		// 				{
-		// 					min = tmp;
-		// 					best_row = 6;
-		// 					best_i = i;
-		// 				}
-		// 			}
-		// 		}
+			if(params_->model_details.dangles ==1){
+				energy_ij = P->get_energy(i+1,j);
+				if (energy_ij < INF)
+				{
+					tmp = energy_ij + PS_penalty + acc;
+					if (tmp < min)
+					{
+						min = tmp;
+						best_row = 6;
+						best_i = i;
+					}
+				}
+				
 
-		// 		if (tree.tree[j].pair <= -1 && i < j-1)
-		// 		{
-		// 			energy_ij = WMB->get_WMB(i,j-1);
-		// 			if (energy_ij < INF)
-		// 			{
-		// 				tmp = energy_ij + PS_penalty + acc;
-		// 				if (tmp < min)
-		// 				{
-		// 					min = tmp;
-		// 					best_row = 7;
-		// 					best_i = i;
-		// 				}
-		// 			}
-		// 		}
+				
+				energy_ij = P->get_energy(i,j-1);
+				if (energy_ij < INF)
+				{
+					tmp = energy_ij + PS_penalty + acc;
+					if (tmp < min)
+					{
+						min = tmp;
+						best_row = 7;
+						best_i = i;
+					}
+				}
+				
 
-		// 		if (tree.tree[i].pair <= -1 && tree.tree[j].pair <= -1 && i+1 < j-1)
-		// 		{
-		// 			energy_ij = WMB->get_WMB(i+1,j-1);
-		// 			if (energy_ij < INF)
-		// 			{
-		// 				tmp = energy_ij + PS_penalty + acc;
-		// 				if (tmp < min)
-		// 				{
-		// 					min = tmp;
-		// 					best_row = 8;
-		// 					best_i = i;
-		// 				}
-		// 			}
-		// 		}
-		// 	}
-		// }
+				
+				energy_ij = P->get_energy(i+1,j-1);
+				if (energy_ij < INF)
+				{
+					tmp = energy_ij + PS_penalty + acc;
+					if (tmp < min)
+					{
+						min = tmp;
+						best_row = 8;
+						best_i = i;
+					}
+				}
+			}
+			
+			
+		}
 			switch (best_row)
 			{
 				case 0:
@@ -511,31 +506,31 @@ void W_final::backtrack(seq_interval *cur_interval){
 						insert_node (1, best_i, FREE);
 					break;
 				// Hosna: June 28, 2007
-				// the last branch of W, which is WMB_i,j
-				// case 5:
-				// 	//printf("W(%d) case 5: inserting WMB(%d,%d) and Free (0,%d)\n",j,best_i,j,best_i-1);
-				// 	insert_node (best_i, j, P_WMB);
-				// 	if (best_i-1 > 1)     // it was TURN instead of 0  - not sure if TURN shouldn't be here
-				// 		insert_node (1, best_i-1, FREE);
-				// 	break;
-				// case 6:
-				// 	//printf("W(%d) case 6: inserting WMB(%d,%d) and Free (0,%d)\n",j,best_i+1,j,best_i);
-				// 	insert_node (best_i+1, j, P_WMB);
-				// 	if (best_i >= 1) // Hosna, March 26, 2012, was best_i-1 instead of best_i
-				// 		insert_node (1, best_i, FREE);
-				// 	break;
-				// case 7:
-				// 	//printf("W(%d) case 7: inserting WMB(%d,%d) and Free (0,%d)\n",j,best_i,j-1,best_i-1);
-				// 	insert_node (best_i, j-1, P_WMB);
-				// 	if (best_i-1 > 1)
-				// 		insert_node (1, best_i-1, FREE);
-				// 	break;
-				// case 8:
-				// 	//printf("W(%d) case 8: inserting WMB(%d,%d) and Free (0,%d)\n",j,best_i+1,j-1,best_i);
-				// 	insert_node (best_i+1, j-1, P_WMB);
-				// 	if (best_i >= 1) // Hosna, March 26, 2012, was best_i-1 instead of best_i
-				// 		insert_node (1, best_i, FREE);
-				// 	break;
+				// the last branch of W, which is P_i,j
+				case 5:
+					//printf("W(%d) case 5: inserting WMB(%d,%d) and Free (0,%d)\n",j,best_i,j,best_i-1);
+					insert_node (best_i, j, P_P);
+					if (best_i-1 > 1)     // it was TURN instead of 0  - not sure if TURN shouldn't be here
+						insert_node (1, best_i-1, FREE);
+					break;
+				case 6:
+					//printf("W(%d) case 6: inserting WMB(%d,%d) and Free (0,%d)\n",j,best_i+1,j,best_i);
+					insert_node (best_i+1, j, P_P);
+					if (best_i >= 1) // Hosna, March 26, 2012, was best_i-1 instead of best_i
+						insert_node (1, best_i, FREE);
+					break;
+				case 7:
+					//printf("W(%d) case 7: inserting WMB(%d,%d) and Free (0,%d)\n",j,best_i,j-1,best_i-1);
+					insert_node (best_i, j-1, P_P);
+					if (best_i-1 > 1)
+						insert_node (1, best_i-1, FREE);
+					break;
+				case 8:
+					//printf("W(%d) case 8: inserting WMB(%d,%d) and Free (0,%d)\n",j,best_i+1,j-1,best_i);
+					insert_node (best_i+1, j-1, P_P);
+					if (best_i >= 1) // Hosna, March 26, 2012, was best_i-1 instead of best_i
+						insert_node (1, best_i, FREE);
+					break;
 			}
 		}
 			break;
@@ -664,23 +659,50 @@ void W_final::backtrack(seq_interval *cur_interval){
 			}
 		}
 		break;
-		// case P_WMB:
-		// case P_WMBP:
-		// case P_WMBW:
-		// case P_VP:
-		// case P_VPR:
-		// case P_VPL:
-		// case P_WI:
-		// case P_BE:
-		// case P_WIP:
-		// {
-		// 	P->set_stack_interval(stack_interval);
-		// 	// P->back_track(structure,f,cur_interval);
-		// 	stack_interval = P->get_stack_interval();
-		// 	structure = P->get_structure();
-		// 	f = P->get_minimum_fold();
-		// }
-			// break;
+		case P_PK:
+		case P_PL:
+		case P_PR:
+		case P_PM:
+		case P_PO:
+		case P_PfromL:
+		case P_PfromR:
+		case P_PfromM:
+		case P_PfromO:
+		case P_PLiloop:
+		case P_PLiloop5:
+		case P_PLmloop:
+		case P_PLmloop0:
+		case P_PLmloop1:
+		case P_PRiloop:
+		case P_PRiloop5:
+		case P_PRmloop:
+		case P_PRmloop0:
+		case P_PRmloop1:
+		case P_PMiloop:
+		case P_PMiloop5:
+		case P_PMmloop:
+		case P_PMmloop0:
+		case P_PMmloop1:
+		case P_POiloop:
+		case P_POiloop5:
+		case P_POmloop:
+		case P_POmloop0:
+		case P_POmloop1:
+		case P_WB:
+		case P_WBP:
+		case P_WP:
+		case P_WPP:
+		case P_P:
+		{
+			P->set_stack_interval(stack_interval);
+			// Hosna, Feb 18, 2014
+			// removed structure in pseudoloop backtrack, see pseudoloop.cpp for detail
+			//P->back_track(structure,f,cur_interval);
+			P->backtrack(f,cur_interval);
+			stack_interval = P->get_stack_interval();
+			f = P->get_minimum_fold();
+		}
+			break;
 		default:
 			printf("Should not be here!\n");
 	}
