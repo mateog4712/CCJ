@@ -96,6 +96,7 @@ double W_final::ccj(){
         delete cur_interval;    // this should make up for the new in the insert_node
         cur_interval = stack_interval;
     }
+	fill_structure();
 	this->structure = structure.substr(1,n);
     return energy;
 }
@@ -181,9 +182,6 @@ void W_final::backtrack(seq_interval *cur_interval){
 			f[i].pair = j;
 			f[j].pair = i;
 
-			// Hosna Jun. 28 2007
-			// if the pairing is part of original structure, put '(' and ')' in the structure
-			// otherwise make it '[' and ']' -- changed to () if pseudoknot-free and [] if pseudoknotted -Mateo
 			structure[i] = '(';
 			structure[j] = ')';		
 
@@ -235,8 +233,8 @@ void W_final::backtrack(seq_interval *cur_interval){
 				{
 					f[i].type = MULTI;
 					f[j].type = MULTI;
-					int best_k = -1, best_row = -1;
-					int tmp= INF, min = INF;
+					cand_pos_t best_k = -1, best_row = -1;
+					energy_t tmp= INF, min = INF;
 					for (cand_pos_t k = i+1; k <= j-1; k++){
 						tmp = V->get_energy_WM (i+1,k-1) + std::min(V->get_energy_WMv(k, j-1),V->get_energy_WMp(k, j-1)) + E_MLstem(pair[S_[j]][S_[i]],-1,-1,params_) + params_->MLclosing;
 						if (tmp < min){
@@ -310,12 +308,10 @@ void W_final::backtrack(seq_interval *cur_interval){
 						insert_node (best_k, j-1, M_WM);
 						break;
 					  case 3:
-		             	// printf("M_WM(%d,%d) branch 3: pushing M_WM(%d,%d) and M_WM(%d,%d) \n", i,j,i+1,best_k-1,best_k,j-2);
 						insert_node (i+1, best_k-1, M_WM);
 						insert_node (best_k, j-2, M_WM);
 						break;
 					  case 4:
-		             	// printf("M_WM(%d,%d) branch 4: pushing M_WM(%d,%d) and M_WM(%d,%d) \n", i,j,i+2,best_k,best_k+1,j-2);
 						insert_node (i+2, best_k-1, M_WM);
 						insert_node (best_k, j-2, M_WM);
 						break;
@@ -339,7 +335,7 @@ void W_final::backtrack(seq_interval *cur_interval){
 			break;
 		case FREE:
 		{
-			int j = cur_interval->j;
+			cand_pos_t j = cur_interval->j;
 
 			if (j==1) return;
 
@@ -354,9 +350,6 @@ void W_final::backtrack(seq_interval *cur_interval){
 			}
 			for (cand_pos_t i=1; i<=j-1; i++)    // no TURN
 			{
-
-				// Don't need to make sure i and j don't have to pair with something else
-				//  it's INF, done in fold_sequence_restricted
 				acc = (i>1) ? W[i-1] : 0;
 				energy_ij = V->get_energy(i,j);
 
@@ -409,73 +402,58 @@ void W_final::backtrack(seq_interval *cur_interval){
 					}
 				}
 			}
-		// Hosna June 30, 2007
-		// The following would not take care of when
-		// we have some unpaired bases before the start of the WMB
-		for (cand_pos_t i=1; i<=j-1; i++){
-			// Hosna: July 9, 2007
-			// We only chop W to W + WMB when the bases before WMB are free
+			// Hosna June 30, 2007
+			// The following would not take care of when
+			// we have some unpaired bases before the start of the P
+			for (cand_pos_t i=1; i<=j-1; i++){
+				acc = (i-1>0) ? W[i-1]: 0;
 
-			acc = (i-1>0) ? W[i-1]: 0;
+				energy_ij = P->get_energy(i,j);
 
-			energy_ij = P->get_energy(i,j);
-
-			if (energy_ij < INF)
-			{
-				tmp = energy_ij + PS_penalty + acc;
-
-				if (tmp < min)
-				{
-					min = tmp;
-					best_row = 5;
-					best_i = i;
-				}
-			}
-
-			if(params_->model_details.dangles ==1){
-				energy_ij = P->get_energy(i+1,j);
 				if (energy_ij < INF)
 				{
 					tmp = energy_ij + PS_penalty + acc;
+
 					if (tmp < min)
 					{
 						min = tmp;
-						best_row = 6;
+						best_row = 5;
 						best_i = i;
 					}
 				}
-				
 
-				
-				energy_ij = P->get_energy(i,j-1);
-				if (energy_ij < INF)
-				{
-					tmp = energy_ij + PS_penalty + acc;
-					if (tmp < min)
-					{
-						min = tmp;
-						best_row = 7;
-						best_i = i;
+				if(params_->model_details.dangles ==1){
+					energy_ij = P->get_energy(i+1,j);
+					if (energy_ij < INF){
+						tmp = energy_ij + PS_penalty + acc;
+						if (tmp < min){
+							min = tmp;
+							best_row = 6;
+							best_i = i;
+						}
 					}
-				}
 				
-
+					energy_ij = P->get_energy(i,j-1);
+					if (energy_ij < INF){
+						tmp = energy_ij + PS_penalty + acc;
+						if (tmp < min){
+							min = tmp;
+							best_row = 7;
+							best_i = i;
+						}
+					}
 				
-				energy_ij = P->get_energy(i+1,j-1);
-				if (energy_ij < INF)
-				{
-					tmp = energy_ij + PS_penalty + acc;
-					if (tmp < min)
-					{
-						min = tmp;
-						best_row = 8;
-						best_i = i;
+					energy_ij = P->get_energy(i+1,j-1);
+					if (energy_ij < INF){
+						tmp = energy_ij + PS_penalty + acc;
+						if (tmp < min){
+							min = tmp;
+							best_row = 8;
+							best_i = i;
+						}
 					}
 				}
 			}
-			
-			
-		}
 			switch (best_row)
 			{
 				case 0:
@@ -533,7 +511,7 @@ void W_final::backtrack(seq_interval *cur_interval){
 					break;
 			}
 		}
-			break;
+		break;
 		case M_WM:
 		{
 			cand_pos_t i = cur_interval->i;
@@ -695,9 +673,6 @@ void W_final::backtrack(seq_interval *cur_interval){
 		case P_P:
 		{
 			P->set_stack_interval(stack_interval);
-			// Hosna, Feb 18, 2014
-			// removed structure in pseudoloop backtrack, see pseudoloop.cpp for detail
-			//P->back_track(structure,f,cur_interval);
 			P->backtrack(f,cur_interval);
 			stack_interval = P->get_stack_interval();
 			f = P->get_minimum_fold();
@@ -720,4 +695,35 @@ void W_final::insert_node (int i, int j, char type)
     tmp->type = type;
     tmp->next = stack_interval;
     stack_interval = tmp;
+}
+
+void W_final::fill_structure()
+{
+
+    std::vector<cand_pos_t> pair;
+	for(cand_pos_t i=1;i<=n;++i){
+		cand_pos_t j = f[i].pair;
+		if(structure[i] == '(' || structure[i] == ')' || j<0) continue;
+
+		if(j<i){
+			if(!pair.empty() && i==pair.back()){
+				pair.pop_back();
+				structure[j] = '(';
+				structure[i] = ')';
+			}
+		}
+		else{
+			if(pair.empty()){
+				pair.push_back(j);
+			}
+			else{
+				if(j<pair.back()) pair.push_back(j);
+				else{
+					structure[i] = '[';
+					structure[j] = ']';
+				}
+			}
+		}
+	}
+
 }

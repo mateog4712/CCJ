@@ -1685,20 +1685,2170 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 	this->f = f;
 	switch (cur_interval->type)
 	{
+		case P_P:
+		{
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			if (i >= l){
+				//return;
+				printf("border case: This should not have happened!, P_P\n");
+				exit(-1);
+			}
+
+			energy_t min_energy = INF,b1=INF;
+
+			cand_pos_t best_d=0, best_j=0,best_k=0;
+			for(cand_pos_t j=i; j< l; j++){
+				for (cand_pos_t d=j+1; d<l; d++){
+					for (cand_pos_t k=d+1; k<l; k++){
+						b1 = get_PK(i,j,d+1,k) + get_PK(j+1,d,k+1,l);
+						if(b1 < min_energy){
+							min_energy = b1;
+							best_d = d;
+							best_j = j;
+							best_k= k;
+						}
+					}
+				}
+			}
+
+			insert_node(i,best_k,best_j,best_d+1,P_PK);
+			insert_node(best_j+1,l,best_d,best_k+1,P_PK);
+
+		}
+		break;
+
+		case P_PK:
+		{
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k= cur_interval->l;
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				printf("border cases: This should not have happened!, P_PK\n");
+				exit(-1);
+			}
+
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k>n || l>n){
+				printf("impossible cases: This should not have happened!, P_PK\n");
+				exit(-1);
+			}
+			energy_t min_energy = INF,tmp=INF;
+			cand_pos_t best_row = -1,best_d=-1;
+
+			// branch 1
+			// Hosna, july 8, 2014
+			// based on original recurrences we should have i<d, and
+			// it is not clear to me why we have d=i here, so I am changing this back to original
+			// by changing d=i to d=i+1
+			for(cand_pos_t d=i+1; d< j; d++){
+				tmp = get_PK(i,d,k,l) + get_WP(d+1,j);
+				if (tmp < min_energy){
+					min_energy=tmp;
+					best_row = 1;
+					best_d=d;
+				}
+			}
+
+			// branch 2
+			// Hosna, july 8, 2014
+			// based on original recurrences we should have d<l, and
+			// it is not clear to me why we have d<=l here, so I am changing this back to original
+			// by changing d<=l to d<l
+			for(cand_pos_t d=k+1; d< l; d++){
+				tmp = get_PK(i,j,d,l) + get_WP(k,d-1);
+				if (tmp < min_energy){
+					min_energy=tmp;
+					best_row = 2;
+					best_d = d;
+				}
+			}
+
+			// branch 3
+			tmp = get_PL(i,j,k,l) + gamma2(j,i) + PB_penalty;
+			if(tmp < min_energy){
+				min_energy = tmp;
+				best_row = 3;
+				best_d = -1;
+			}
+
+			//branch 4
+			tmp = get_PM(i,j,k,l) + gamma2(j,k) + PB_penalty;
+			if(tmp < min_energy){
+				min_energy = tmp;
+				best_row = 4;
+				best_d = -1;
+			}
+
+			// branch 5
+			tmp = get_PR(i,j,k,l) + gamma2(l,k) + PB_penalty;
+			if(tmp < min_energy){
+				min_energy = tmp;
+				best_row = 5;
+				best_d = -1;
+			}
+
+			// branch 6
+			tmp = get_PO(i,j,k,l) + gamma2(l,i) + PB_penalty;
+			if(tmp < min_energy){
+				min_energy = tmp;
+				best_row = 6;
+				best_d = -1;
+			}
+
+
+			switch (best_row)
+			{
+				case 1:
+					if (best_d > -1){
+						insert_node(i,l,best_d,k,P_PK);
+						insert_node(best_d+1,j,P_WP);
+					}
+					break;
+				case 2:
+					if (best_d > -1){
+						insert_node(i,l,j,best_d,P_PK);
+						insert_node(k,best_d-1,P_WP);
+					}
+					break;
+				case 3:
+					insert_node(i,l,j,k,P_PL);
+					break;
+				case 4:
+					insert_node(i,l,j,k,P_PM);
+					break;
+				case 5:
+					insert_node(i,l,j,k,P_PR);
+					break;
+				case 6:
+					insert_node(i,l,j,k,P_PO);
+					break;
+				default:
+					printf("default: This should not have happened!, P_PK\n");
+					exit(-1);
+			}
+
+		}
+		break;
+
+		case P_PL:
+		{
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k= cur_interval->l;
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				printf("border cases: This should not have happened!, P_PL\n");
+				exit(-1);
+			}
+
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k>n || l>n){
+				printf("impossible cases: This should not have happened!, P_PL\n");
+				exit(-1);
+			}
+
+			energy_t min_energy = INF,tmp=INF;
+			cand_pos_t best_row = -1;
+			int ptype_closing = pair[S_[i]][S_[j]];
+			if (ptype_closing>0){
+
+				//branch 1
+				tmp = get_PLiloop(i,j,k,l);
+				if(tmp < min_energy){
+					min_energy = tmp;
+					best_row = 1;
+				}
+
+				//branch 2
+				// Hosna, April 11, 2014
+				// we need to add a branch penalty for multiloop that spans a band
+				tmp = get_PLmloop(i,j,k,l) + bp_penalty;
+				if(tmp < min_energy){
+					min_energy = tmp;
+					best_row=2;
+				}
+
+				//branch 3
+				// Hosna, July 11, 2014
+				// To avoid addition of close base pairs we check for the following here
+				if (j>=(i+TURN+1)){
+					// Hosna April 11, 2014
+					// I think we have already added gamma2(j,i) when coming to PL, so there is no need to add it again here.
+					// Hosna July 17, 2014
+					// I am adding gamma2 back here to avoid single base pair band predictions
+					tmp = get_PfromL(i+1,j-1,k,l) + gamma2(j,i);
+					if(tmp < min_energy){
+						min_energy = tmp;
+						best_row= 3;
+					}
+				}
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i,l,j,k,P_PLiloop);
+					break;
+				case 2:
+					insert_node(i,l,j,k,P_PLmloop);
+					break;
+				case 3:
+					insert_node(i+1,l,j-1,k,P_PfromL);
+					// Hosna, Feb 18, 2014
+					// filling the structure
+					f[i].pair = j;
+					f[j].pair = i;
+					f[i].type = P_PL;
+					f[j].type = P_PL;
+					break;
+				default:
+					printf("default: This should not have happened!, P_PL\n");
+					exit(-1);
+			}
+
+		}
+		break;
+
+		case P_PR:
+		{
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k= cur_interval->l;
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				printf("boder cases: This should not have happened!, P_PR\n");
+				exit(-1);
+			}
+
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k>n || l>n){
+				printf("impossible cases: This should not have happened!, P_PR\n");
+				exit(-1);
+			}
+
+			energy_t min_energy = INF,tmp=INF;
+			cand_pos_t best_row = -1;
+			int ptype_closing = pair[S_[k]][S_[l]];
+			if (ptype_closing>0){
+				//branch 1
+				tmp = get_PRiloop(i,j,k,l);
+				if(tmp < min_energy){
+					min_energy = tmp;
+					best_row = 1;
+				}
+
+				//branch 2
+				// Hosna, April 11, 2014
+				// we need to add a branch penalty for multiloop that spans a band
+				tmp = get_PRmloop(i,j,k,l)+ bp_penalty;
+				if(tmp < min_energy){
+					min_energy = tmp;
+					best_row=2;
+				}
+
+				//branch 3
+				// Hosna, July 11, 2014
+				// To avoid addition of close base pairs we check for the following here
+				if (l>=(k+TURN+1)){
+					// Hosna April 11, 2014
+					// I think we have already added gamma2(l,k) when coming to PR, so there is no need to add it again here.
+					// Hosna July 17, 2014
+					// I am adding gamma2 back here to avoid single base pair band predictions
+					tmp = get_PfromR(i,j,k+1,l-1) + gamma2(l,k);
+					if(tmp < min_energy){
+						min_energy = tmp;
+						best_row= 3;
+					}
+				}
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i,l,j,k,P_PRiloop);
+					break;
+				case 2:
+					insert_node(i,l,j,k,P_PRmloop);
+					break;
+				case 3:
+					insert_node(i,l-1,j,k+1,P_PfromR);
+					// Hosna, Feb 18, 2014
+					f[k].pair = l;
+					f[l].pair = k;
+					f[k].type = P_PR;
+					f[l].type = P_PR;
+
+					break;
+				default:
+					printf("default: This should not have happened!, P_PR\n");
+					exit(-1);
+			}
+
+		}
+		break;
+
+		case P_PM:
+		{
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				printf("border cases: This should not have happened!, P_PM\n");
+				exit(-1);
+			}
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k>n || l>n){
+				printf("impossible cases: This should not have happened!, P_PM\n");
+				exit(-1);
+			}
+
+			if (i==j && k ==l){
+				// Hosna, Feb 25, 2014
+				f[j].pair = k;
+				f[k].pair = j;
+				f[j].type = P_PM;
+				f[k].type = P_PM;
+				return;
+			}
+
+			energy_t min_energy = INF,tmp=INF;
+			cand_pos_t best_row = -1;
+			int ptype_closing = pair[S_[j]][S_[k]];
+			if (ptype_closing>0){
+				//branch 1
+				tmp = get_PMiloop(i,j,k,l);
+				if(tmp < min_energy){
+					min_energy = tmp;
+					best_row = 1;
+				}
+				//branch 2
+				// Hosna, April 11, 2014
+				// we need to add a branch penalty for multiloop that spans a band
+				tmp = get_PMmloop(i,j,k,l) + bp_penalty;
+				if(tmp < min_energy){
+					min_energy = tmp;
+					best_row=2;
+				}
+				//branch 3
+				// Hosna, July 11, 2014
+				// To avoid addition of close base pairs we check for the following here
+				if (k>=(j+TURN-1)){
+					// Hosna April 11, 2014
+					// I think we have already added gamma2(j,k) when coming to PM, so there is no need to add it again here.
+					// Hosna July 17, 2014
+					// I am adding gamma2 back here to avoid single base pair band predictions
+					tmp = get_PfromM(i,j-1,k+1,l) + gamma2(j,k);
+					if(tmp < min_energy){
+						min_energy = tmp;
+						best_row= 3;
+					}
+				}
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i,l,j,k,P_PMiloop);
+					break;
+				case 2:
+					insert_node(i,l,j,k,P_PMmloop);
+					break;
+				case 3:
+					insert_node(i,l,j-1,k+1,P_PfromM);
+					// Hosna, Feb 18, 2014
+					f[j].pair = k;
+					f[k].pair = j;
+					f[j].type = P_PM;
+					f[k].type = P_PM;
+					break;
+				default:
+					printf("default: This should not have happened!, P_PM\n");
+					exit(-1);
+			}
+
+		}
+		break;
+
+		case P_PO:
+		{
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k= cur_interval->l;
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				printf("border cases: This should not have happened!, P_PO\n");
+				exit(-1);
+			}
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k>n || l>n){
+				printf("impossible cases: This should not have happened!, P_PO\n");
+				exit(-1);
+			}
+			energy_t min_energy = INF,tmp=INF;
+			cand_pos_t best_row = -1;
+			int ptype_closing = pair[S_[i]][S_[l]];
+			if (ptype_closing>0){
+				//branch 1
+				tmp = get_POiloop(i,j,k,l);
+				if(tmp < min_energy){
+					min_energy = tmp;
+					best_row = 1;
+				}
+				//branch 2
+				// Hosna, April 11, 2014
+				// we need to add a branch penalty for multiloop that spans a band
+				tmp = get_POmloop(i,j,k,l)+bp_penalty;
+				if(tmp < min_energy){
+					min_energy = tmp;
+					best_row=2;
+				}
+				//branch 3
+				// Hosna, July 11, 2014
+				// To avoid addition of close base pairs we check for the following here
+				if (l>=(i+TURN+1)){
+					// Hosna April 11, 2014
+					// I think we have already added gamma2(l,i) when coming to PO, so there is no need to add it again here.
+					// Hosna July 17, 2014
+					// I am adding gamma2 back here to avoid single base pair band predictions
+					tmp = get_PfromO(i+1,j,k,l-1) + gamma2(l,i);
+					if(tmp < min_energy){
+						min_energy = tmp;
+						best_row= 3;
+					}
+				}
+			}
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i,l,j,k,P_POiloop);
+					break;
+				case 2:
+					insert_node(i,l,j,k,P_POmloop);
+					break;
+				case 3:
+					insert_node(i+1,l-1,j,k,P_PfromO);
+					// Hosna, Feb 18, 2014
+					f[i].pair = l;
+					f[l].pair = i;
+					f[i].type = P_PO;
+					f[l].type = P_PO;
+					break;
+				default:
+					printf("default: This should not have happened!, P_PO\n");
+					exit(-1);
+			}
+
+		}
+		break;
+		case P_PfromL:
+		{
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k= cur_interval->l;
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				//return;
+				printf("This should not have happened!, P_PfromL\n");
+				exit(-1);
+			}
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k>n || l>n){
+				//return;
+				printf("This should not have happened!, P_PfromL\n");
+				exit(-1);
+			}
+
+			if (i==j && k==l){
+				return;
+			}
+
+
+			energy_t min_energy = INF,tmp=INF;
+			cand_pos_t best_row = -1,best_d=-1;
+
+			for(cand_pos_t d=i+1; d< j; d++){
+				//branch 1
+				tmp=get_PfromL(d,j,k,l)+get_WP(i,d-1);
+				if(tmp < min_energy){
+					min_energy=tmp;
+					best_row=1;
+					best_d = d;
+
+				}
+				//branch 2
+				tmp=get_PfromL(i,d,k,l) + get_WP(d+1,j);
+				if(tmp < min_energy){
+					min_energy=tmp;
+					best_row=2;
+					best_d = d;
+				}
+			}
+			// branch 3
+			//Hosna, July 28, 2014
+			// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
+			tmp = get_PR(i,j,k,l) + gamma2(l,k)+PB_penalty;
+			if(tmp < min_energy){
+				min_energy = tmp;
+				best_row=3;
+				best_d = -1;
+			}
+
+			//branch 4
+			//Hosna, July 28, 2014
+			// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
+			tmp = get_PM(i,j,k,l) + gamma2(j,k)+PB_penalty;
+			if(tmp < min_energy){
+				min_energy = tmp;
+				best_row=4;
+				best_d = -1;
+			}
+
+			// branch 5
+			//Hosna, July 28, 2014
+			// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
+			tmp = get_PO(i,j,k,l) + gamma2(l,i)+PB_penalty;
+			if(tmp < min_energy){
+				min_energy = tmp;
+				best_row=5;
+				best_d = -1;
+			}
+			switch (best_row)
+			{
+				case 1:
+					if (best_d > -1){
+						insert_node(best_d,l,j,k,P_PfromL);
+						insert_node(i,best_d-1,P_WP);
+					}
+					break;
+				case 2:
+					if (best_d > -1){
+						insert_node(i,l,best_d,k,P_PfromL);
+						insert_node(best_d+1,j,P_WP);
+					}
+					break;
+				case 3:
+					insert_node(i,l,j,k,P_PR);
+					break;
+				case 4:
+					insert_node(i,l,j,k,P_PM);
+					break;
+				case 5:
+					insert_node(i,l,j,k,P_PO);
+					break;
+				default:
+					printf("default: This should not have happened!, P_PfromL\n");
+					exit(-1);
+			}
+
+
+		}
+			break;
+
+		case P_PfromR:
+		{
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k= cur_interval->l;
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				printf("This should not have happened!, P_PfromR\n");
+				exit(-1);
+			}
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k>n || l>n){
+				printf("impossible case: This should not have happened!, P_PfromR\n");
+				exit(-1);
+			}
+
+			if (i==j && k==l){
+				return;
+			}
+
+			energy_t min_energy = INF,tmp=INF;
+			cand_pos_t best_row = -1,best_d=-1;
+
+			for(int d=k+1; d< l; d++){
+				//branch 1
+				tmp=get_PfromR(i,j,d,l) + get_WP(k,d-1);
+				if(tmp < min_energy){
+					min_energy = tmp;
+					best_row=1;
+					best_d = d;
+
+				}
+				//branch 2
+				tmp=get_PfromR(i,j,k,d) + get_WP(d+1,l);
+				if(tmp < min_energy){
+					min_energy=tmp;
+					best_row=2;
+					best_d = d;
+				}
+			}
+
+			//branch 3
+			//Hosna, July 28, 2014
+			// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
+			tmp = get_PM(i,j,k,l) + gamma2(j,k)+PB_penalty;
+			if(tmp < min_energy){
+				min_energy = tmp;
+				best_row=3;
+				best_d = -1;
+			}
+
+			// branch 4
+			//Hosna, July 28, 2014
+			// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
+			tmp = get_PO(i,j,k,l) + gamma2(l,i)+PB_penalty;
+			if(tmp < min_energy){
+				min_energy = tmp;
+				best_row=4;
+				best_d = -1;
+			}
+			switch (best_row)
+			{
+				case 1:
+					if (best_d > -1){
+						insert_node(i,l,j,best_d,P_PfromR);
+						insert_node(k,best_d-1,P_WP);
+					}
+					break;
+				case 2:
+					if (best_d > -1){
+						insert_node(i,best_d,j,k,P_PfromR);
+						insert_node(best_d+1,l,P_WP);
+					}
+					break;
+				case 3:
+					insert_node(i,l,j,k,P_PM);
+					break;
+				case 4:
+					insert_node(i,l,j,k,P_PO);
+					break;
+				default:
+					printf("default: This should not have happened!, P_PfromR\n");
+					exit(-1);
+			}
+
+
+		}
+		break;
+
+		case P_PfromM:
+		{
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k= cur_interval->l;
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				printf("This should not have happened!, P_PfromM\n");
+				exit(-1);
+			}
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k>n || l>n){
+				printf("This should not have happened!, P_PfromM\n");
+				exit(-1);
+			}
+
+			if (i==j && k==l){
+				return;
+			}
+
+			energy_t min_energy = INF,tmp=INF;
+			cand_pos_t best_row = -1,best_d=-1;
+
+			for(cand_pos_t d=i+1; d<j; d++){
+				//branch 1
+				tmp=get_PfromM(i,d,k,l)+get_WP(d+1,j);
+				if(tmp < min_energy){
+					min_energy=tmp;
+					best_row=1;
+					best_d = d;
+
+				}
+			}
+			for(cand_pos_t d=k+1; d<l; ++d){
+				//branch 2
+				tmp=get_PfromM(i,j,d,l) + get_WP(k,d-1);
+				if(tmp < min_energy){
+					min_energy=tmp;
+					best_row=2;
+					best_d = d;
+				}
+			}
+			// branch 3
+			//Hosna, July 28, 2014
+			// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
+			tmp = get_PL(i,j,k,l) + gamma2(j,i) + PB_penalty;
+			if(tmp < min_energy){
+				min_energy = tmp;
+				best_row=3;
+				best_d = -1;
+			}
+
+			//branch 4
+			//Hosna, July 28, 2014
+			// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
+			tmp = get_PR(i,j,k,l) + gamma2(l,k) + PB_penalty;
+			if(tmp < min_energy){
+				min_energy = tmp;
+				best_row=4;
+				best_d = -1;
+			}
+			switch (best_row)
+			{
+				case 1:
+					if (best_d > -1){
+						insert_node(i,l,best_d,k,P_PfromM);
+						insert_node(best_d+1,j,P_WP);
+					}
+					break;
+				case 2:
+					if (best_d > -1){
+						insert_node(i,l,j,best_d,P_PfromM);
+						insert_node(k,best_d-1,P_WP);
+					}
+					break;
+				case 3:
+					insert_node(i,l,j,k,P_PL);
+					break;
+				case 4:
+					insert_node(i,l,j,k,P_PR);
+					break;
+				default:
+					printf("This should not have happened!, P_PfromM\n");
+					exit(-1);
+			}
+
+
+		}
+			break;
+
+		case P_PfromO:
+		{
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				printf("border cases: This should not have happened!, P_PfromO\n");
+				exit(-1);
+			}
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k>n || l>n){
+				printf("impossible case: This should not have happened!, P_PfromO\n");
+				exit(-1);
+			}
+
+			if (i==j && k==l){
+				return;
+			}
+
+			energy_t min_energy = INF,tmp=INF;
+			cand_pos_t best_row = -1,best_d=-1;
+
+			for(cand_pos_t d=i+1;d<j;++d){
+				//branch 1
+				tmp=get_PfromO(d,j,k,l)+get_WP(i,d-1);
+				if(tmp < min_energy){
+					min_energy=tmp;
+					best_row=1;
+					best_d = d;
+
+				}
+			}
+			for(cand_pos_t d=k+1;d<l;++d){
+				//branch 2
+				tmp=get_PfromO(i,j,k,d)+get_WP(d+1,l);
+				if(tmp < min_energy){
+					min_energy=tmp;
+					best_row=2;
+					best_d = d;
+				}
+			}
+			// branch 3
+			//Hosna, July 28, 2014
+			// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
+			tmp = get_PL(i,j,k,l) + gamma2(j,i) + PB_penalty;
+			if(tmp < min_energy){
+				min_energy = tmp;
+				best_row=3;
+				best_d = -1;
+			}
+
+			//branch 4
+			//Hosna, July 28, 2014
+			// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
+			tmp = get_PR(i,j,k,l) + gamma2(l,k) + PB_penalty;
+			if(tmp < min_energy){
+				min_energy = tmp;
+				best_row=4;
+				best_d = -1;
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					if (best_d > -1){
+						insert_node(best_d,l,j,k,P_PfromO);
+						insert_node(i,best_d-1,P_WP);
+					}
+					break;
+				case 2:
+					if (best_d > -1){
+						insert_node(i,best_d,j,k,P_PfromO);
+						insert_node(best_d+1,l,P_WP);
+					}
+					break;
+				case 3:
+					insert_node(i,l,j,k,P_PL);
+					break;
+				case 4:
+					insert_node(i,l,j,k,P_PR);
+					break;
+				default:
+					printf("default: This should not have happened!, P_PfromO\n");
+					exit(-1);
+			}
+
+
+		}
+			break;
+		case P_WB:
+		{
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 || l<=0 || i>n || l>n){
+				//return;
+				printf("impossible cases: This should not have happened!, P_WB\n");
+				exit(-1);
+			}
+
+			if (i>l){
+				return;
+			}
+
+			energy_t min_energy = INF,tmp=INF;
+			cand_pos_t best_row = -1;
+			//branch 1
+			tmp = get_WBP(i,l);
+			if (tmp < min_energy){
+				min_energy = tmp;
+				best_row=1;
+			}
+
+			tmp = beta1P*(l-i+1);
+			if (tmp < min_energy){
+				min_energy = tmp;
+				best_row=2;
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i,l,P_WBP);
+					break;
+				case 2:
+					// do nothing.
+					break;
+				default:
+					printf("default: This should not have happened!, P_WB\n");
+					exit(-1);
+			}
+
+		}
+			break;
+		case P_WBP:
+		{
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			if (i>l){
+				printf("border case: This should not have happened!, P_WBP\n");
+				exit(-1);
+			}
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 || l<=0 || i>n || l>n){
+				printf("impossible cases: This should not have happened!, P_WBP\n");
+				exit(-1);
+			}
+			energy_t min_energy = INF,tmp=INF;
+			cand_pos_t best_row = -1,best_d=-1,best_e=-1;
+
+			for(cand_pos_t d=i; d< l; d++){
+				for(cand_pos_t e = d+1; e<= l; e++){
+					//branch 1
+					// Hosna, August 26, 2014
+					// comparing calculation of WI in HFold and WPP in CCJ, I found that
+					// in HFold we add another penalty called PPS_penalty for closed regions inside a pseudoloop or multiloop that spans a band
+					energy_t common = get_WB(i,d-1) + beta1P*(l-e) + PPS_penalty;
+					tmp = common + V->get_energy(d,e) +beta2P(e,d);
+					if (tmp < min_energy){
+						min_energy = tmp;
+						best_row = 1;
+						best_d = d;
+						best_e = e;
+					}
+
+					//branch 2
+					tmp = common + get_P(d,e) + gamma0m;
+					if (tmp < min_energy){
+						min_energy = tmp;
+						best_row = 2;
+						best_d = d;
+						best_e = e;
+					}
+				}
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i,best_d-1,P_WB);
+					insert_node(best_d,best_e,LOOP);
+					break;
+				case 2:
+					insert_node(i,best_d-1,P_WB);
+					insert_node(best_d,best_e,P_P);
+					break;
+				default:
+					printf("default: This should not have happened!, P_WBP\n");
+					exit(-1);
+			}
+		}
+			break;
+
+		case P_WP:
+		{
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 || l<=0 || i>n || l>n){
+				printf("impossible cases: This should not have happened!, P_WP\n");
+				exit(-1);
+			}
+
+			if (i>l){
+				return;
+			}
+
+			energy_t min_energy = INF,tmp=INF;
+			cand_pos_t best_row = -1;
+			//branch 1
+			tmp = get_WPP(i,l);
+			if (tmp < min_energy){
+				min_energy = tmp;
+				best_row=1;
+			}
+
+			tmp = gamma1*(l-i+1);
+			if (tmp < min_energy){
+				min_energy = tmp;
+				best_row=2;
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i,l,P_WPP);
+					break;
+				case 2:
+					// do nothing.
+					break;
+				default:
+					printf("default: This should not have happened!, P_WP\n");
+					exit(-1);
+			}
+
+		}
+			break;
+		case P_WPP:
+		{//TODO: change WPP
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			if (i>l){
+				printf("border case: This should not have happened!, P_WPP\n");
+				exit(-1);
+				//return;
+			}
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 || l<=0 || i>n || l>n){
+				printf("impossible cases: This should not have happened!, P_WPP\n");
+				exit(-1);
+			}
+
+			energy_t min_energy = INF,tmp=INF;
+			cand_pos_t best_row = -1,best_d=-1,best_e=-1;
+
+			for(cand_pos_t d=i; d< l; d++){
+				for(cand_pos_t e = d+1; e<= l; e++){
+					// Hosna, August 26, 2014
+					// comparing calculation of WI in HFold and WPP in CCJ, I found that
+					// in HFold we add another penalty called PPS_penalty for closed regions inside a pseudoloop or multiloop that spans a band
+					energy_t common = get_WP(i,d-1) + gamma1*(l-e) + PPS_penalty;
+					//branch 1
+					tmp = V->get_energy(d,e) + gamma2(e,d) + common;
+					if (tmp < min_energy){
+						min_energy = tmp;
+						best_row = 1;
+						best_d = d;
+						best_e = e;
+					}
+
+					//branch 2
+					tmp = get_P(d,e) + gamma0P + common;
+					if (tmp < min_energy){
+						min_energy = tmp;
+						best_row = 2;
+						best_d = d;
+						best_e = e;
+					}
+				}
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i,best_d-1,P_WP);
+					insert_node(best_d,best_e,LOOP);
+					break;
+				case 2:
+					insert_node(i,best_d-1,P_WP);
+					insert_node(best_d,best_e,P_P);
+
+					break;
+				default:
+					printf("default: This should not have happened!, P_WPP\n");
+					exit(-1);
+			}
+		}
+			break;
+		case P_PLiloop:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k= cur_interval->l;
+
+			if (!(i < j && j < k-1 && k < l)){
+				printf("border cases: This should not have happened!, P_PLiloop\n");
+				exit(-1);
+			}
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k>n || l>n){
+				printf("impossbible cases: This should not have happened!, P_PLiloop\n");
+				exit(-1);
+			}
+			// Hosna, Feb 25, 2014
+			f[i].pair = j;
+			f[j].pair = i;
+			f[i].type = P_PLiloop;
+			f[j].type = P_PLiloop;
+
+			energy_t min_energy = INF,tmp=INF;
+			cand_pos_t best_row = -1,best_s=-1;
+			int ptype_closing = pair[S_[i]][S_[j]];
+			if (ptype_closing>0){
+				if (i+1<=n && j-1> 0){
+					//branch 1
+					tmp = get_PL(i+1,j-1,k,l) + get_e_stP(i,j);
+					if (tmp < min_energy){
+						min_energy = tmp;
+						best_row=1;
+					}
+					//branch 2
+					// Hosna, August 21, 2014
+					// revising the max_s value
+					// there are j-i+1 bases between i and j, from which we need an ip and jp and at least 3 bases between ip and jp=> j-i+1-2-3
+					//int max_s = MIN(MAX(j-i-5,0),MAXLOOP-1);
+					cand_pos_t max_s = std::min(std::max(j-i-4,0),MAXLOOP-1);
+					// Hosna April 11, 2014 changed s=0 to s=1 to avoid considering stack as internal loop
+					for(cand_pos_t s = 1; s <= max_s; s++){
+						tmp = get_PLiloop5(i,j,k,l,s) + alpha0P + alpha2P(i,j);
+						if (tmp < min_energy){
+							min_energy = tmp;
+							best_row = 2;
+							best_s = s;
+						}
+					}
+				}
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i+1,l,j-1,k,P_PL);
+					break;
+				case 2:
+					insert_node(i,l,j,k,best_s,P_PLiloop5);
+					break;
+				default:
+					printf("default: This should not have happened!, P_PLiloop\n");
+					exit(-1);
+			}
+		}
+		break;
+		case P_PLiloop5:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			cand_pos_t s = cur_interval->asym;
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				printf("border cases: This should not have happened!, P_PLiloop5\n");
+				exit(-1);
+			}
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 || j<=0 || k<=0 || l<=0 || s<=0 || i>n || j>n || k>n || l>n){
+				printf("imposible cases: This should not have happened!, P_PLiloop5\n");
+				exit(-1);
+			}
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_row = -1;
+			if (s >= 2 && (i+1)<=n && (j-1)>0){
+				// branch 1
+				temp = get_PLiloop5(i+1,j-1,k,l,s-2)+alpha1P(2);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row = 1;
+				}
+			}
+			// branch 2
+			if((j-2)>0 && (i+s+2)<=n){
+				temp = get_PL(i+s+1,j-1,k,l) + alpha1P(s) + alpha3P(s) + alpha2P(i+s+1,j-1);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row = 2;
+				}
+			}
+
+			//branch 3
+			if ((j-s-2) >0 && (i+2)<=n){
+				temp = get_PL(i+1,j-s-1,k,l) + alpha1P(s) + alpha3P(s) + alpha2P(i+1,j-s-1);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row = 3;
+				}
+
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i+1,l,j-1,k,s-2,P_PLiloop5);
+					break;
+				case 2:
+					insert_node(i+s+1,l,j-1,k,P_PL);
+					break;
+				case 3:
+					insert_node(i+1,l,j-s-1,k,P_PL);
+					break;
+				default:
+					printf("default: This should not have happened!, P_PLiloop5\n");
+					exit(-1);
+			}
+
+		}
+			break;
+
+		case P_PLmloop:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				printf("border cases: This should not have happened!, P_PLmloop\n");
+				exit(-1);
+			}
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<0 ||j<0 || k<0 || l<0 || i>n || j>n || k>n || l>n){
+				printf("impossible cases: This should not have happened!, P_PLmloop\n");
+				exit(-1);
+			}
+			// Hosna, Feb 25, 2014
+			f[i].pair = j;
+			f[j].pair = i;
+			f[i].type = P_PLmloop;
+			f[j].type = P_PLmloop;
+
+			energy_t min_energy = INF,tmp=INF;
+			cand_pos_t best_row = -1, best_d=-1;
+			for(cand_pos_t d = i+1; d < j-1; d++){
+				//branch 1
+				// Hosna, Feb 23, 2014
+				// Since PLmloop comes from PL and in PL i and j must pair, so we must have the same thing here
+				// therefore we should have PLmloop0(d,j-1,k,l)
+				tmp = get_PLmloop0(d,j-1,k,l) + get_WBP(i+1,d-1) + beta0P + beta2P(j,i);
+				if (tmp < min_energy){
+					min_energy = tmp;
+					best_row = 1;
+					best_d = d;
+				}
+				//branch 2
+				tmp = get_PLmloop1(d,j-1,k,l) + get_WB(i+1,d-1) + beta0P + beta2P(j,i);
+				if (tmp < min_energy){
+					min_energy = tmp;
+					best_row = 2;
+					best_d = d;
+				}
+			}
+			switch (best_row)
+			{
+				case 1:
+					insert_node(best_d,l,j-1,k,P_PLmloop0);
+					insert_node(i+1,best_d-1,P_WBP);
+					break;
+				case 2:
+					insert_node(best_d,l,j-1,k,P_PLmloop1);
+					insert_node(i+1,best_d-1,P_WB);
+					break;
+				default:
+					printf("default: This should not have happened!, P_PLmloop\n");
+					exit(-1);
+			}
+
+		}
+			break;
+		case P_PLmloop0:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k= cur_interval->l;
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				printf("border cases: This should not have happened!, P_PLmloop0\n");
+				exit(-1);
+			}
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k>n || l>n){
+				printf("impossible cases: This should not have happened!, P_PLmloop0\n");
+				exit(-1);
+			}
+			energy_t min_energy = INF,tmp=INF;
+			cand_pos_t best_d=-1;
+			for(cand_pos_t d = i+1; d < j; d++){
+				// Hosna, feb 23, 2014
+				// changed the recurrences so that j-1 is accounted for in PLmloop
+				tmp = get_PL(i,d,k,l) + get_WB(d+1,j) + beta2P(d,i);
+				if (tmp < min_energy){
+					min_energy = tmp;
+					best_d = d;
+				}
+			}
+			insert_node(i,l,best_d,k,P_PL);
+			insert_node(best_d+1,j,P_WB);
+
+		}
+			break;
+		case P_PLmloop1:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k= cur_interval->l;
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				printf("border cases: This should not have happened!, P_PLmloop1\n");
+				exit(-1);
+			}
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k>n || l>=n){
+				printf("impossible cases: This should not have happened!, P_PLmloop1\n");
+				exit(-1);
+			}
+			energy_t min_energy = INF,tmp=INF;
+			cand_pos_t best_d=-1;
+			for(cand_pos_t d = i+1; d < j; d++){
+				// Hosna, feb 23, 2014
+				// changed the recurrences so that j-1 is accounted for in PLmloop
+				tmp = get_PL(i,d,k,l) + get_WBP(d+1,j) + beta2P(d,i);
+				if (tmp < min_energy){
+					min_energy = tmp;
+					best_d = d;
+				}
+			}
+			insert_node(i,l,best_d,k,P_PL);
+			insert_node(best_d+1,j,P_WBP);
+		}
+			break;
+
+		case P_PRiloop:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				printf("border cases: This should not have happened!, P_PRiloop\n");
+				exit(-1);
+			}
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k>n || l>n){
+				printf("impossible cases: This should not have happened!, P_PRiloop\n");
+				exit(-1);
+			}
+
+			// Hosna, Feb 25, 2014
+			f[k].pair = l;
+			f[l].pair = k;
+			f[k].type = P_PRiloop;
+			f[l].type = P_PRiloop;
+
+			energy_t min_energy = INF,tmp=INF;
+			cand_pos_t best_row=-1,best_s=-1;
+			int ptype_closing = pair[S_[k]][S_[l]];
+			if (ptype_closing>0){
+				if (k+1<=n && l-1>0){
+					//branch 1
+					tmp = get_PR(i,j,k+1,l-1) + get_e_stP(k,l);
+					if(tmp < min_energy){
+						min_energy = tmp;
+						best_row = 1;
+					}
+					//branch 2
+					// Hosna, August 21, 2014
+					// revising the max_s value
+					// there are l-k+1 bases between l and k, from which we need an kp and lp and at least 3 bases between kp and lp => l-k+1-2-3
+					cand_pos_t max_s = std::min(std::max(l-k-4,0),MAXLOOP-1);
+					// Hosna April 11, 2014 changed s=0 to s=1 to avoid considering stack as internal loop
+					for(cand_pos_t s = 1; s <= max_s; s++){
+						tmp = get_PRiloop5(i,j,k,l,s) + alpha0P + alpha2P(k,l);
+						if (tmp < min_energy){
+							min_energy = tmp;
+							best_row = 2;
+							best_s = s;
+						}
+					}
+				}
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i,l-1,j,k+1,P_PR);
+					break;
+				case 2:
+					insert_node(i,l,j,k,best_s,P_PRiloop5);
+					break;
+				default:
+					printf("default: This should not have happened!, P_PRiloop\n");
+					exit(-1);
+			}
+
+		}
+			break;
+
+		case P_PRiloop5:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			cand_pos_t s = cur_interval->asym;
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				printf("border cases: This should not have happened!, P_PRiloop5\n");
+				exit(-1);
+			}
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 || j<=0 || k<=0 || l<=0 || s<=0 || i>n || j>n || k>n || l>n){
+				printf("impossible cases: This should not have happened!, P_PRiloop5\n");
+				exit(-1);
+			}
+
+			energy_t min_energy = INF,tmp=INF;
+			cand_pos_t best_row=-1;
+
+			//branch 1
+			if (s >= 2 && (k+1)<=n && (l-1)>0){
+				tmp = get_PRiloop5(i,j,k+1,l-1,s-2)+alpha1P(2);
+				if (tmp < min_energy){
+					min_energy = tmp;
+					best_row =1;
+				}
+			}
+			// branch 2
+			if ((l-2)>0 && (k+s+2)<n){
+				tmp = get_PR(i,j,k+s+1,l-1) + alpha1P(s) + alpha3P(s) + alpha2P(k+s+1,l-1);
+				if (tmp < min_energy){
+					min_energy = tmp;
+					best_row =2;
+				}
+			}
+
+			// branch 3
+			if ((l-s-2)>0 && (k+2)<=n){
+				tmp = get_PR(i,j,k+1,l-s-1) + alpha1P(s) + alpha3P(s) + alpha2P(k+1,l-s-1);
+				if (tmp < min_energy){
+					min_energy = tmp;
+					best_row =3;
+				}
+
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i,l-1,j,k+1,s-2,P_PRiloop5);
+					break;
+				case 2:
+					insert_node(i,l-1,j,k+s+1,P_PR);
+					break;
+				case 3:
+					insert_node(i,l-s-1,j,k+1,P_PR);
+					break;
+				default:
+					printf("default: This should not have happened!, P_PRiloop5\n");
+					exit(-1);
+			}
+		}
+			break;
+
+		case P_PRmloop:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				printf("border cases: This should not have happened!, P_PRmloop\n");
+				exit(-1);
+			}
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k>n || l>n){
+				printf("impossible cases: This should not have happened!, P_PRmloop\n");
+				exit(-1);
+			}
+			// Hosna, Feb 25, 2014
+			f[k].pair = l;
+			f[l].pair = k;
+			f[k].type = P_PRmloop;
+			f[l].type = P_PRmloop;
+
+			energy_t min_energy = INF,tmp=INF;
+			cand_pos_t best_row=-1, best_d=-1;
+			//Hosna Feb 23, 2014
+			// changed the recurrences to have l-1 instead of l in PRmloop and removed l-1 from PRmloop0,1, as we are accounting for k.l here
+			for(cand_pos_t d = k+1; d < l-1; d++){
+				// branch 1
+				tmp = get_PRmloop0(i,j,d,l-1) + get_WBP(k+1,d-1) + beta0P + beta2P(l,k);
+				if (tmp < min_energy){
+					min_energy = tmp;
+					best_row = 1;
+					best_d=d;
+				}
+				// branch 2
+				tmp = get_PRmloop1(i,j,d,l-1) + get_WB(k+1,d-1) + beta0P + beta2P(l,k);
+				if (tmp < min_energy){
+					min_energy = tmp;
+					best_row=2;
+					best_d = d;
+				}
+			}
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i,l-1,j,best_d,P_PRmloop0);
+					insert_node(k+1,best_d-1,P_WBP);
+					break;
+				case 2:
+					insert_node(i,l-1,j,best_d,P_PRmloop1);
+					insert_node(k+1,best_d-1,P_WB);
+					break;
+				default:
+					printf("default: This should not have happened!, P_PRmloop\n");
+					exit(-1);
+			}
+
+		}
+			break;
+
+		case P_PRmloop0:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k= cur_interval->l;
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				printf("border cases: This should not have happened!, P_PRmloop0\n");
+				exit(-1);
+			}
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k>n || l>n){
+				printf("impossible cases: This should not have happened!, P_PRmloop0\n");
+				exit(-1);
+			}
+
+			energy_t min_energy = INF,tmp=INF;
+			cand_pos_t best_d=-1;
+			for(cand_pos_t d = k+1; d < l; d++){
+				tmp = get_PR(i,j,k,d) + get_WB(d+1,l) + beta2P(k,d);
+				if (tmp < min_energy){
+					min_energy = tmp;
+					best_d=d;
+				}
+			}
+			insert_node(i,best_d,j,k,P_PR);
+			insert_node(best_d+1,l,P_WB);
+
+		}
+			break;
+		case P_PRmloop1:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				printf("border cases: This should not have happened!, P_PRmloop1\n");
+				exit(-1);
+			}
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k>n || l>n){
+				printf("impossible cases: This should not have happened!, P_PRmloop1\n");
+				exit(-1);
+			}
+
+			energy_t min_energy = INF,tmp=INF;
+			cand_pos_t best_d=-1;
+			for(cand_pos_t d = k+1; d < l; d++){
+				tmp = get_PR(i,j,k,d) + get_WBP(d+1,l) + beta2P(k,d);
+				if (tmp < min_energy){
+					min_energy = tmp;
+					best_d=d;
+				}
+			}
+			insert_node(i,best_d,j,k,P_PR);
+			insert_node(best_d+1,l,P_WBP);
+
+		}
+			break;
+
+		case P_PMiloop:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				printf("border cases: This should not have happened!, P_PMiloop\n");
+				exit(-1);
+			}
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k>n || l>n){
+				printf("impossible cases: This should not have happened!, P_PMiloop\n");
+				exit(-1);
+			}
+			// Hosna, Feb 25, 2014
+			f[j].pair = k;
+			f[k].pair = j;
+			f[j].type = P_PMiloop;
+			f[k].type = P_PMiloop;
+
+			energy_t min_energy = INF,tmp=INF;
+			cand_pos_t best_s=-1,best_row=-1;
+			int ptype_closing = pair[S_[j]][S_[k]];
+			if (ptype_closing>0){
+				if (j-1>0 && k+1<=n){
+					// branch 1
+					tmp = get_PM(i,j-1,k+1,l) + get_e_stP(j-1,k+1);
+					if (tmp < min_energy){
+						min_energy = tmp;
+						best_row=1;
+					}
+					// branch 2
+					cand_pos_t max_s = std::min(std::max({j-i,l-k,0}),MAXLOOP-1);
+					// Hosna April 11, 2014 changed s=0 to s=1 to avoid considering stack as internal loop
+					for(cand_pos_t s = 1; s <= max_s; s++){
+						tmp = get_PMiloop5(i,j,k,l,s) + alpha0P + alpha2P(j,k);
+						if (tmp < min_energy){
+							min_energy = tmp;
+							best_row = 2;
+							best_s = s;
+						}
+					}
+				}
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i,l,j-1,k+1,P_PM);
+					break;
+				case 2:
+					insert_node(i,l,j,k,best_s,P_PMiloop5);
+					break;
+				default:
+					printf("default: This should not have happened!, P_PMiloop\n");
+					exit(-1);
+			}
+		}
+			break;
+
+		case P_PMiloop5:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			cand_pos_t s = cur_interval->asym;
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				printf("border cases: This should not have happened!, P_PMiloop5\n");
+				exit(-1);
+			}
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 || j<=0 || k<=0 || l<=0 || s<=0 || i>n || j>n || k>n || l>n){
+				printf("impossible cases: This should not have happened!, P_PMiloop5\n");
+				exit(-1);
+			}
+			energy_t min_energy = INF,tmp=INF;
+			cand_pos_t best_row=-1;
+			// branch 1
+			if (s >= 2 && (j-1)> 0 && (k+1)<=n){
+				tmp = get_PMiloop5(i,j-1,k+1,l,s-2)+alpha1P(2);
+				if (tmp < min_energy){
+					min_energy = tmp;
+					best_row = 1;
+				}
+			}
+			// branch 2
+			if ((j-s-1) >0 && (k+1) <= n){
+				tmp = get_PM(i,j-s-1,k+1,l) + alpha1P(s) + alpha3P(s) + alpha2P(j-s-1,k+1);
+				if (tmp < min_energy){
+					min_energy = tmp;
+					best_row = 2;
+				}
+			}
+
+			//branch 3
+			if ((j-1) >0 && (k+s+1) <= n ){
+				tmp = get_PM(i,j-1,k+s+1,l) + alpha1P(s) + alpha3P(s) + alpha2P(j-1,k+s+1);
+				if (tmp < min_energy){
+					min_energy = tmp;
+					best_row = 3;
+				}
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i,l,j-1,k+1,s-2,P_PMiloop5);
+					break;
+				case 2:
+					insert_node(i,l,j-s-1,k+1,P_PM);
+					break;
+				case 3:
+					insert_node(i,l,j-1,k+s+1,P_PM);
+					break;
+				default:
+					printf("default: This should not have happened!, P_PMiloop5\n");
+					exit(-1);
+			}
+
+		}
+		break;
+
+		case P_PMmloop:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				//return;
+				printf("border cases: This should not have happened!, P_PMmloop\n");
+				exit(-1);
+			}
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k>n || l>n){
+				//return;
+				printf("impossible cases: This should not have happened!, P_PMmloop\n");
+				exit(-1);
+			}
+			// Hosna, Feb 25, 2014
+			f[j].pair = k;
+			f[k].pair = j;
+			f[j].type = P_PMmloop;
+			f[k].type = P_PMmloop;
+
+			energy_t min_energy = INF,tmp=INF;
+			cand_pos_t best_row=-1, best_d=-1;
+			for(cand_pos_t d = i+1; d < j; d++){
+				// Hosna Feb 23, 2014
+				// changed the recurrence of PMmloop, to have k+1 instead of k when calling PMmloop0,1, and removed k+1 from PMmloop0,1
+				// as j.k pair is accounted for in this recurrence
+				// branch 1
+				tmp = get_PMmloop0(i,d,k+1,l) + get_WBP(d+1,j-1) + beta0P + beta2P(j,k);
+				if (tmp < min_energy){
+					min_energy = tmp;
+					best_row=1;
+					best_d=d;
+				}
+				// branch 2
+				tmp = get_PMmloop1(i,d,k+1,l) + get_WB(d+1,j-1) + beta0P + beta2P(j,k);
+				if (tmp < min_energy){
+					min_energy = tmp;
+					best_row=2;
+					best_d=d;
+				}
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i,l,best_d,k+1,P_PMmloop0);
+					insert_node(best_d+1,j-1,P_WBP);
+					break;
+				case 2:
+					insert_node(i,l,best_d,k+1,P_PMmloop1);
+					insert_node(best_d+1,j-1,P_WB);
+					break;
+				default:
+					printf("default: This should not have happened!, P_PMmloop\n");
+					exit(-1);
+			}
+
+		}
+		break;
+
+		case P_PMmloop0:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				printf("border cases: This should not have happened!, P_PMmloop0\n");
+				exit(-1);
+			}
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k>n || l>n){
+				printf("impossible cases: This should not have happened!, P_PMmloop0\n");
+				exit(-1);
+			}
+
+			energy_t min_energy = INF,tmp=INF;
+			cand_pos_t best_d=-1;
+			for(cand_pos_t d = k+1; d < l; d++){
+				tmp = get_PM(i,j,d,l) + get_WB(k,d-1) + beta2P(j,d);
+				if (tmp < min_energy){
+					min_energy = tmp;
+					best_d =d;
+				}
+			}
+			insert_node(i,l,j,best_d,P_PM);
+			insert_node(k,best_d-1,P_WB);
+
+		}
+			break;
+		case P_PMmloop1:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				printf("border cases: This should not have happened!, P_PMmloop1\n");
+				exit(-1);
+			}
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k>n || l>n){
+				printf("impossible cases: This should not have happened!, P_PMmloop1\n");
+				exit(-1);
+			}
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_d=-1;
+			for(cand_pos_t d = k+1; d < l; d++){
+				temp = get_PM(i,j,d,l) + get_WBP(k,d-1) + beta2P(j,d);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_d=d;
+				}
+			}
+			insert_node(i,l,j,best_d,P_PM);
+			insert_node(k,best_d-1,P_WBP);
+
+		}
+		break;
+		case P_POiloop:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k>n || l>n){
+				printf("impossible cases: This should not have happened!, P_POiloop\n");
+				exit(-1);
+			}
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				printf("border cases: This should not have happened!, P_POiloop\n");
+				exit(-1);
+			}
+
+			// Hosna, Feb 25, 2014
+			f[i].pair = l;
+			f[l].pair = i;
+			f[i].type = P_POiloop;
+			f[l].type = P_POiloop;
+
+
+			energy_t min_energy = INF,tmp=INF;
+			cand_pos_t best_s=-1,best_row=-1;
+			int ptype_closing = pair[S_[i]][S_[l]];
+			if (ptype_closing>0 && i+1 <= n && l-1 > 0){
+				//branch 1
+				tmp = get_PO(i+1,j,k,l-1) + get_e_stP(i,l);
+				if(tmp < min_energy){
+					min_energy = tmp;
+					best_row=1;
+				}
+
+				// branch 2
+				// Hosna, August 21, 2014
+				// revising the max_s value
+				// there are l-i+1 bases between l and i, from which we need an ip and lp and at least 3 bases between j and k and at least 1 base between ip and lp => l-i+1-2-3-1
+				//int max_s = MIN(MAX(MAX(j-i-5,l-k-5),0),MAXLOOP-1);
+				cand_pos_t max_s = std::min(std::max(l-i-5,0),MAXLOOP-1);
+				// Hosna April 11, 2014 changed s=0 to s=1 to avoid considering stack as internal loop
+				for(cand_pos_t s = 1; s <= max_s; s++){
+					tmp = get_POiloop5(i,j,k,l,s) + alpha0P + alpha2P(i,l);
+					if(tmp < min_energy){
+						min_energy = tmp;
+						best_row=2;
+						best_s=s;
+					}
+				}
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i+1,l-1,j,k,P_PO);
+					break;
+				case 2:
+					insert_node(i,l,j,k,best_s,P_POiloop5);
+					break;
+				default:
+					printf("default: This should not have happened!, P_POiloop\n");
+					exit(-1);
+			}
+
+		}
+			break;
+
+		case P_POiloop5:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k= cur_interval->l;
+			cand_pos_t s = cur_interval->asym;
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				printf("border cases: This should not have happened!, P_POiloop5\n");
+				exit(-1);
+			}
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 || j<=0 || k<=0 || l<=0 || s<=0 || i>n || j>n || k>n || l>n){
+				printf("imposible cases: This should not have happened!, P_POiloop5\n");
+				exit(-1);
+			}
+
+			energy_t min_energy = INF,tmp=INF;
+			cand_pos_t best_row=-1;
+			// branch 1
+			if (s >= 2 && i+1 <= n && l-1>0){
+				tmp = get_POiloop5(i+1,j,k,l-1,s-2)+alpha1P(2);
+				if (tmp < min_energy){
+					min_energy = tmp;
+					best_row=1;
+				}
+			}
+			// branch 2
+			if (l-2 > 0 && i+s+2 <= n){
+				tmp = get_PO(i+s+1,j,k,l-1) + alpha1P(s) + alpha3P(s) + alpha2P(i+s+1,l-1);
+				if (tmp < min_energy){
+					min_energy = tmp;
+					best_row=2;
+				}
+			}
+
+			// branch 3
+			if (l-s-2 > 0 && i+2 <= n){
+				tmp = get_PO(i+1,j,k,l-s-1) + alpha1P(s) + alpha3P(s) + alpha2P(i+1,l-s-1);
+				if (tmp < min_energy){
+					min_energy = tmp;
+					best_row=3;
+				}
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i+1,l-1,j,k,s-2,P_POiloop5);
+					break;
+				case 2:
+					insert_node(i+s+1,l-1,j,k,P_PO);
+					break;
+				case 3:
+					insert_node(i+1,l-s-1,j,k,P_PO);
+					break;
+				default:
+					printf("default: This should not have happened!, P_POiloop5\n");
+					exit(-1);
+			}
+
+
+		}
+			break;
+
+		case P_POmloop:
+		{
+			// changing gapped region borders to match the recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				printf("border cases: This should not have happened!, P_POmloop\n");
+				exit(-1);
+			}
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k>n || l>n){
+				printf("impossible cases: This should not have happened!, P_POmloop\n");
+				exit(-1);
+			}
+			// Hosna, Feb 25, 2014
+			f[i].pair = l;
+			f[l].pair = i;
+			f[i].type = P_POmloop;
+			f[l].type = P_POmloop;
+
+
+			energy_t min_energy = INF,tmp=INF;
+			cand_pos_t best_row=-1,best_d=-1;
+			// Hosna Feb 23, 2014
+			// changed recurrences for POmloop to have l-1 instead of l and removed l-1 from POmloop0,1 as i.l is accounted for here in this recurrence
+			for(cand_pos_t d = i+1; d < j; d++){
+				//branch 1
+				tmp = get_POmloop0(d,j,k,l-1) + get_WBP(i+1,d-1) + beta0P + beta2P(l,i);
+				if (tmp < min_energy){
+					min_energy = tmp;
+					best_row=1;
+					best_d=d;
+				}
+				//branch 2
+				tmp = get_POmloop1(d,j,k,l-1) + get_WB(i+1,d-1) + beta0P + beta2P(l,i);
+				if (tmp < min_energy){
+					min_energy = tmp;
+					best_row=2;
+					best_d=d;
+				}
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(best_d,l-1,j,k,P_POmloop0);
+					insert_node(i+1,best_d-1,P_WBP);
+					break;
+				case 2:
+					insert_node(best_d,l-1,j,k,P_POmloop1);
+					insert_node(i+1,best_d-1,P_WB);
+					break;
+				default:
+					printf("default: This should not have happened!, P_POmloop\n");
+					exit(-1);
+			}
+		}
+			break;
+
+		case P_POmloop0:
+		{
+			// changing gapped region borders to match the recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				printf("border cases: This should not have happened!, P_POmloop0\n");
+				exit(-1);
+			}
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k>n || l>n){
+				printf("impossible cases: This should not have happened!, P_POmloop0\n");
+				exit(-1);
+			}
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_d=-1;
+			for(cand_pos_t d = k+1; d < l; d++){
+				temp = get_PO(i,j,k,d) + get_WB(d+1,l) + beta2P(d,i);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_d=d;
+				}
+			}
+			insert_node(i,best_d,j,k,P_PO);
+			insert_node(best_d+1,l,P_WB);
+		}
+			break;
+		case P_POmloop1:
+		{
+			// changing gapped region borders to match the recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k= cur_interval->l;
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				printf("border cases: This should not have happened!, P_POmloop1\n");
+				exit(-1);
+			}
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k>n || l>n){
+				printf("impossible cases: This should not have happened!, P_POmloop1\n");
+				exit(-1);
+			}
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_d=-1;
+			for(cand_pos_t d = k+1; d < l; d++){
+				temp = get_PO(i,j,k,d) + get_WBP(d+1,l) + beta2P(d,i);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_d=d;
+				}
+			}
+			insert_node(i,best_d,j,k,P_PO);
+			insert_node(best_d+1,l,P_WBP);
+
+
+		}
+		break;
 	}
 }
 
-
-void pseudo_loop::insert_node(int i, int j, char type)
-{
+void pseudo_loop::insert_node (int i, int j, char type){
 	seq_interval *tmp;
     tmp = new seq_interval;
     tmp->i = i;
     tmp->j = j;
+	tmp->k = -1;
+	tmp->l = -1;
+	tmp->asym = -1;
+
     tmp->type = type;
     tmp->next = stack_interval;
     stack_interval = tmp;
+}
 
+// corresponds to region [i,k]U[l,j]
+void pseudo_loop::insert_node(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, char type){
+	seq_interval *tmp;
+    tmp = new seq_interval;
+    tmp->i = i;
+    tmp->j = j;
+	tmp->k = k;
+	tmp->l = l;
+	tmp->asym = -1;
+    tmp->type = type;
+    tmp->next = stack_interval;
+    stack_interval = tmp;
+}
+
+// corresponds to region [i,k]U[l,j] with asymmetry s (used for Pxiloop5, where x=L,R,M,O)
+void pseudo_loop::insert_node(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, cand_pos_t s, char type){
+	seq_interval *tmp;
+    tmp = new seq_interval;
+    tmp->i = i;
+    tmp->j = j;
+	tmp->k = k;
+	tmp->l = l;
+	tmp->asym = s;
+    tmp->type = type;
+    tmp->next = stack_interval;
+    stack_interval = tmp;
 }
 
 void pseudo_loop::set_stack_interval(seq_interval *stack_interval){
