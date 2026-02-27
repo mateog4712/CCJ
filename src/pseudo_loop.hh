@@ -194,6 +194,8 @@ private:
   	// Hosna: Feb 19th 2007
   	// used for backtracking
   	void insert_node (cand_pos_t i, cand_pos_t j, char type);//, seq_interval *stack_interval);
+	void insert_node(int i, int j, int k, int l, char type);
+	void insert_node(int i, int j, int k, int l, int s, char type);
 
 };
 #endif /*PSEUDO_LOOP_H_*/

@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <algorithm>
 #include <iostream>
+#include <stack>
+#include <list>
 
 
 // Hosna June 20th, 2007
@@ -55,8 +57,8 @@ void W_final::space_allocation(){
 
 double W_final::ccj(){
 
-	for (int i = n; i >=1; --i){	
-		for (int j =i; j<=n; ++j){
+	for (cand_pos_t i = n; i>=1; --i){	
+		for (cand_pos_t j =i; j<=n; ++j){
 			V->compute_energy (i,j);
 			P->compute_energies(i,j);
 			V->compute_WMv_WMp(i,j,P->get_energy(i,j));
@@ -96,6 +98,9 @@ double W_final::ccj(){
         delete cur_interval;    // this should make up for the new in the insert_node
         cur_interval = stack_interval;
     }
+
+	fill_structure();
+
 	this->structure = structure.substr(1,n);
     return energy;
 }
@@ -720,4 +725,92 @@ void W_final::insert_node (int i, int j, char type)
     tmp->type = type;
     tmp->next = stack_interval;
     stack_interval = tmp;
+}
+
+// void W_final::fill_structure()
+// {
+
+//     std::vector<int> pair;
+// 	for(cand_pos_t i=1;i<=n;++i){
+// 		cand_pos_t j = f[i].pair;
+// 		std::cout << i << "\t" << j << "\t" << f[i].type << std::endl;
+// 		if(structure[i-1] == '(' || structure[i-1] == ')' || j<=0) continue;
+
+// 		if(j<i){
+// 			if(!pair.empty() && i==pair.back()){
+// 				pair.pop_back();
+// 				structure[j-1] = '(';
+// 				structure[i-1] = ')';
+// 			}
+// 		}
+// 		else{
+// 			if(pair.empty()){
+// 				pair.push_back(j);
+// 			}
+// 			else{
+// 				if(j<pair.back()) pair.push_back(j);
+// 				else{
+// 					structure[i-1] = '[';
+// 					structure[j-1] = ']';
+// 				}
+// 			}
+// 		}
+// 	}
+// }
+
+void W_final::fill_structure()
+{
+    std::stack < brack_type > st;
+
+    st.push(brack_type('<','>'));
+
+    st.push(brack_type('{','}'));
+
+    st.push(brack_type('[',']'));
+
+    st.push(brack_type('(',')'));
+
+    cand_pos_t isInABand=0;
+    // cand_pos_t num_crossing_bands=0;
+
+    std::list <band_elem > bands;
+    bands.push_back(band_elem('|','|',0,0,0,0));
+
+    for (cand_pos_t i = 1; i <= n; i++){
+        cand_pos_t j = f[i].pair;
+        if (j == -1){ // i is unpaired
+            structure[i]='.';
+        }else if (i < j){
+            isInABand=0;
+            //			for (band_elem *p = head; p != NULL;  p = p->next){
+            for (std::list<band_elem > ::iterator it = bands.begin(); it != bands.end(); it++){
+                if(i> (*it).inner_start && j < (*it).inner_end){ // i.e. i is paired and i.pair[i] is nested in the band
+                    (*it).inner_start = i;
+                    (*it).inner_end =j;
+                    structure[i] = (*it).open;
+                    structure[j] = (*it).close;
+                    isInABand=1;
+                    break;
+                }
+            }
+
+            if (!isInABand){
+                brack_type e = st.top();
+                st.pop();
+                // num_crossing_bands++;
+
+                bands.push_back(band_elem(e.open,e.close,i,j,i,j));
+                structure[i] = e.open;
+                structure[j] = e.close;
+            }
+
+        }else{ //having the closing base pair i>pair[i]
+            for(std::list<band_elem > ::iterator current = bands.begin(); current != bands.end(); current++){
+                if (i == (*current).outer_end){
+                    st.push(brack_type((*current).open,(*current).close));
+                    break;
+                }
+            }
+        }
+    }
 }

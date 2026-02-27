@@ -66,6 +66,8 @@ class W_final{
 
         energy_t E_ext_Stem(const energy_t& vij,const energy_t& vi1j,const energy_t& vij1,const energy_t& vi1j1,const short* S, paramT* params, const cand_pos_t i,const cand_pos_t j, cand_pos_t n);
 
+        void fill_structure();
+
 };
 
 #endif /*W_FINAL_H_*/

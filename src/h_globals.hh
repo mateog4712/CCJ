@@ -26,7 +26,7 @@ int cp_penalty = 12; //0;			//penalty for unpaired base in a multiloop that span
 
 // Hosna, April 2, 2014
 // adding the energy parameters for CCJ
-// int alpha0P = (int) round(start_internal_size *e_intP_penalty);				// penalty for internal loop that spans a band
+// int alpha0P = (int) round(start_internal_size *e_intP_penalty);				// penalty for internal loop that spans a band start =52
 int alpha0P = 0;
 // Hosna, April 2, 2014, for now the value of alpha0P has been set to regular internal loop penalty by size *0.74 for internal loop that spans a band
 

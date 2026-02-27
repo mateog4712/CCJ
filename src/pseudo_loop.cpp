@@ -7,6 +7,8 @@
 #include <math.h>
 #include <algorithm>
 
+#define debug 0
+
 pseudo_loop::pseudo_loop(std::string seq, s_energy_matrix *V, short *S, short *S1, vrna_param_t *params)
 {
 	this->seq = seq;
@@ -174,8 +176,8 @@ void pseudo_loop::compute_WBP(int i, int l){
 
 	cand_pos_t il = index[i]+l-i;
 	// Mateo 2025 Changed i to i+1 as get_WB(i,i-1) is wrong
-	for(cand_pos_t d=i+1; d< l; d++){
-		for(cand_pos_t e = d+1; e<= l; e++){
+	for(cand_pos_t d=i+1; d< l; ++d){
+		for(cand_pos_t e = d+1; e<= l; ++e){
 			// Hosna, August 26, 2014
 			// comparing calculation of WI in HFold and WPP in CCJ, I found that
 			// in HFold we add another penalty called PPS_penalty for closed regions inside a pseudoloop or multiloop that spans a band
@@ -194,8 +196,8 @@ void pseudo_loop::compute_WPP(cand_pos_t i, cand_pos_t l){
 	energy_t min_energy = INF, b1 = INF, b2=INF;
 
 	cand_pos_t il = index[i]+l-i;
-	for(cand_pos_t d=i+1; d< l; d++){
-		for(cand_pos_t e = d+1; e<= l; e++){
+	for(cand_pos_t d=i+1; d<l; ++d){
+		for(cand_pos_t e = d+1; e<= l; ++e){
 			// Hosna, August 26, 2014
 			// comparing calculation of WI in HFold and WPP in CCJ, I found that
 			// in HFold we add another penalty called PPS_penalty for closed regions inside a pseudoloop or multiloop that spans a band
@@ -213,9 +215,9 @@ void pseudo_loop::compute_WPP(cand_pos_t i, cand_pos_t l){
 void pseudo_loop::compute_P(cand_pos_t i, cand_pos_t l){
 	energy_t min_energy = INF,b1=INF;
 	cand_pos_t il = index[i]+l-i;
-	for(cand_pos_t j=i; j< l; j++){
-		for (cand_pos_t d=j+1; d<l; d++){
-			for (cand_pos_t k=d+1; k<l; k++){
+	for(cand_pos_t j=i; j<l; ++j){
+		for (cand_pos_t d=j+1; d<l; ++d){
+			for (cand_pos_t k=d+1; k<l; ++k){
 				b1 = get_PK(i,j-1,d+1,k-1) + get_PK(j,d,k,l);
 				min_energy = std::min(min_energy,b1);
 			}
@@ -321,8 +323,6 @@ void pseudo_loop::compute_PR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	if (min_energy < INF/2){
 		PR[ij][kl]=min_energy;
 	}
-	//	printf (">>>>>>>>> PR(%d,%d,%d,%d) branch %d energy %d\n", i, j, k,l,best_branch, min_energy);
-
 }
 
 void pseudo_loop::compute_PM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -397,7 +397,7 @@ void pseudo_loop::compute_PfromL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
-	for(cand_pos_t d=i+1; d< j; d++){
+	for(cand_pos_t d=i+1; d< j; ++d){
 		energy_t tmp = get_PfromL(d,j,k,l)+get_WP(i,d-1);
 		b1 = std::min(b1,tmp);
 		tmp = get_PfromL(i,d,k,l)+get_WP(d+1,j);
@@ -426,7 +426,7 @@ void pseudo_loop::compute_PfromR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
-	for(cand_pos_t d=k+1; d< l; d++){
+	for(cand_pos_t d=k+1; d< l; ++d){
 		energy_t tmp = get_PfromR(i,j,d,l)+get_WP(k,d-1);
 		b1 = std::min(b1,tmp);
 		tmp = get_PfromR(i,j,k,d)+get_WP(d+1,l);
@@ -452,11 +452,11 @@ void pseudo_loop::compute_PfromM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
-	for(cand_pos_t d=i+1; d< j; d++){
+	for(cand_pos_t d=i+1; d<j; ++d){
 		energy_t tmp = get_PfromM(i,d,k,l)+get_WP(d+1,j);
 		b1 = std::min(b1,tmp);
 	}
-	for(cand_pos_t d=k+1; d<l; d++){
+	for(cand_pos_t d=k+1; d<l; ++d){
 		energy_t tmp=get_PfromM(i,j,d,l)+get_WP(k,d-1);
 		b2 = std::min(b2,tmp);
 	}
@@ -467,14 +467,6 @@ void pseudo_loop::compute_PfromM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 	// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
 	b4 = get_PR(i,j,k,l) + gamma2(l,k)+PB_penalty;
 
-	//Hosna, May 2, 2014
-	// I think I should block going from PM to PO as it will solve the same band from 2 sides jumping over possible internal loops
-	/*
-	b5 = get_PO(i,j,k,l) + gamma2(l,i);
-	if(b5 < min_energy){
-		min_energy = b5;
-	}
-	*/
 	min_energy = std::min({min_energy,b1,b2,b3,b4});
 	if (min_energy < INF/2){
 		PfromM[ij][kl]=min_energy;
@@ -487,11 +479,11 @@ void pseudo_loop::compute_PfromO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
-	for(cand_pos_t d=i+1; d< j; d++){
+	for(cand_pos_t d=i+1; d< j; ++d){
 		energy_t tmp=get_PfromO(d,j,k,l)+get_WP(i,d-1);
 		b1 = std::min(b1,tmp);
 	}
-	for(cand_pos_t d=k+1; d<l; d++){
+	for(cand_pos_t d=k+1; d<l; ++d){
 		energy_t tmp=get_PfromO(i,j,k,d)+get_WP(d+1,l);
 		b2 = std::min(b2,tmp);
 	}
@@ -590,7 +582,7 @@ void pseudo_loop::compute_PLmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
-	for(cand_pos_t d = i+1; d < j-1; d++){
+	for(cand_pos_t d = i+1; d < j-1; ++d){
 		// Hosna, Feb 23, 2014
 		// Since PLmloop comes from PL and in PL i and j must pair, so we must have the same thing here
 		// therefore we should have PLmloop0(d,j-1,k,l)
@@ -606,11 +598,11 @@ void pseudo_loop::compute_PLmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 }
 
 void pseudo_loop::compute_PLmloop0(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	int min_energy = INF;
+	energy_t min_energy = INF;
 
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
-	for(cand_pos_t d = i+1; d < j; d++){
+	for(cand_pos_t d = i+1; d < j; ++d){
 		// Hosna, feb 23, 2014
 		// changed the recurrences so that j-1 is accounted for in PLmloop
 		energy_t tmp = get_PL(i,d,k,l) + get_WB(d+1,j) + beta2P(d,i);
@@ -627,7 +619,7 @@ void pseudo_loop::compute_PLmloop1(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
-	for(cand_pos_t d = i+1; d < j; d++){
+	for(cand_pos_t d = i+1; d < j; ++d){
 		// Hosna, feb 23, 2014
 		// changed the recurrences so that j-1 is accounted for in PLmloop
 		energy_t tmp = get_PL(i,d,k,l) + get_WBP(d+1,j) + beta2P(d,i);
@@ -654,7 +646,7 @@ void pseudo_loop::compute_PRiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 			//int max_s = MIN(MAX(l-k-5,0),MAXLOOP-1);
 			cand_pos_t max_s = std::min(std::max(l-k-4,0),MAXLOOP-1);
 			// Hosna April 11, 2014 changed s=0 to s=1 to avoid considering stack as internal loop
-			for(cand_pos_t s = 1; s <= max_s; s++){
+			for(cand_pos_t s = 1; s <= max_s; ++s){
 				// Hosna, April 2, 2014
 				// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
 				//int temp = get_PRiloop5(i,j,k,l,s) + alpha0P + alpha2P(l,k);
@@ -723,7 +715,7 @@ void pseudo_loop::compute_PRmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 
 	//Hosna Feb 23, 2014
 	// changed the recurrences to have l-1 instead of l in PRmloop and removed l-1 from PRmloop0,1, as we are accounting for k.l here
-	for(cand_pos_t d = k+1; d < l-1; d++){
+	for(cand_pos_t d = k+1; d < l-1; ++d){
 		energy_t tmp = get_PRmloop0(i,j,d,l-1) + get_WBP(k+1,d-1) + beta0P + beta2P(l,k);
 		b1 = std::min(b1,tmp);
 		tmp = get_PRmloop1(i,j,d,l-1) + get_WB(k+1,d-1) + beta0P + beta2P(l,k);
@@ -742,7 +734,7 @@ void pseudo_loop::compute_PRmloop0(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
-	for(cand_pos_t d = k+1; d < l; d++){
+	for(cand_pos_t d = k+1; d < l; ++d){
 		energy_t tmp = get_PR(i,j,k,d) + get_WB(d+1,l) + beta2P(k,d);
 		min_energy = std::min(min_energy,tmp);
 	}
@@ -757,7 +749,7 @@ void pseudo_loop::compute_PRmloop1(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
-	for(cand_pos_t d = k+1; d < l; d++){
+	for(cand_pos_t d = k+1; d < l; ++d){
 		energy_t tmp = get_PR(i,j,k,d) + get_WBP(d+1,l) + beta2P(k,d);
 		min_energy = std::min(min_energy,tmp);
 	}
@@ -777,11 +769,11 @@ void pseudo_loop::compute_PMiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	if (ptype_closing>0){
 
 		if (j-1 > 0 && k+1 <= n){
-			b1 = get_PM(i,j-1,k+1,l) + get_e_stP(j-1,k+1);
+			b1 = get_PM(i,j-1,k+1,l) + get_e_stP(j-1,k+1); // Why is this j-1,k+1, it makes no sense. Everything else is like j,k
 
 			cand_pos_t max_s = std::min(std::max({j-i,l-k,0}),MAXLOOP-1);
 			// Hosna April 11, 2014 changed s=0 to s=1 to avoid considering stack as internal loop
-			for(cand_pos_t s = 1; s <= max_s; s++){
+			for(cand_pos_t s = 1; s <= max_s; ++s){
 				// Hosna, April 2, 2014
 				// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
 				//int temp = get_PMiloop5(i,j,k,l,s) + alpha0P + alpha2P(j,k);
@@ -844,7 +836,7 @@ void pseudo_loop::compute_PMmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	// Hosna Feb 23, 2014
 	// changed the recurrence of PMmloop, to have k+1 instead of k when calling PMmloop0,1, and removed k+1 from PMmloop0,1
 	// as j.k pair is accounted for in this recurrence
-	for(cand_pos_t d = i+1; d < j; d++){
+	for(cand_pos_t d = i+1; d < j; ++d){
 		energy_t tmp = get_PMmloop0(i,d,k+1,l) + get_WBP(d+1,j-1) + beta0P + beta2P(j,k);
 		b1 = std::min(b1,tmp);
 		energy_t tmp2 = get_PMmloop1(i,d,k+1,l) + get_WB(d+1,j-1) + beta0P + beta2P(j,k);
@@ -863,7 +855,7 @@ void pseudo_loop::compute_PMmloop0(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
-	for(cand_pos_t d = k+1; d < l; d++){
+	for(cand_pos_t d = k+1; d < l; ++d){
 		energy_t tmp = get_PM(i,j,d,l) + get_WB(k,d-1) + beta2P(j,d);
 		min_energy = std::min(min_energy,tmp);
 	}
@@ -878,7 +870,7 @@ void pseudo_loop::compute_PMmloop1(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
-	for(int d = k+1; d < l; d++){
+	for(cand_pos_t d = k+1; d < l; ++d){
 		energy_t tmp = get_PM(i,j,d,l) + get_WBP(k,d-1) + beta2P(j,d);
 		min_energy = std::min(min_energy,tmp);
 	}
@@ -927,7 +919,7 @@ void pseudo_loop::compute_POiloop5(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
-	if (s >= 2 && i+1 < n && l-1>=0){
+	if (s >= 2 && i+1 <= n && l-1>0){
 		b1 = get_POiloop5(i+1,j,k,l-1,s-2)+alpha1P(2);
 		min_energy = std::min(min_energy,b1);
 	}
@@ -968,7 +960,7 @@ void pseudo_loop::compute_POmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 
 	// Hosna Feb 23, 2014
 	// changed recurrences for POmloop to have l-1 instead of l and removed l-1 from POmloop0,1 as i.l is accounted for here in this recurrence
-	for(int d = i+1; d < j; d++){
+	for(cand_pos_t d = i+1; d < j; ++d){
 		energy_t tmp = get_POmloop0(d,j,k,l-1) + get_WBP(i+1,d-1) + beta0P + beta2P(l,i);
 		b1 = std::min(b1,tmp);
 		energy_t tmp2 = get_POmloop1(d,j,k,l-1) + get_WB(i+1,d-1) + beta0P + beta2P(l,i);
@@ -988,7 +980,7 @@ void pseudo_loop::compute_POmloop0(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
-	for(int d = k+1; d < l; d++){
+	for(cand_pos_t d = k+1; d < l; ++d){
 		energy_t tmp = get_PO(i,j,k,d) + get_WB(d+1,l) + beta2P(d,i);
 		min_energy = std::min(min_energy,tmp);
 	}
@@ -1004,7 +996,7 @@ void pseudo_loop::compute_POmloop1(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
-	for(int d = k+1; d < l; d++){
+	for(cand_pos_t d = k+1; d < l; ++d){
 		energy_t tmp = get_PO(i,j,k,d) + get_WBP(d+1,l) + beta2P(d,i);
 		min_energy = std::min(min_energy,tmp);
 	}
@@ -1630,7 +1622,7 @@ energy_t pseudo_loop::alpha1P(cand_pos_t z){
 }
 
 // penalty for closing pair i.l of an internal loop that spans a band
-energy_t pseudo_loop::alpha2P( cand_pos_t i, cand_pos_t l){
+energy_t pseudo_loop::alpha2P(cand_pos_t i, cand_pos_t l){
 	// Hosna April 2, 2014
 	// I added this similar to calculation of closing base pair contribution in a general internal loop in simfold and
 	// multiplied that to the intP_penalty for an internal loop that spans a band
@@ -1666,10 +1658,10 @@ energy_t pseudo_loop::gamma2(cand_pos_t i, cand_pos_t l){
 	// Hosna, April 2, 2014
 	// I changed this value to be 0 as I can't find its correct value
 	// the correct value for this penalty should be similar to what we have in case of an internal loop or a multiloop, but the value is missing here
-	//return 0;
+	return 0;
 	// Hosna July 17, 2014
 	// To avoid addition of single base pair bands I am giving a very small non-zero value to gamma2
-	return 1;
+	// return 1;
 }
 
 // Hosna, Feb 18, 2014
@@ -1685,6 +1677,2206 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 	this->f = f;
 	switch (cur_interval->type)
 	{
+		case P_P:
+		{
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			if(debug) printf("At P_P with i=%d,l=%d\n",i,l);
+
+			if (i >= l){
+				std::cerr << "border case: This should not have happened!, P_P" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+			energy_t min_energy = INF,b1=INF;
+
+			cand_pos_t best_d=0, best_j=0,best_k=0;
+			for(cand_pos_t j=i; j< l; j++){
+				for (cand_pos_t d=j+1; d<l; d++){
+					for (cand_pos_t k=d+1; k<l; k++){
+						b1 = get_PK(i,j,d+1,k) +get_PK(j+1,d,k+1,l);
+						if(b1 < min_energy){
+							min_energy = b1;
+							best_d = d;
+							best_j = j;
+							best_k= k;
+						}
+					}
+				}
+			}
+
+			insert_node(i,best_k,best_j,best_d+1,P_PK);
+			insert_node(best_j+1,l,best_d,best_k+1,P_PK);
+		}
+		break;
+
+		case P_PK:
+		{
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_PK with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+		
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "border cases: This should not have happened!, P_PK" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr << "impossible cases: This should not have happened!, P_PK" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_row = -1,best_d=-1;
+
+			// branch 1
+			// Hosna, july 8, 2014
+			// based on original recurrences we should have i<d, and
+			// it is not clear to me why we have d=i here, so I am changing this back to original
+			// by changing d=i to d=i+1
+			for(cand_pos_t  d=i+1; d< j; d++){
+				temp = get_PK(i,d,k,l) + get_WP(d+1,j);
+				if (temp < min_energy){
+					min_energy=temp;
+					best_row = 1;
+					best_d=d;
+				}
+			}
+
+			// branch 2
+			// Hosna, july 8, 2014
+			// based on original recurrences we should have d<l, and
+			// it is not clear to me why we have d<=l here, so I am changing this back to original
+			// by changing d<=l to d<l
+			for(cand_pos_t d=k+1; d< l; d++){
+				temp = get_PK(i,j,d,l) + get_WP(k,d-1);
+				if (temp < min_energy){
+					min_energy=temp;
+					best_row = 2;
+					best_d = d;
+				}
+			}
+
+			// branch 3
+			temp = get_PL(i,j,k,l) + gamma2(j,i)+PB_penalty;
+			if(temp < min_energy){
+				min_energy = temp;
+				best_row = 3;
+				best_d = -1;
+			}
+
+			//branch 4
+			temp = get_PM(i,j,k,l) + gamma2(j,k)+PB_penalty;
+			if(temp < min_energy){
+				min_energy = temp;
+				best_row = 4;
+				best_d = -1;
+			}
+
+			// branch 5
+			temp = get_PR(i,j,k,l) + gamma2(l,k)+PB_penalty;
+			if(temp < min_energy){
+				min_energy = temp;
+				best_row = 5;
+				best_d = -1;
+			}
+
+			// branch 6
+			temp = get_PO(i,j,k,l) + gamma2(l,i)+PB_penalty;
+			if(temp < min_energy){
+				min_energy = temp;
+				best_row = 6;
+				best_d = -1;
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					if (best_d > -1){
+						insert_node(i,l,best_d,k,P_PK);
+						insert_node(best_d+1,j,P_WP);
+					}
+					break;
+				case 2:
+					if (best_d > -1){
+						insert_node(i,l,j,best_d,P_PK);
+						insert_node(k,best_d-1,P_WP);
+					}
+					break;
+				case 3:
+					insert_node(i,l,j,k,P_PL);
+					break;
+				case 4:
+					insert_node(i,l,j,k,P_PM);
+					break;
+				case 5:
+					insert_node(i,l,j,k,P_PR);
+					break;
+				case 6:
+					insert_node(i,l,j,k,P_PO);
+					break;
+			}
+		}
+		break;
+
+		case P_PL:
+		{
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_PL with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "border cases: This should not have happened!, P_PL" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr << "impossible cases: This should not have happened!, P_PL" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_row = -1;
+
+			if (pair[S_[i]][S_[j]]> 0){
+
+				//branch 1
+				temp = get_PLiloop(i,j,k,l);
+				if(temp < min_energy){
+					min_energy = temp;
+					best_row = 1;
+				}
+
+				//branch 2
+				// Hosna, April 11, 2014
+				// we need to add a branch penalty for multiloop that spans a band
+				temp = get_PLmloop(i,j,k,l) + bp_penalty;
+				if(temp < min_energy){
+					min_energy = temp;
+					best_row=2;
+				}
+
+				//branch 3
+				// Hosna, July 11, 2014
+				// To avoid addition of close base pairs we check for the following here
+				if (j>=(i+TURN+1)){
+					// Hosna April 11, 2014
+					// I think we have already added gamma2(j,i) when coming to PL, so there is no need to add it again here.
+					// Hosna July 17, 2014
+					// I am adding gamma2 back here to avoid single base pair band predictions
+					temp = get_PfromL(i+1,j-1,k,l) + gamma2(j,i);
+					if(temp < min_energy){
+						min_energy = temp;
+						best_row= 3;
+					}
+				}
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i,l,j,k,P_PLiloop);
+					break;
+				case 2:
+					insert_node(i,l,j,k,P_PLmloop);
+					break;
+				case 3:
+					insert_node(i+1,l,j-1,k,P_PfromL);
+					// Hosna, Feb 18, 2014
+					// filling the structure
+					f[i].pair = j;
+					f[j].pair = i;
+					f[i].type = P_PL;
+					f[j].type = P_PL;
+					break;
+			}
+		}
+		break;
+
+		case P_PR:
+		{
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_PR with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "boder cases: This should not have happened!, P_PR" <<std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<0 ||j<0 || k<0 || l<0 || i>=n || j>=n || k>= n || l>= n){
+				std::cerr << "impossible cases: This should not have happened!, P_PR" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_row = -1;
+			if (pair[S_[k]][S_[l]]>0){
+				//branch 1
+				temp = get_PRiloop(i,j,k,l);
+				if(temp < min_energy){
+					min_energy = temp;
+					best_row = 1;
+				}
+
+				//branch 2
+				// Hosna, April 11, 2014
+				// we need to add a branch penalty for multiloop that spans a band
+				temp = get_PRmloop(i,j,k,l)+ bp_penalty;
+				if(temp < min_energy){
+					min_energy = temp;
+					best_row=2;
+				}
+
+				//branch 3
+				// Hosna, July 11, 2014
+				// To avoid addition of close base pairs we check for the following here
+				if (l>=(k+TURN+1)){
+					// Hosna April 11, 2014
+					// I think we have already added gamma2(l,k) when coming to PR, so there is no need to add it again here.
+					// Hosna July 17, 2014
+					// I am adding gamma2 back here to avoid single base pair band predictions
+					temp = get_PfromR(i,j,k+1,l-1) + gamma2(l,k);
+					if(temp < min_energy){
+						min_energy = temp;
+						best_row= 3;
+					}
+				}
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i,l,j,k,P_PRiloop);
+					break;
+				case 2:
+					insert_node(i,l,j,k,P_PRmloop);
+					break;
+				case 3:
+					insert_node(i,l-1,j,k+1,P_PfromR);
+					// Hosna, Feb 18, 2014
+					f[k].pair = l;
+					f[l].pair = k;
+					f[k].type = P_PR;
+					f[l].type = P_PR;
+
+					break;
+			}
+
+		}
+		break;
+
+		case P_PM:
+		{
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_PM with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "border cases: This should not have happened!, P_PM" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr << "impossible cases: This should not have happened!, P_PM" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i==j && k ==l){
+				// Hosna, Feb 25, 2014
+				f[j].pair = k;
+				f[k].pair = j;
+				f[j].type = P_PM;
+				f[k].type = P_PM;
+				return;
+			}
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_row = -1;
+
+			if (pair[S_[j]][S_[k]]>0){
+				//branch 1
+				temp = get_PMiloop(i,j,k,l);
+				if(temp < min_energy){
+					min_energy = temp;
+					best_row = 1;
+				}
+				//branch 2
+				// Hosna, April 11, 2014
+				// we need to add a branch penalty for multiloop that spans a band
+				temp = get_PMmloop(i,j,k,l) + bp_penalty;
+				if(temp < min_energy){
+					min_energy = temp;
+					best_row=2;
+				}
+				//branch 3
+				// Hosna, July 11, 2014
+				// To avoid addition of close base pairs we check for the following here
+				if (k>=(j+TURN-1)){
+					// Hosna April 11, 2014
+					// I think we have already added gamma2(j,k) when coming to PM, so there is no need to add it again here.
+					// Hosna July 17, 2014
+					// I am adding gamma2 back here to avoid single base pair band predictions
+					temp = get_PfromM(i,j-1,k+1,l) + gamma2(j,k);
+					if(temp < min_energy){
+						min_energy = temp;
+						best_row= 3;
+					}
+				}
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i,l,j,k,P_PMiloop);
+					break;
+				case 2:
+					insert_node(i,l,j,k,P_PMmloop);
+					break;
+				case 3:
+					insert_node(i,l,j-1,k+1,P_PfromM);
+					// Hosna, Feb 18, 2014
+					f[j].pair = k;
+					f[k].pair = j;
+					f[j].type = P_PM;
+					f[k].type = P_PM;
+					break;
+			}
+		}
+		break;
+
+		case P_PO:
+		{
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_PO with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "border cases: This should not have happened!, P_PO" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+			// Hosna, April 3, 2014
+			// adding impossible cases
+			if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr << "impossible cases: This should not have happened!, P_PO" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_row = -1;
+			if (pair[S_[i]][S_[l]] > 0){
+				//branch 1
+				temp = get_POiloop(i,j,k,l);
+				if(temp < min_energy){
+					min_energy = temp;
+					best_row = 1;
+				}
+				//branch 2
+				// Hosna, April 11, 2014
+				// we need to add a branch penalty for multiloop that spans a band
+				temp = get_POmloop(i,j,k,l)+bp_penalty;
+				if(temp < min_energy){
+					min_energy = temp;
+					best_row=2;
+				}
+				//branch 3
+				// Hosna, July 11, 2014
+				// To avoid addition of close base pairs we check for the following here
+				if (l>=(i+TURN+1)){
+					// Hosna April 11, 2014
+					// I think we have already added gamma2(l,i) when coming to PO, so there is no need to add it again here.
+					// Hosna July 17, 2014
+					// I am adding gamma2 back here to avoid single base pair band predictions
+					temp = get_PfromO(i+1,j,k,l-1) + gamma2(l,i);
+					if(temp < min_energy){
+						min_energy = temp;
+						best_row= 3;
+					}
+				}
+			}
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i,l,j,k,P_POiloop);
+					break;
+				case 2:
+					insert_node(i,l,j,k,P_POmloop);
+					break;
+				case 3:
+					insert_node(i+1,l-1,j,k,P_PfromO);
+					// Hosna, Feb 18, 2014
+					f[i].pair = l;
+					f[l].pair = i;
+					f[i].type = P_PO;
+					f[l].type = P_PO;
+					break;
+			}
+
+		}
+		break;
+
+		case P_PfromL:
+		{
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_PfromL with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "This should not have happened!, P_PfromL" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr << "This should not have happened!, P_PfromL" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i==j && k==l){
+				return;
+			}
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_row = -1,best_d=-1;
+
+			for(cand_pos_t d=i+1; d< j; d++){
+				//branch 1
+				temp=get_PfromL(d,j,k,l)+get_WP(i,d-1);
+				if(temp < min_energy){
+					min_energy=temp;
+					best_row=1;
+					best_d = d;
+
+				}
+				//branch 2
+				temp=get_PfromL(i,d,k,l)+get_WP(d+1,j);
+				if(temp < min_energy){
+					min_energy=temp;
+					best_row=2;
+					best_d = d;
+				}
+			}
+			// branch 3
+			//Hosna, July 28, 2014
+			// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
+			temp = get_PR(i,j,k,l) + gamma2(l,k)+PB_penalty;
+			if(temp < min_energy){
+				min_energy = temp;
+				best_row=3;
+				best_d = -1;
+			}
+
+			//branch 4
+			//Hosna, July 28, 2014
+			// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
+			temp = get_PM(i,j,k,l) + gamma2(j,k)+PB_penalty;
+			if(temp < min_energy){
+				min_energy = temp;
+				best_row=4;
+				best_d = -1;
+			}
+
+			// branch 5
+			//Hosna, July 28, 2014
+			// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
+			temp = get_PO(i,j,k,l) + gamma2(l,i)+PB_penalty;
+			if(temp < min_energy){
+				min_energy = temp;
+				best_row=5;
+				best_d = -1;
+			}
+			switch (best_row)
+			{
+				case 1:
+					if (best_d > -1){
+						insert_node(best_d,l,j,k,P_PfromL);
+						insert_node(i,best_d-1,P_WP);
+					}
+					break;
+				case 2:
+					if (best_d > -1){
+						insert_node(i,l,best_d,k,P_PfromL);
+						insert_node(best_d+1,j,P_WP);
+					}
+					break;
+				case 3:
+					insert_node(i,l,j,k,P_PR);
+					break;
+				case 4:
+					insert_node(i,l,j,k,P_PM);
+					break;
+				case 5:
+					insert_node(i,l,j,k,P_PO);
+					break;
+			}
+
+
+		}
+			break;
+
+		case P_PfromR:
+		{
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_PfromR with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "This should not have happened!, P_PfromR" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr << "impossible case: This should not have happened!, P_PfromR" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i==j && k==l){
+				return;
+			}
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_row = -1,best_d=-1;
+
+			for(cand_pos_t d=k+1; d< l; d++){
+				//branch 1
+				temp=get_PfromR(i,j,d,l)+get_WP(k,d-1);
+				if(temp < min_energy){
+					min_energy = temp;
+					best_row=1;
+					best_d = d;
+
+				}
+				//branch 2
+				temp=get_PfromR(i,j,k,d)+get_WP(d+1,l);
+				if(temp < min_energy){
+					min_energy=temp;
+					best_row=2;
+					best_d = d;
+				}
+			}
+
+			//branch 3
+			//Hosna, July 28, 2014
+			// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
+			temp = get_PM(i,j,k,l) + gamma2(j,k)+PB_penalty;
+			if(temp < min_energy){
+				min_energy = temp;
+				best_row=3;
+				best_d = -1;
+			}
+
+			// branch 4
+			//Hosna, July 28, 2014
+			// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
+			temp = get_PO(i,j,k,l) + gamma2(l,i)+PB_penalty;
+			if(temp < min_energy){
+				min_energy = temp;
+				best_row=4;
+				best_d = -1;
+			}
+			switch (best_row)
+			{
+				case 1:
+					if (best_d > -1){
+						insert_node(i,l,j,best_d,P_PfromR);
+						insert_node(k,best_d-1,P_WP);
+					}
+					break;
+				case 2:
+					if (best_d > -1){
+						insert_node(i,best_d,j,k,P_PfromR);
+						insert_node(best_d+1,l,P_WP);
+					}
+					break;
+				case 3:
+					insert_node(i,l,j,k,P_PM);
+					break;
+				case 4:
+					insert_node(i,l,j,k,P_PO);
+					break;
+			}
+
+
+		}
+		break;
+
+		case P_PfromM:
+		{
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_PfromM with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "This should not have happened!, P_PfromM" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr << "This should not have happened!, P_PfromM" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i==j && k==l){
+				return;
+			}
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_row = -1,best_d=-1;
+
+			for(cand_pos_t d=i+1; d< j; d++){
+				//branch 1
+				temp=get_PfromM(i,d,k,l)+get_WP(d+1,j);
+				if(temp < min_energy){
+					min_energy=temp;
+					best_row=1;
+					best_d = d;
+
+				}
+			}
+			for(cand_pos_t d=k+1; d< l; d++){
+				//branch 2
+				temp=get_PfromM(i,j,d,l)+get_WP(k,d-1);
+				if(temp < min_energy){
+					min_energy=temp;
+					best_row=2;
+					best_d = d;
+				}
+			}
+			// branch 3
+			//Hosna, July 28, 2014
+			// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
+			temp = get_PL(i,j,k,l) + gamma2(j,i)+PB_penalty;
+			if(temp < min_energy){
+				min_energy = temp;
+				best_row=3;
+				best_d = -1;
+			}
+
+			//branch 4
+			//Hosna, July 28, 2014
+			// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
+			temp = get_PR(i,j,k,l) + gamma2(l,k)+PB_penalty;
+			if(temp < min_energy){
+				min_energy = temp;
+				best_row=4;
+				best_d = -1;
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					if (best_d > -1){
+						insert_node(i,l,best_d,k,P_PfromM);
+						insert_node(best_d+1,j,P_WP);
+					}
+					break;
+				case 2:
+					if (best_d > -1){
+						insert_node(i,l,j,best_d,P_PfromM);
+						insert_node(k,best_d-1,P_WP);
+					}
+					break;
+				case 3:
+					insert_node(i,l,j,k,P_PL);
+					break;
+				case 4:
+					insert_node(i,l,j,k,P_PR);
+					break;
+			}
+
+
+		}
+			break;
+
+		case P_PfromO:
+		{
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_PfromO with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "border cases: This should not have happened!, P_PfromO" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr << "impossible case: This should not have happened!, P_PfromO" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i==j && k==l){
+				return;
+			}
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_row = -1,best_d=-1;
+
+			for(cand_pos_t d=i+1; d< j; d++){
+				//branch 1
+				temp=get_PfromO(d,j,k,l)+get_WP(i,d-1);
+				if(temp < min_energy){
+					min_energy=temp;
+					best_row=1;
+					best_d = d;
+
+				}
+			}
+			for(cand_pos_t d=k+1; d< l; d++){
+				//branch 2
+				temp=get_PfromO(i,j,k,d)+get_WP(d+1,l);
+				if(temp < min_energy){
+					min_energy=temp;
+					best_row=2;
+					best_d = d;
+				}
+			}
+			// branch 3
+			//Hosna, July 28, 2014
+			// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
+			temp = get_PL(i,j,k,l) + gamma2(j,i)+PB_penalty;
+			if(temp < min_energy){
+				min_energy = temp;
+				best_row=3;
+				best_d = -1;
+			}
+
+			//branch 4
+			//Hosna, July 28, 2014
+			// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
+			temp = get_PR(i,j,k,l) + gamma2(l,k)+PB_penalty;
+			if(temp < min_energy){
+				min_energy = temp;
+				best_row=4;
+				best_d = -1;
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					if (best_d > -1){
+						insert_node(best_d,l,j,k,P_PfromO);
+						insert_node(i,best_d-1,P_WP);
+					}
+					break;
+				case 2:
+					if (best_d > -1){
+						insert_node(i,best_d,j,k,P_PfromO);
+						insert_node(best_d+1,l,P_WP);
+					}
+					break;
+				case 3:
+					insert_node(i,l,j,k,P_PL);
+					break;
+				case 4:
+					insert_node(i,l,j,k,P_PR);
+					break;
+			}
+
+
+		}
+			break;
+		case P_WB:
+		{
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			if(debug) printf("At P_WM with i=%d,l=%d\n",i,l);
+
+			if (i<=0 ||l<=0 || i>n || l >n){
+				std::cerr << "impossible cases: This should not have happened!, P_WB" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i>l){
+				return;
+			}
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_row = -1;
+			//branch 1
+			temp = get_WBP(i,l);
+			if (temp < min_energy){
+				min_energy = temp;
+				best_row=1;
+			}
+
+			temp = beta1P*(l-i+1);
+			if (temp < min_energy){
+				min_energy = temp;
+				best_row=2;
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i,l,P_WBP);
+					break;
+				case 2:
+					// do nothing.
+					break;
+			}
+
+		}
+			break;
+		case P_WBP:
+		{
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			if(debug) printf("At P_WBP with i=%d,l=%d\n",i,l);
+			if (i>l){
+				std::cerr << "border case: This should not have happened!, P_WBP" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 ||l<=0 || i>n || l >n){
+				std::cerr << "impossible cases: This should not have happened!, P_WBP" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_row = -1,best_d=-1,best_e=-1;
+
+			for(cand_pos_t d=i; d< l; d++){
+				for(cand_pos_t e = d+1; e<= l; e++){
+					//branch 1
+					// Hosna, August 26, 2014
+					// comparing calculation of WI in HFold and WPP in CCJ, I found that
+					// in HFold we add another penalty called PPS_penalty for closed regions inside a pseudoloop or multiloop that spans a band
+					//int common = get_WB(i,d-1) + beta1P*(l-e);
+					energy_t common = get_WB(i,d-1) + beta1P*(l-e)+PPS_penalty;
+					temp = common + V->get_energy(d,e) +beta2P(e,d);
+					if (temp < min_energy){
+						min_energy = temp;
+						best_row = 1;
+						best_d = d;
+						best_e = e;
+					}
+
+					//branch 2
+					temp = common + get_P(d,e) + gamma0m;
+					if (temp < min_energy){
+						min_energy = temp;
+						best_row = 2;
+						best_d = d;
+						best_e = e;
+					}
+				}
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i,best_d-1,P_WB);
+					insert_node(best_d,best_e,LOOP);
+					break;
+				case 2:
+					insert_node(i,best_d-1,P_WB);
+					insert_node(best_d,best_e,P_P);
+
+					break;
+			}
+		}
+			break;
+
+		case P_WP:
+		{
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			if(debug) printf("At P_WP with i=%d,l=%d\n",i,l);
+
+			if (i<=0 ||l<=0 || i>n || l >n){
+				std::cerr << "impossible cases: This should not have happened!, P_WP" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i>l){
+				return;
+			}
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_row = -1;
+			//branch 1
+			temp = get_WPP(i,l);
+			if (temp < min_energy){
+				min_energy = temp;
+				best_row=1;
+			}
+
+			temp = gamma1*(l-i+1);
+			if (temp < min_energy){
+				min_energy = temp;
+				best_row=2;
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i,l,P_WPP);
+					break;
+				case 2:
+					// do nothing.
+					break;
+			}
+
+		}
+			break;
+		case P_WPP:
+		{//TODO: change WPP
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			if(debug) printf("At P_WPP with i=%d,l=%d\n",i,l);
+			if (i>l){
+				std::cerr << "border case: This should not have happened!, P_WPP" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 ||l<=0 || i>n || l >n){
+				std::cerr << "impossible cases: This should not have happened!, P_WPP" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_row = -1,best_d=-1,best_e=-1;
+
+			for(cand_pos_t d=i; d< l; d++){
+				for(cand_pos_t e = d+1; e<= l; e++){
+					// Hosna, August 26, 2014
+					// comparing calculation of WI in HFold and WPP in CCJ, I found that
+					// in HFold we add another penalty called PPS_penalty for closed regions inside a pseudoloop or multiloop that spans a band
+					//int common = get_WP(i,d-1) + gamma1*(l-e);
+					energy_t common = get_WP(i,d-1) + gamma1*(l-e)+PPS_penalty;
+					//branch 1
+					temp = V->get_energy(d,e) + gamma2(e,d) + common;
+					if (temp < min_energy){
+						min_energy = temp;
+						best_row = 1;
+						best_d = d;
+						best_e = e;
+					}
+
+					//branch 2
+					temp = get_P(d,e) + gamma0P + common;
+					if (temp < min_energy){
+						min_energy = temp;
+						best_row = 2;
+						best_d = d;
+						best_e = e;
+					}
+				}
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i,best_d-1,P_WP);
+					insert_node(best_d,best_e,LOOP);
+					break;
+				case 2:
+					insert_node(i,best_d-1,P_WP);
+					insert_node(best_d,best_e,P_P);
+					break;
+			}
+		}
+			break;
+		case P_PLiloop:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_PLiloop with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (!(i < j && j < k-1 && k < l)){
+				std::cerr << "border cases: This should not have happened!, P_PLiloop" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr << "impossbible cases: This should not have happened!, P_PLiloop" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_row = -1,best_s=-1;
+
+			// Hosna, Feb 25, 2014
+			f[i].pair = j;
+			f[j].pair = i;
+			f[i].type = P_PLiloop;
+			f[j].type = P_PLiloop;
+
+
+			if (pair[S_[i]][S_[j]] > 0){
+				if (i+1 <= n && j-1 > 0){
+					//branch 1
+					temp = get_PL(i+1,j-1,k,l) + get_e_stP(i,j);
+					if (temp < min_energy){
+						min_energy = temp;
+						best_row=1;
+					}
+
+					//branch 2
+					// Hosna, August 21, 2014
+					// revising the max_s value
+					// there are j-i+1 bases between i and j, from which we need an ip and jp and at least 3 bases between ip and jp=> j-i+1-2-3
+					//int max_s = MIN(MAX(j-i-5,0),MAXLOOP-1);
+					cand_pos_t max_s = std::min(std::max(j-i-4,0),MAXLOOP-1);
+					// Hosna April 11, 2014 changed s=0 to s=1 to avoid considering stack as internal loop
+					for(cand_pos_t s = 1; s <= max_s; s++){
+						// Hosna, April 2, 2014
+						// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
+						//temp = get_PLiloop5(i,j,k,l,s) + alpha0P + alpha2P(j,i);
+						// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
+						// so the order of alpha2P(i,l,i+1,l-1)
+						//temp = get_PLiloop5(i,j,k,l,s) + alpha0P + alpha2P(int_sequence[j],int_sequence[i],int_sequence[j-1],int_sequence[i+1]);
+						temp = get_PLiloop5(i,j,k,l,s) + alpha0P + alpha2P(i,j);
+						if (temp < min_energy){
+							min_energy = temp;
+							best_row = 2;
+							best_s = s;
+						}
+					}
+				}
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i+1,l,j-1,k,P_PL);
+					break;
+				case 2:
+					insert_node(i,l,j,k,best_s,P_PLiloop5);
+					break;
+			}
+		}
+			break;
+		case P_PLiloop5:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			cand_pos_t s = cur_interval->asym;
+			if(debug) printf("At P_PLiloop5 with i=%d,l=%d,j=%d,k=%d,s=%d\n",i,l,j,k,s);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "border cases: This should not have happened!, P_PLiloop5" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 ||j<=0 || k<=0 || l<=0 || s<0 || i>n || j>n || k> n || l> n){
+				std::cerr <<"imposible cases: This should not have happened!, P_PLiloop5" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_row = -1;
+
+			if (s >= 2 && (i+1) <= n && (j-1)>0){
+				// branch 1
+				temp = get_PLiloop5(i+1,j-1,k,l,s-2)+alpha1P(2);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row = 1;
+				}
+			}
+			// branch 2
+			// Hosna, April 2, 2014
+			// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
+			//temp = get_PL(i+s+1,j-1,k,l) + alpha1P(s) + alpha3P(3) + alpha2P(j-1,i+s+1);
+			if((j-2) > 0 && (i+s+2) <= n){
+				// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
+				// so the order of alpha2P(i,l,i+1,l-1)
+				//temp = get_PL(i+s+1,j-1,k,l) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[j-1],int_sequence[i+s+1],int_sequence[j-2],int_sequence[i+s+2]);
+				temp = get_PL(i+s+1,j-1,k,l) + alpha1P(s) + alpha3P(s) + alpha2P(i+s+1,j-1);
+				//Hosna, August 21, 2014, adding V here is wrong! since a PX will handle its energy in other recurrences
+				/*
+				// Hosna, April 11, 2014
+				// This branch needs to add the energy of the hairpin loop to the internal loop as well, so adding V->get_energy()*penalty
+				// because we have internal loop here, we use the internal loop penalty
+				int hairpin_energy = (int)round(e_intP_penalty * (double)V->get_energy(i+s+1,j-1));
+				temp += hairpin_energy;
+				 */
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row = 2;
+				}
+			}
+
+			//branch 3
+			// Hosna, April 2, 2014
+			// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
+			//temp = get_PL(i+1,j-s-1,k,l) + alpha1P(s) + alpha3P(s) + alpha2P(j-s-1,i+1);
+			if ((j-s-2) > 0 && (i+2) <= n){
+				// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
+				// so the order of alpha2P(i,l,i+1,l-1)
+				//temp = get_PL(i+1,j-s-1,k,l) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[j-s-1],int_sequence[i+1],int_sequence[j-s-2],int_sequence[i+2]);
+				temp = get_PL(i+1,j-s-1,k,l) + alpha1P(s) + alpha3P(s) + alpha2P(i+1,j-s-1);
+				//Hosna, August 21, 2014, adding V here is wrong! since a PX will handle its energy in other recurrences
+				/*
+				// Hosna, April 11, 2014
+				// This branch needs to add the energy of the hairpin loop to the internal loop as well, so adding V->get_energy()*penalty
+				// because we have internal loop here, we use the internal loop penalty
+				int hairpin_energy = (int)round(e_intP_penalty * (double)V->get_energy(i+1,j-s-1));
+				temp += hairpin_energy;
+				 */
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row = 3;
+				}
+
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i+1,l,j-1,k,s-2,P_PLiloop5);
+					break;
+				case 2:
+					insert_node(i+s+1,l,j-1,k,P_PL);
+					break;
+				case 3:
+					insert_node(i+1,l,j-s-1,k,P_PL);
+					break;
+			}
+
+		}
+			break;
+
+		case P_PLmloop:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_PLmloop with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "border cases: This should not have happened!, P_PLmloop" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr << "impossible cases: This should not have happened!, P_PLmloop" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			// Hosna, Feb 25, 2014
+			f[i].pair = j;
+			f[j].pair = i;
+			f[i].type = P_PLmloop;
+			f[j].type = P_PLmloop;
+
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_row = -1, best_d=-1;
+			for(cand_pos_t d = i+1; d < j-1; d++){
+				//branch 1
+				// Hosna, Feb 23, 2014
+				// Since PLmloop comes from PL and in PL i and j must pair, so we must have the same thing here
+				// therefore we should have PLmloop0(d,j-1,k,l)
+				temp = get_PLmloop0(d,j-1,k,l) + get_WBP(i+1,d-1) + beta0P + beta2P(j,i);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row = 1;
+					best_d = d;
+				}
+				//branch 2
+				temp = get_PLmloop1(d,j-1,k,l) + get_WB(i+1,d-1) + beta0P + beta2P(j,i);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row = 2;
+					best_d = d;
+				}
+			}
+			switch (best_row)
+			{
+				case 1:
+					insert_node(best_d,l,j-1,k,P_PLmloop0);
+					insert_node(i+1,best_d-1,P_WBP);
+					break;
+				case 2:
+					insert_node(best_d,l,j-1,k,P_PLmloop1);
+					insert_node(i+1,best_d-1,P_WB);
+					break;
+			}
+
+		}
+			break;
+		case P_PLmloop0:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_PLmloop0 with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "border cases: This should not have happened!, P_PLmloop0" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr << "impossible cases: This should not have happened!, P_PLmloop0" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_d=-1;
+			for(cand_pos_t d = i+1; d < j; d++){
+				// Hosna, feb 23, 2014
+				// changed the recurrences so that j-1 is accounted for in PLmloop
+				temp = get_PL(i,d,k,l) + get_WB(d+1,j) + beta2P(d,i);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_d = d;
+				}
+			}
+			insert_node(i,l,best_d,k,P_PL);
+			insert_node(best_d+1,j,P_WB);
+
+		}
+			break;
+		case P_PLmloop1:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_PLmloop1 with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr<< "border cases: This should not have happened!, P_PLmloop1" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr<< "impossible cases: This should not have happened!, P_PLmloop1" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_d=-1;
+			for(cand_pos_t d = i+1; d < j; d++){
+				// Hosna, feb 23, 2014
+				// changed the recurrences so that j-1 is accounted for in PLmloop
+				temp = get_PL(i,d,k,l) + get_WBP(d+1,j) + beta2P(d,i);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_d = d;
+				}
+			}
+			insert_node(i,l,best_d,k,P_PL);
+			insert_node(best_d+1,j,P_WBP);
+		}
+			break;
+
+		case P_PRiloop:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_PRiloop with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "border cases: This should not have happened!, P_PRiloop" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr << "impossible cases: This should not have happened!, P_PRiloop" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			// Hosna, Feb 25, 2014
+			f[k].pair = l;
+			f[l].pair = k;
+			f[k].type = P_PRiloop;
+			f[l].type = P_PRiloop;
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_row=-1,best_s=-1;
+			if (pair[S_[k]][S_[l]]>0){
+				if (k+1 <= n && l-1 > 0){
+					//branch 1
+					temp = get_PR(i,j,k+1,l-1) + get_e_stP(k,l);
+					if(temp < min_energy){
+						min_energy = temp;
+						best_row = 1;
+					}
+					//branch 2
+					// Hosna, August 21, 2014
+					// revising the max_s value
+					// there are l-k+1 bases between l and k, from which we need an kp and lp and at least 3 bases between kp and lp => l-k+1-2-3
+					//int max_s = MIN(MAX(l-k-5,0),MAXLOOP-1);
+					cand_pos_t max_s = std::min(std::max(l-k-4,0),MAXLOOP-1);
+					// Hosna April 11, 2014 changed s=0 to s=1 to avoid considering stack as internal loop
+					for(cand_pos_t s = 1; s <= max_s; s++){
+						// Hosna, April 2, 2014
+						// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
+						//temp = get_PRiloop5(i,j,k,l,s) + alpha0P + alpha2P(l,k);
+						// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
+						// so the order of alpha2P(i,l,i+1,l-1)
+						//temp = get_PRiloop5(i,j,k,l,s) + alpha0P + alpha2P(int_sequence[l],int_sequence[k],int_sequence[l-1],int_sequence[k+1]);
+						temp = get_PRiloop5(i,j,k,l,s) + alpha0P + alpha2P(k,l);
+						if (temp < min_energy){
+							min_energy = temp;
+							best_row = 2;
+							best_s = s;
+						}
+					}
+				}
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i,l-1,j,k+1,P_PR);
+					break;
+				case 2:
+					insert_node(i,l,j,k,best_s,P_PRiloop5);
+					break;
+			}
+
+		}
+			break;
+
+		case P_PRiloop5:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			cand_pos_t s = cur_interval->asym;
+			if(debug) printf("At P_PRiloop5 with i=%d,l=%d,j=%d,k=%d,s=%d\n",i,l,j,k,s);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "border cases: This should not have happened!, P_PRiloop5" << std::endl;
+				exit(-1);
+			}
+
+			if (i<=0 ||j<=0 || k<=0 || l<=0 || s<0 || i>n || j>n || k> n || l> n){
+				std::cerr << "impossible cases: This should not have happened!, P_PRiloop5" << std::endl;
+				exit(-1);
+			}
+
+			energy_t min_energy = INF,temp=INF; 
+			cand_pos_t best_row=-1;
+
+			//branch 1
+			if (s >= 2 && (k+1) <=n && (l-1)>0){
+				temp = get_PRiloop5(i,j,k+1,l-1,s-2)+alpha1P(2);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row =1;
+				}
+			}
+			// branch 2
+			// Hosna, April 2, 2014
+			// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
+			//temp = get_PR(i,j,k+s+1,l-1) + alpha1P(s) + alpha3P(s) + alpha2P(l-1,k+s+1);
+			if ((l-2) > 0 && (k+s+2) <= n){
+				// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
+				// so the order of alpha2P(i,l,i+1,l-1)
+				//temp = get_PR(i,j,k+s+1,l-1) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[l-1],int_sequence[k+s+1],int_sequence[l-2],int_sequence[k+s+2]);
+				temp = get_PR(i,j,k+s+1,l-1) + alpha1P(s) + alpha3P(s) + alpha2P(k+s+1,l-1);
+				//Hosna, August 21, 2014, adding V here is wrong! since a PX will handle its energy in other recurrences
+				/*
+				// Hosna, April 11, 2014
+				// This branch needs to add the energy of the hairpin loop to the internal loop as well, so adding V->get_energy()*penalty
+				// because we have internal loop here, we use the internal loop penalty
+				int hairpin_energy = (int)round(e_intP_penalty * (double)V->get_energy(k+s+1,l-1));
+				temp += hairpin_energy;
+				 */
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row =2;
+				}
+			}
+
+			// branch 3
+			// Hosna, April 2, 2014
+			// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
+			//temp = get_PR(i,j,k+1,l-s-1) + alpha1P(s) + alpha3P(s) + alpha2P(l-s-1,k+1);
+			if ((l-s-2)>0 && (k+2)<= n){
+				// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
+				// so the order of alpha2P(i,l,i+1,l-1)
+				//temp = get_PR(i,j,k+1,l-s-1) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[l-s-1],int_sequence[k+1],int_sequence[l-s-2],int_sequence[k+2]);
+				temp = get_PR(i,j,k+1,l-s-1) + alpha1P(s) + alpha3P(s) + alpha2P(k+1,l-s-1);
+				//Hosna, August 21, 2014, adding V here is wrong! since a PX will handle its energy in other recurrences
+				/*
+				// Hosna, April 11, 2014
+				// This branch needs to add the energy of the hairpin loop to the internal loop as well, so adding V->get_energy()*penalty
+				// because we have internal loop here, we use the internal loop penalty
+				int hairpin_energy = (int)round(e_intP_penalty * (double)V->get_energy(k+1,l-s-1));
+				temp += hairpin_energy;
+				 */
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row =3;
+				}
+
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i,l-1,j,k+1,s-2,P_PRiloop5);
+					break;
+				case 2:
+					insert_node(i,l-1,j,k+s+1,P_PR);
+					break;
+				case 3:
+					insert_node(i,l-s-1,j,k+1,P_PR);
+					break;
+			}
+		}
+			break;
+
+		case P_PRmloop:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_PRmloop with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "border cases: This should not have happened!, P_PRmloop" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr << "impossible cases: This should not have happened!, P_PRmloop" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			// Hosna, Feb 25, 2014
+			f[k].pair = l;
+			f[l].pair = k;
+			f[k].type = P_PRmloop;
+			f[l].type = P_PRmloop;
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_row=-1, best_d=-1;
+			//Hosna Feb 23, 2014
+			// changed the recurrences to have l-1 instead of l in PRmloop and removed l-1 from PRmloop0,1, as we are accounting for k.l here
+			for(cand_pos_t d = k+1; d < l-1; d++){
+				// branch 1
+				temp = get_PRmloop0(i,j,d,l-1) + get_WBP(k+1,d-1) + beta0P + beta2P(l,k);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row = 1;
+					best_d=d;
+				}
+				// branch 2
+				temp = get_PRmloop1(i,j,d,l-1) + get_WB(k+1,d-1) + beta0P + beta2P(l,k);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row=2;
+					best_d = d;
+				}
+			}
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i,l-1,j,best_d,P_PRmloop0);
+					insert_node(k+1,best_d-1,P_WBP);
+					break;
+				case 2:
+					insert_node(i,l-1,j,best_d,P_PRmloop1);
+					insert_node(k+1,best_d-1,P_WB);
+					break;
+			}
+
+		}
+			break;
+
+		case P_PRmloop0:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_PRmloop0 with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "border cases: This should not have happened!, P_PRmloop0" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr << "impossible cases: This should not have happened!, P_PRmloop0" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_d=-1;
+			for(cand_pos_t d = k+1; d < l; d++){
+				temp = get_PR(i,j,k,d) + get_WB(d+1,l) + beta2P(k,d);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_d=d;
+				}
+			}
+			insert_node(i,best_d,j,k,P_PR);
+			insert_node(best_d+1,l,P_WB);
+
+		}
+			break;
+		case P_PRmloop1:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_PRmloop1 with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "border cases: This should not have happened!, P_PRmloop1" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr << "impossible cases: This should not have happened!, P_PRmloop1" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			energy_t min_energy = INF,temp=INF; 
+			cand_pos_t best_d=-1;
+			for(cand_pos_t d = k+1; d < l; d++){
+				temp = get_PR(i,j,k,d) + get_WBP(d+1,l) + beta2P(k,d);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_d=d;
+				}
+			}
+			insert_node(i,best_d,j,k,P_PR);
+			insert_node(best_d+1,l,P_WBP);
+
+		}
+			break;
+
+		case P_PMiloop:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_PMiloop with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "border cases: This should not have happened!, P_PMiloop" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr << "impossible cases: This should not have happened!, P_PMiloop" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			// Hosna, Feb 25, 2014
+			f[j].pair = k;
+			f[k].pair = j;
+			f[j].type = P_PMiloop;
+			f[k].type = P_PMiloop;
+			
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_s=-1,best_row=-1;
+
+			if (pair[S_[j]][S_[k]]>0){
+				if (j-1 > 0 && k+1 <= n){
+					// branch 1
+					temp = get_PM(i,j-1,k+1,l) + get_e_stP(j-1,k+1);
+					if (temp < min_energy){
+						min_energy = temp;
+						best_row=1;
+					}
+					// branch 2
+					// Hosna, August 21, 2014
+					// revising the max_s value
+					// there are j-i+1 bases between i and j, from which we need one base for ip => j-i+1-1
+					// similarly for l and k
+					//int max_s = MIN(MAX(MAX(j-i-5,l-k-5),0),MAXLOOP-1);
+					energy_t max_s = std::min(std::max(std::max(j-i,l-k),0),MAXLOOP-1);
+					// Hosna April 11, 2014 changed s=0 to s=1 to avoid considering stack as internal loop
+					for(cand_pos_t s = 1; s <= max_s; s++){
+					//for(int s = 0; s < MIN(MAX(j-i-5,l-k-5),MAXLOOP); s++){
+						// Hosna, April 2, 2014
+						// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
+						//temp = get_PMiloop5(i,j,k,l,s) + alpha0P + alpha2P(j,k);
+						// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
+						// so the order of alpha2P(i,l,i+1,l-1)
+						//temp = get_PMiloop5(i,j,k,l,s) + alpha0P + alpha2P(int_sequence[j],int_sequence[k],int_sequence[j-1],int_sequence[k+1]);
+						temp = get_PMiloop5(i,j,k,l,s) + alpha0P + alpha2P(j,k);
+						// Hosna, April 11, 2014
+						// This branch needs to add the energy of the hairpin loop to the internal loop as well, so adding H->get_energy()*penalty
+						// because we have internal loop here, we use the internal loop penalty; however since here the loop expands outward, we need to add this value at PMiloop, not PMiloop5
+						// Hosna, May 3, 2014,
+						// I now think addition of V->energy should be done in PMiloop5 not in PMiloop
+						//int hairpin_energy = (int)round(e_intP_penalty * (double)V->get_energy(j,k));
+						//temp += hairpin_energy;
+						if (temp < min_energy){
+							min_energy = temp;
+							best_row = 2;
+							best_s = s;
+						}
+					}
+				}
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i,l,j-1,k+1,P_PM);
+					break;
+				case 2:
+					insert_node(i,l,j,k,best_s,P_PMiloop5);
+					break;
+			}
+		}
+			break;
+
+		case P_PMiloop5:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			cand_pos_t s = cur_interval->asym;
+			if(debug) printf("At P_PMiloop5 with i=%d,l=%d,j=%d,k=%d,s=%d\n",i,l,j,k,s);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "border cases: This should not have happened!, P_PMiloop5" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 ||j<=0 || k<=0 || l<=0 || s<0 || i>n || j>n || k> n || l> n){
+				std::cerr << "impossible cases: This should not have happened!, P_PMiloop5" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_row=-1;
+			// branch 1
+			if (s >= 2 && (j-1)> 0 && (k+1)<=n){
+				temp = get_PMiloop5(i,j-1,k+1,l,s-2)+alpha1P(2);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row = 1;
+				}
+			}
+			// branch 2
+			// Hosna, April 2, 2014
+			// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
+			//temp = get_PM(i,j-s-1,k+1,l) + alpha1P(s) + alpha3P(s) + alpha2P(k+1,j-s-1);
+
+			if ((j-s-1) >0 && (k+1) <= n){
+				// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
+				// so the order of alpha2P(i,l,i+1,l-1)
+				//temp = get_PM(i,j-s-1,k+1,l) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[k+1],int_sequence[j-s-1],int_sequence[k],int_sequence[j-s]);
+				temp = get_PM(i,j-s-1,k+1,l) + alpha1P(s) + alpha3P(s) + alpha2P(j-s-1,k+1);
+				//Hosna, August 21, 2014, adding V here is wrong! since a PX will handle its energy in other recurrences
+				/*
+				// Hosna, April 11, 2014
+				// This branch needs to add the energy of the hairpin loop to the internal loop as well, so adding V->get_energy()*penalty
+				// because we have internal loop here, we use the internal loop penalty; however since here the loop expands outward, we need to add this value at PMiloop, not here
+				// Hosna, May 3, 2014,
+				// I now think addition of V->energy should be done in PMiloop5 not in PMiloop
+				int loop_energy = (int)round(e_intP_penalty * (double)V->get_energy(j-s-1,k+1));
+				temp += loop_energy;
+				 */
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row = 2;
+				}
+			}
+
+			//branch 3
+			// Hosna, April 2, 2014
+			// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
+			//temp = get_PM(i,j-1,k+s+1,l) + alpha1P(s) + alpha3P(s) + alpha2P(k+s+1,j-1);
+
+			if ((j-1) >0 && (k+s+1) <= n ){
+				// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
+				// so the order of alpha2P(i,l,i+1,l-1)
+				//temp = get_PM(i,j-1,k+s+1,l) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[k+s+1],int_sequence[j-1],int_sequence[k+s],int_sequence[j]);
+				temp = get_PM(i,j-1,k+s+1,l) + alpha1P(s) + alpha3P(s) + alpha2P(j-1,k+s+1);
+				//Hosna, August 21, 2014, adding V here is wrong! since a PX will handle its energy in other recurrences
+				/*
+				// Hosna, April 11, 2014
+				// This branch needs to add the energy of the hairpin loop to the internal loop as well, so adding V->get_energy()*penalty
+				// because we have internal loop here, we use the internal loop penalty; however since here the loop expands outward, we need to add this value at PMiloop, not here
+				// Hosna, May 3, 2014,
+				// I now think addition of V->energy should be done in PMiloop5 not in PMiloop
+				int loop_energy = (int)round(e_intP_penalty * (double)V->get_energy(j-1,k+s+1));
+				temp += loop_energy;
+				 */
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row = 3;
+				}
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i,l,j-1,k+1,s-2,P_PMiloop5);
+					break;
+				case 2:
+					insert_node(i,l,j-s-1,k+1,P_PM);
+					break;
+				case 3:
+					insert_node(i,l,j-1,k+s+1,P_PM);
+					break;
+			}
+
+		}
+			break;
+
+		case P_PMmloop:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_PMmloop with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "border cases: This should not have happened!, P_PMmloop" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr << "impossible cases: This should not have happened!, P_PMmloop" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			// Hosna, Feb 25, 2014
+			f[j].pair = k;
+			f[k].pair = j;
+			f[j].type = P_PMmloop;
+			f[k].type = P_PMmloop;
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_row=-1, best_d=-1;
+			for(cand_pos_t d = i+1; d < j; d++){
+				// Hosna Feb 23, 2014
+				// changed the recurrence of PMmloop, to have k+1 instead of k when calling PMmloop0,1, and removed k+1 from PMmloop0,1
+				// as j.k pair is accounted for in this recurrence
+
+				// branch 1
+				temp = get_PMmloop0(i,d,k+1,l) + get_WBP(d+1,j-1) + beta0P + beta2P(j,k);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row=1;
+					best_d=d;
+				}
+				// branch 2
+				temp = get_PMmloop1(i,d,k+1,l) + get_WB(d+1,j-1) + beta0P + beta2P(j,k);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row=2;
+					best_d=d;
+				}
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i,l,best_d,k+1,P_PMmloop0);
+					insert_node(best_d+1,j-1,P_WBP);
+					break;
+				case 2:
+					insert_node(i,l,best_d,k+1,P_PMmloop1);
+					insert_node(best_d+1,j-1,P_WB);
+					break;
+			}
+
+		}
+			break;
+
+		case P_PMmloop0:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_PMmloop0 with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "border cases: This should not have happened!, P_PMmloop0" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr << "impossible cases: This should not have happened!, P_PMmloop0" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_d=-1;
+			for(int d = k+1; d < l; d++){
+				//temp = get_PM(i,j,d,l) + get_WB(k+1,d-1) + beta2P(j,d);
+				temp = get_PM(i,j,d,l) + get_WB(k,d-1) + beta2P(j,d);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_d =d;
+				}
+			}
+			insert_node(i,l,j,best_d,P_PM);
+			insert_node(k,best_d-1,P_WB);
+
+		}
+			break;
+		case P_PMmloop1:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_PMmloop1 with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "border cases: This should not have happened!, P_PMmloop1" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr << "impossible cases: This should not have happened!, P_PMmloop1" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_d=-1;
+			for(cand_pos_t d = k+1; d < l; d++){
+				temp = get_PM(i,j,d,l) + get_WBP(k,d-1) + beta2P(j,d);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_d=d;
+				}
+			}
+			insert_node(i,l,j,best_d,P_PM);
+			insert_node(k,best_d-1,P_WBP);
+
+		}
+			break;
+		case P_POiloop:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_POiloop with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr << "impossible cases: This should not have happened!, P_POiloop" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "border cases: This should not have happened!, P_POiloop" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			// Hosna, Feb 25, 2014
+			f[i].pair = l;
+			f[l].pair = i;
+			f[i].type = P_POiloop;
+			f[l].type = P_POiloop;
+
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_s=-1,best_row=-1;
+			if (pair[S_[i]][S_[l]]>0 && i+1 <= n && l-1 > 0){
+				//branch 1
+				temp = get_PO(i+1,j,k,l-1) + get_e_stP(i,l);
+				if(temp < min_energy){
+					min_energy = temp;
+					best_row=1;
+				}
+
+				// branch 2
+				// Hosna, August 21, 2014
+				// revising the max_s value
+				// there are l-i+1 bases between l and i, from which we need an ip and lp and at least 3 bases between j and k and at least 1 base between ip and lp => l-i+1-2-3-1
+				//int max_s = MIN(MAX(MAX(j-i-5,l-k-5),0),MAXLOOP-1);
+				cand_pos_t max_s = std::min(std::max(l-i-5,0),MAXLOOP-1);
+				// Hosna April 11, 2014 changed s=0 to s=1 to avoid considering stack as internal loop
+				for(int s = 1; s <= max_s; s++){
+					// Hosna, April 2, 2014
+					// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
+					//int temp = get_POiloop5(i,j,k,l,s) + alpha0P + alpha2P(l,i);
+					// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
+					// so the order of alpha2P(i,l,i+1,l-1)
+					//temp = get_POiloop5(i,j,k,l,s) + alpha0P + alpha2P(int_sequence[l],int_sequence[i],int_sequence[l-1],int_sequence[i+1]);
+					temp = get_POiloop5(i,j,k,l,s) + alpha0P + alpha2P(i,l);
+					if(temp < min_energy){
+						min_energy = temp;
+						best_row=2;
+						best_s=s;
+					}
+				}
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i+1,l-1,j,k,P_PO);
+					break;
+				case 2:
+					insert_node(i,l,j,k,best_s,P_POiloop5);
+					break;
+			}
+
+		}
+			break;
+
+		case P_POiloop5:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			cand_pos_t s = cur_interval->asym;
+			if(debug) printf("At P_POiloop5 with i=%d,l=%d,j=%d,k=%d,s=%d\n",i,l,j,k,s);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "border cases: This should not have happened!, P_POiloop5" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+			// leaving s<0 because asymm is different
+			if (i<=0 ||j<=0 || k<=0 || l<=0 || s<0 || i>n || j>n || k> n || l> n){
+				std::cerr << "imposible cases: This should not have happened!, P_POiloop5" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			energy_t  min_energy = INF,temp=INF;
+			cand_pos_t best_row=-1;
+			// branch 1
+			if (s >= 2 && i+1 <= n && l-1>0){
+				temp = get_POiloop5(i+1,j,k,l-1,s-2)+alpha1P(2);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row=1;
+				}
+			}
+			// branch 2
+			// Hosna, April 2, 2014
+			// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
+			//temp = get_PO(i+s+1,j,k,l-1) + alpha1P(s) + alpha3P(s) + alpha2P(l-1,i+s+1);
+			if (l-2 > 0 && i+s+2 <= n){
+				// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
+				// so the order of alpha2P(i,l,i+1,l-1)
+				//temp = get_PO(i+s+1,j,k,l-1) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[l-1],int_sequence[i+s+1],int_sequence[l-2],int_sequence[i+s+2]);
+				temp = get_PO(i+s+1,j,k,l-1) + alpha1P(s) + alpha3P(s) + alpha2P(i+s+1,l-1);
+				//Hosna, August 21, 2014, adding V here is wrong! since a PX will handle its energy in other recurrences
+				/*
+				// Hosna, April 11, 2014
+				// This branch needs to add the energy of the hairpin loop to the internal loop as well, so adding V->get_energy()*penalty
+				// because we have internal loop here, we use the internal loop penalty
+				int loop_energy = (int)round(e_intP_penalty * (double)V->get_energy(i,l));
+				temp += loop_energy;
+				 */
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row=2;
+				}
+			}
+
+			// branch 3
+			// Hosna, April 2, 2014
+			// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
+			//temp = get_PO(i+1,j,k,l-s-1) + alpha1P(s) + alpha3P(s) + alpha2P(l-s-1,i+1);
+			if (l-s-2 > 0 && i+2 <= n){
+				// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
+				// so the order of alpha2P(i,l,i+1,l-1)
+				//temp = get_PO(i+1,j,k,l-s-1) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[l-s-1],int_sequence[i+1],int_sequence[l-s-2],int_sequence[i+2]);
+				temp = get_PO(i+1,j,k,l-s-1) + alpha1P(s) + alpha3P(s) + alpha2P(i+1,l-s-1);;
+				//Hosna, August 21, 2014, adding V here is wrong! since a PX will handle its energy in other recurrences
+				/*
+				// Hosna, April 11, 2014
+				// This branch needs to add the energy of the hairpin loop to the internal loop as well, so adding V->get_energy()*penalty
+				// because we have internal loop here, we use the internal loop penalty
+				int loop_energy = (int)round(e_intP_penalty * (double)V->get_energy(i,l));
+				temp += loop_energy;
+				 */
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row=3;
+				}
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(i+1,l-1,j,k,s-2,P_POiloop5);
+					break;
+				case 2:
+					insert_node(i+s+1,l-1,j,k,P_PO);
+					break;
+				case 3:
+					insert_node(i+1,l-s-1,j,k,P_PO);
+					break;
+			}
+		}
+			break;
+
+		case P_POmloop:
+		{
+			// changing gapped region borders to match the recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_POmloop with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "border cases: This should not have happened!, P_POmloop" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr << "impossible cases: This should not have happened!, P_POmloop" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+			// Hosna, Feb 25, 2014
+			f[i].pair = l;
+			f[l].pair = i;
+			f[i].type = P_POmloop;
+			f[l].type = P_POmloop;
+
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_row=-1,best_d=-1;
+			// Hosna Feb 23, 2014
+			// changed recurrences for POmloop to have l-1 instead of l and removed l-1 from POmloop0,1 as i.l is accounted for here in this recurrence
+			for(cand_pos_t d = i+1; d < j; d++){
+				//branch 1
+				temp = get_POmloop0(d,j,k,l-1) + get_WBP(i+1,d-1) + beta0P + beta2P(l,i);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row=1;
+					best_d=d;
+				}
+				//branch 2
+				temp = get_POmloop1(d,j,k,l-1) + get_WB(i+1,d-1) + beta0P + beta2P(l,i);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row=2;
+					best_d=d;
+				}
+			}
+
+			switch (best_row)
+			{
+				case 1:
+					insert_node(best_d,l-1,j,k,P_POmloop0);
+					insert_node(i+1,best_d-1,P_WBP);
+					break;
+				case 2:
+					insert_node(best_d,l-1,j,k,P_POmloop1);
+					insert_node(i+1,best_d-1,P_WB);
+					break;
+			}
+		}
+			break;
+
+		case P_POmloop0:
+		{
+			// changing gapped region borders to match the recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_POmloop0 with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "border cases: This should not have happened!, P_POmloop0" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr << "impossible cases: This should not have happened!, P_POmloop0" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_d=-1;
+			for(int d = k+1; d < l; d++){
+				temp = get_PO(i,j,k,d) + get_WB(d+1,l) + beta2P(d,i);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_d=d;
+				}
+			}
+			insert_node(i,best_d,j,k,P_PO);
+			insert_node(best_d+1,l,P_WB);
+		}
+			break;
+		case P_POmloop1:
+		{
+			// changing gapped region borders to match the recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_POmloop1 with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "border cases: This should not have happened!, P_POmloop1" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr << "impossible cases: This should not have happened!, P_POmloop1" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_d=-1;
+			for(int d = k+1; d < l; d++){
+				temp = get_PO(i,j,k,d) + get_WBP(d+1,l) + beta2P(d,i);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_d=d;
+				}
+			}
+			insert_node(i,best_d,j,k,P_PO);
+			insert_node(best_d+1,l,P_WBP);
+		}
+			break;
 	}
 }
 
@@ -1699,6 +3891,34 @@ void pseudo_loop::insert_node(int i, int j, char type)
     tmp->next = stack_interval;
     stack_interval = tmp;
 
+}
+
+// corresponds to region [i,k]U[l,j]
+void pseudo_loop::insert_node(int i, int j, int k, int l, char type){
+	seq_interval *tmp;
+    tmp = new seq_interval;
+    tmp->i = i;
+    tmp->j = j;
+	tmp->k = k;
+	tmp->l = l;
+	tmp->asym = -1;
+    tmp->type = type;
+    tmp->next = stack_interval;
+    stack_interval = tmp;
+}
+
+// corresponds to region [i,k]U[l,j] with asymmetry s (used for Pxiloop5, where x=L,R,M,O)
+void pseudo_loop::insert_node(int i, int j, int k, int l, int s, char type){
+	seq_interval *tmp;
+    tmp = new seq_interval;
+    tmp->i = i;
+    tmp->j = j;
+	tmp->k = k;
+	tmp->l = l;
+	tmp->asym = s;
+    tmp->type = type;
+    tmp->next = stack_interval;
+    stack_interval = tmp;
 }
 
 void pseudo_loop::set_stack_interval(seq_interval *stack_interval){
