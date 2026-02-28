@@ -40,10 +40,6 @@ void pseudo_loop::allocate_space()
 	std::vector<energy_t> row_5;
 	row_5.resize(MAXLOOP+1,INF);
 
-	std::vector< std::vector< energy_t> > row_row;
-	for(cand_pos_t i = 1; i <= total_length; ++i) {
-		row_row.push_back(row_5);
-	}
 	for(cand_pos_t i = 0; i < total_length; ++i) {
 		PK.push_back(row);
 		PL.push_back(row);
@@ -75,12 +71,6 @@ void pseudo_loop::allocate_space()
 		POmloop.push_back(row);
 		POmloop0.push_back(row);
 		POmloop1.push_back(row);
-
-		PLiloop5.push_back(row_row);
-		PRiloop5.push_back(row_row);
-		PMiloop5.push_back(row_row);
-		POiloop5.push_back(row_row);
-
 	}
 }
 
@@ -102,19 +92,7 @@ void pseudo_loop::compute_energies(cand_pos_t i, cand_pos_t l)
 	for(cand_pos_t j = i; j<l; ++j){
 		// Hosna, July 8, 2014
 		// in original recurrences we have j< k-1, so I am changing k=j+1 to k=j+2
-		for(cand_pos_t k = l; k>=j+2; k--){//for(int k = j+2; k<=l; k++){
-
-			// 3) compute all energies PXiloop5 for all s
-			for(cand_pos_t s=1; s<=MAXLOOP; ++s){
-
-				compute_PLiloop5(i,j,k,l,s);
-
-				compute_PRiloop5(i,j,k,l,s);
-
-				compute_PMiloop5(i,j,k,l,s);
-
-				compute_POiloop5(i,j,k,l,s);
-			}
+		for(cand_pos_t k = l; k>=j+2; --k){
 
 			compute_PLiloop(i,j,k,l);
 
@@ -504,76 +482,25 @@ void pseudo_loop::compute_PfromO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 }
 
 void pseudo_loop::compute_PLiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,b1=INF,b2=INF;
+	energy_t min_energy = INF,b1=INF,b2=INF,tmp=INF;
 
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 	int ptype_closing = pair[S_[i]][S_[j]];
 	if (ptype_closing>0){
+		b1 = get_PL(i+1,j-1,k,l) + get_e_stP(i,j);
 
-		if (i+1 <= n && j-1 > 0){
-			b1 = get_PL(i+1,j-1,k,l) + get_e_stP(i,j);
-			// Hosna, August 21, 2014
-			// revising the max_s value
-			// there are j-i+1 bases between i and j, from which we need an ip and jp and at least 3 bases between ip and jp=> j-i+1-2-3
-			//int max_s = MIN(MAX(j-i-5,0),MAXLOOP-1);
-			cand_pos_t max_s = std::min(std::max(j-i-4,0),MAXLOOP-1);
-			// Hosna April 11, 2014 changed s=0 to s=1 to avoid considering stack as internal loop
-			for(cand_pos_t s = 1; s <= max_s; ++s){
-				// Hosna, April 2, 2014
-				// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
-				//int temp = get_PLiloop5(i,j,k,l,s) + alpha0P + alpha2P(j,i);
-				// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
-				// so the order of alpha2P(i,l,i+1,l-1)
-				//int temp = get_PLiloop5(i,j,k,l,s) + alpha0P + alpha2P(int_sequence[j],int_sequence[i],int_sequence[j-1],int_sequence[i+1]);
-				energy_t tmp = get_PLiloop5(i,j,k,l,s) + alpha0P + alpha2P(i,j);
-				b2 = std::min(b2,tmp);
-			}
-		}
+		for(cand_pos_t d= i+1; d<std::min(j,i+MAXLOOP); ++d){
+        	for(cand_pos_t dp = j-1; dp > std::max(d+TURN,j-MAXLOOP); --dp){
+            	tmp = get_e_intP(i,d,dp,j) + get_PL(d,dp,k,l);
+            	b2 = std::min(b2,tmp);
+        	}
+    	}
 		min_energy = std::min(b1,b2);
 	}
 	if (min_energy < INF/2){
 		PLiloop[ij][kl]=min_energy;
 	}
-}
-
-// This is just looking at different sized bulges on different sides. This can maybe be rewritten to be removed
-void pseudo_loop::compute_PLiloop5(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, cand_pos_t s){
-	energy_t min_energy = INF,b1=INF,b2=INF,b3=INF;
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	if (s >= 2 && (i+1) <= n && (j-1)>0){
-		b1 = get_PLiloop5(i+1,j-1,k,l,s-2) + alpha1P(2);
-
-	}
-	// Hosna, April 2, 2014
-	// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
-	//b2 = get_PL(i+s+1,j-1,k,l) + alpha1P(s) + alpha3P(3) + alpha2P(j-1,i+s+1);
-	if((j-2) > 0 && (i+s+2) <= n){
-		// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
-		// so the order of alpha2P(i,l,i+1,l-1)
-		//b2 = get_PL(i+s+1,j-1,k,l) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[j-1],int_sequence[i+s+1],int_sequence[j-2],int_sequence[i+s+2]);
-		b2 = get_PL(i+s+1,j-1,k,l) + alpha1P(s) + alpha3P(s) + alpha2P(i+s+1,j-1);
-	}
-
-
-	// Hosna, April 2, 2014
-	// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
-	//b3 = get_PL(i+1,j-s-1,k,l) + alpha1P(s) + alpha3P(3) + alpha2P(j-s-1,i+1);
-	if ((j-s-2) > 0 && (i+2) <= n){
-		// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
-		// so the order of alpha2P(i,l,i+1,l-1)
-		//b3 = get_PL(i+1,j-s-1,k,l) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[j-s-1],int_sequence[i+1],int_sequence[j-s-2],int_sequence[i+2]);
-		b3 = get_PL(i+1,j-s-1,k,l) + alpha1P(s) + alpha3P(s) + alpha2P(i+1,j-s-1);
-	}
-
-	min_energy = std::min({min_energy,b1,b2,b3});
-	if (min_energy < INF/2){
-		PLiloop5[ij][kl][s] = min_energy;
-	}
-
 }
 
 void pseudo_loop::compute_PLmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -632,31 +559,20 @@ void pseudo_loop::compute_PLmloop1(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 }
 
 void pseudo_loop::compute_PRiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,b1=INF,b2=INF;
+	energy_t min_energy = INF,b1=INF,b2=INF,tmp=INF;
 
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 	int ptype_closing = pair[S_[k]][S_[l]];
 	if (ptype_closing>0){
-		if (k+1 <= n && l-1 > 0){
-			b1 = get_PR(i,j,k+1,l-1) + get_e_stP(k,l);
-			// Hosna, August 21, 2014
-			// revising the max_s value
-			// there are l-k+1 bases between l and k, from which we need an kp and lp and at least 3 bases between kp and lp => l-k+1-2-3
-			//int max_s = MIN(MAX(l-k-5,0),MAXLOOP-1);
-			cand_pos_t max_s = std::min(std::max(l-k-4,0),MAXLOOP-1);
-			// Hosna April 11, 2014 changed s=0 to s=1 to avoid considering stack as internal loop
-			for(cand_pos_t s = 1; s <= max_s; ++s){
-				// Hosna, April 2, 2014
-				// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
-				//int temp = get_PRiloop5(i,j,k,l,s) + alpha0P + alpha2P(l,k);
-				// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
-				// so the order of alpha2P(i,l,i+1,l-1)
-				//int temp = get_PRiloop5(i,j,k,l,s) + alpha0P + alpha2P(int_sequence[l],int_sequence[k],int_sequence[l-1],int_sequence[k+1]);
-				energy_t tmp = get_PRiloop5(i,j,k,l,s) + alpha0P + alpha2P(k,l);
-				b2 = std::min(b2,tmp);
-			}
-		}
+		b1 = get_PR(i,j,k+1,l-1) + get_e_stP(k,l);
+
+		for(cand_pos_t d= k+1; d<std::min(l,k+MAXLOOP); ++d){
+        	for(cand_pos_t dp=l-1; dp > std::max(d+TURN,l-MAXLOOP); --dp){
+            	tmp = get_e_intP(k,d,dp,l) + get_PR(i,j,d,dp);
+            	b2 = std::min(b2,tmp);
+        	}
+    	}
 		min_energy = std::min(b1,b2);
 	}
 	if (min_energy < INF/2){
@@ -664,48 +580,6 @@ void pseudo_loop::compute_PRiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	}
 
 }
-
-void pseudo_loop::compute_PRiloop5(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, cand_pos_t s){
-	energy_t min_energy = INF,b1=INF,b2=INF,b3=INF;
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	if (s >= 2 && (k+1) <=n && (l-1)>0){
-		b1 = get_PRiloop5(i,j,k+1,l-1,s-2) + alpha1P(2);
-		min_energy = std::min(min_energy,b1);
-
-	}
-	// Hosna, April 2, 2014
-	// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
-	//b2 = get_PR(i,j,k+s+1,l-1) + alpha1P(s) + alpha3P(s) + alpha2P(l-1,k+s+1);
-	if ((l-2) > 0 && (k+s+2) <= n){
-		// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
-		// so the order of alpha2P(i,l,i+1,l-1)
-		//b2 = get_PR(i,j,k+s+1,l-1) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[l-1],int_sequence[k+s+1],int_sequence[l-2],int_sequence[k+s+2]);
-		b2 = get_PR(i,j,k+s+1,l-1) + alpha1P(s) + alpha3P(s) + alpha2P(k+s+1,l-1);
-		min_energy = std::min(min_energy,b2);
-	}
-
-
-	// Hosna, April 2, 2014
-	// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
-	//b3 = get_PR(i,j,k+1,l-s-1) + alpha1P(s) + alpha3P(s) + alpha2P(l-s-1,k+1);
-	if ((l-s-2)>0 && (k+2)<= n){
-		// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
-		// so the order of alpha2P(i,l,i+1,l-1)
-		//b3 = get_PR(i,j,k+1,l-s-1) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[l-s-1],int_sequence[k+1],int_sequence[l-s-2],int_sequence[k+2]);
-		b3 = get_PR(i,j,k+1,l-s-1) + alpha1P(s) + alpha3P(s) + alpha2P(k+1,l-s-1);
-		min_energy = std::min(min_energy,b3);
-
-	}
-
-	if (min_energy < INF/2){
-		PRiloop5[ij][kl][s] = min_energy;
-	}
-
-}
-
 
 void pseudo_loop::compute_PRmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 
@@ -760,30 +634,21 @@ void pseudo_loop::compute_PRmloop1(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 }
 
 void pseudo_loop::compute_PMiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,b1=INF,b2=INF;
+	energy_t min_energy = INF,b1=INF,b2=INF,tmp=INF;
 
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 	int ptype_closing = pair[S_[j]][S_[k]];
 
 	if (ptype_closing>0){
+		b1 = get_PM(i,j-1,k+1,l) + get_e_stP(j-1,k+1); // Why is this j-1,k+1, it makes no sense. Everything else is like j,k
 
-		if (j-1 > 0 && k+1 <= n){
-			b1 = get_PM(i,j-1,k+1,l) + get_e_stP(j-1,k+1); // Why is this j-1,k+1, it makes no sense. Everything else is like j,k
-
-			cand_pos_t max_s = std::min(std::max({j-i,l-k,0}),MAXLOOP-1);
-			// Hosna April 11, 2014 changed s=0 to s=1 to avoid considering stack as internal loop
-			for(cand_pos_t s = 1; s <= max_s; ++s){
-				// Hosna, April 2, 2014
-				// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
-				//int temp = get_PMiloop5(i,j,k,l,s) + alpha0P + alpha2P(j,k);
-				// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
-				// so the order of alpha2P(i,l,i+1,l-1)
-				//int temp = get_PMiloop5(i,j,k,l,s) + alpha0P + alpha2P(int_sequence[j],int_sequence[k],int_sequence[j-1],int_sequence[k+1]);
-				energy_t tmp = get_PMiloop5(i,j,k,l,s) + alpha0P + alpha2P(j,k);
-				b2 = std::min(b2,tmp);				
-			}
-		}
+		for(cand_pos_t d= j-1; d>std::max(i,j-MAXLOOP); --d){
+        	for (cand_pos_t dp=k+1; dp <std::min(l,k+MAXLOOP); ++dp) {
+            	tmp = get_e_intP(d,j,k,dp) + get_PM(i,d,dp,l);
+            	b2= std::min(b2,tmp);
+        	}
+    	}
 		min_energy = std::min(b1,b2);
 	}
 	if (min_energy < INF/2){
@@ -791,41 +656,6 @@ void pseudo_loop::compute_PMiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	}
 
 }
-
-void pseudo_loop::compute_PMiloop5(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, cand_pos_t s){
-	energy_t min_energy = INF,b1=INF,b2=INF,b3=INF;
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	if (s >= 2 && (j-1)> 0 && (k+1)<=n){
-		b1 = get_PMiloop5(i,j-1,k+1,l,s-2)+alpha1P(2);
-		min_energy = std::min(min_energy,b1);
-
-	}
-	
-	if ((j-s-1) >0 && (k+1) <= n){
-		// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
-		// so the order of alpha2P(i,l,i+1,l-1)
-		//b2 = get_PM(i,j-s-1,k+1,l) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[k+1],int_sequence[j-s-1],int_sequence[k],int_sequence[j-s]);
-		b2 = get_PM(i,j-s-1,k+1,l) + alpha1P(s) + alpha3P(s) + alpha2P(j-s-1,k+1);
-		min_energy = std::min(min_energy,b2);
-	}
-
-	if ((j-1) >0 && (k+s+1) <= n ){
-		// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
-		// so the order of alpha2P(i,l,i+1,l-1)
-		//b3 = get_PM(i,j-1,k+s+1,l) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[k+s+1],int_sequence[j-1],int_sequence[k+s],int_sequence[j]);
-		b3 = get_PM(i,j-1,k+s+1,l) + alpha1P(s) + alpha3P(s) + alpha2P(j-1,k+s+1);
-		min_energy = std::min(min_energy,b3);
-	}
-
-	if (min_energy < INF/2){
-		PMiloop5[ij][kl][s] = min_energy;
-	}
-
-}
-
 
 void pseudo_loop::compute_PMmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF,b1=INF,b2=INF;
@@ -881,30 +711,21 @@ void pseudo_loop::compute_PMmloop1(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 }
 
 void pseudo_loop::compute_POiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,b1=INF,b2=INF;
+	energy_t min_energy = INF,b1=INF,b2=INF,tmp=INF;
 
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 	int ptype_closing = pair[S_[i]][S_[l]];
 
-	if (ptype_closing>0 && i+1 <= n && l-1 > 0){
+	if (ptype_closing>0){
 		b1 = get_PO(i+1,j,k,l-1) + get_e_stP(i,l);
-		// Hosna, August 21, 2014
-		// revising the max_s value
-		// there are l-i+1 bases between l and i, from which we need an ip and lp and at least 3 bases between j and k and at least 1 base between ip and lp => l-i+1-2-3-1
-		//int max_s = MIN(MAX(MAX(j-i-5,l-k-5),0),MAXLOOP-1);
-		cand_pos_t max_s = std::min(std::max(l-i-5,0),MAXLOOP-1);
-		// Hosna April 11, 2014 changed s=0 to s=1 to avoid considering stack as internal loop
-		for(cand_pos_t s = 1; s <= max_s; s++){
-			// Hosna, April 2, 2014
-			// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
-			//int temp = get_POiloop5(i,j,k,l,s) + alpha0P + alpha2P(l,i);
-			// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
-			// so the order of alpha2P(i,l,i+1,l-1)
-			//int temp = get_POiloop5(i,j,k,l,s) + alpha0P + alpha2P(int_sequence[l],int_sequence[i],int_sequence[l-1],int_sequence[i+1]);
-			energy_t tmp = get_POiloop5(i,j,k,l,s) + alpha0P + alpha2P(i,l);
-			b2 = std::min(b2,tmp);
-		}
+
+		for(cand_pos_t d= i+1; d<std::min(j,i+MAXLOOP); ++d){
+        	for (cand_pos_t dp=l-1; dp >std::max(l-MAXLOOP,k); --dp) {
+            	tmp = get_e_intP(i,d,dp,l) + get_PO(d,j,dp,k);
+            	b2 = std::min(b2,tmp);
+        	}
+    	}
 		min_energy = std::min(b1,b2);
 	}
 	if (min_energy < INF/2){
@@ -912,45 +733,6 @@ void pseudo_loop::compute_POiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	}
 
 }
-
-void pseudo_loop::compute_POiloop5(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, cand_pos_t s){
-	energy_t min_energy = INF,b1=INF,b2=INF,b3=INF;
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	if (s >= 2 && i+1 <= n && l-1>0){
-		b1 = get_POiloop5(i+1,j,k,l-1,s-2)+alpha1P(2);
-		min_energy = std::min(min_energy,b1);
-	}
-	// Hosna, April 2, 2014
-	// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
-	//b2 = get_PO(i+s+1,j,k,l-1) + alpha1P(s) + alpha3P(s) + alpha2P(l-1,i+s+1);
-	if (l-2 > 0 && i+s+2 <= n){
-		// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
-		// so the order of alpha2P(i,l,i+1,l-1)
-		//b2 = get_PO(i+s+1,j,k,l-1) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[l-1],int_sequence[i+s+1],int_sequence[l-2],int_sequence[i+s+2]);
-		b2 = get_PO(i+s+1,j,k,l-1) + alpha1P(s) + alpha3P(s) + alpha2P(i+s+1,l-1);
-		min_energy = std::min(min_energy,b2);
-	}
-
-	// Hosna, April 2, 2014
-	// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
-	//b3 = get_PO(i+1,j,k,l-s-1) + alpha1P(s) + alpha3P(s) + alpha2P(l-s-1,i+1);
-	if (l-s-2 > 0 && i+2 <= n){
-		// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
-		// so the order of alpha2P(i,l,i+1,l-1)
-		//b3 = get_PO(i+1,j,k,l-s-1) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[l-s-1],int_sequence[i+1],int_sequence[l-s-2],int_sequence[i+2]);
-		b3 = get_PO(i+1,j,k,l-s-1) + alpha1P(s) + alpha3P(s) + alpha2P(i+1,l-s-1);
-		min_energy = std::min(min_energy,b3);
-	}
-
-	if (min_energy < INF/2){
-		POiloop5[ij][kl][s] = min_energy;
-	}
-
-}
-
 
 void pseudo_loop::compute_POmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF,b1=INF,b2=INF;
@@ -1254,23 +1036,6 @@ energy_t pseudo_loop::get_PLiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	return PLiloop[ij][kl];
 }
 
-energy_t pseudo_loop::get_PLiloop5(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, cand_pos_t s){
-	if (!(i <= j && j < k-1 && k <= l && s>0 && s<=MAXLOOP)){
-		return INF;
-	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
-	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-		return INF;
-	}
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PLiloop5[ij][kl][s];
-}
-
 energy_t pseudo_loop::get_PLmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
@@ -1340,23 +1105,6 @@ energy_t pseudo_loop::get_PRiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	cand_pos_t kl = index[k]+l-k;
 
 	return PRiloop[ij][kl];
-}
-
-energy_t pseudo_loop::get_PRiloop5(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, cand_pos_t s){
-	if (!(i <= j && j < k-1 && k <= l && s>0 && s<=MAXLOOP)){
-		return INF;
-	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
-	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-		return INF;
-	}
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PRiloop5[ij][kl][s];
 }
 
 energy_t pseudo_loop::get_PRmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -1430,23 +1178,6 @@ energy_t pseudo_loop::get_PMiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	return PMiloop[ij][kl];
 }
 
-energy_t pseudo_loop::get_PMiloop5(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, cand_pos_t s){
-	if (!(i <= j && j < k-1 && k <= l && s>0 && s<= MAXLOOP)){
-		return INF;
-	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
-	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-		return INF;
-	}
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PMiloop5[ij][kl][s];
-}
-
 energy_t pseudo_loop::get_PMmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
@@ -1517,23 +1248,6 @@ energy_t pseudo_loop::get_POiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	cand_pos_t kl = index[k]+l-k;
 
 	return POiloop[ij][kl];
-}
-
-energy_t pseudo_loop::get_POiloop5(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, cand_pos_t s){
-	if (!(i <= j && j < k-1 && k <= l && s>0 && s<= MAXLOOP)){
-		return INF;
-	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
-	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-		return INF;
-	}
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return POiloop5[ij][kl][s];
 }
 
 energy_t pseudo_loop::get_POmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -2711,47 +2425,34 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				exit(EXIT_FAILURE);
 			}
 
-			energy_t min_energy = INF,temp=INF;
-			cand_pos_t best_row = -1,best_s=-1;
-
 			// Hosna, Feb 25, 2014
 			f[i].pair = j;
 			f[j].pair = i;
 			f[i].type = P_PLiloop;
 			f[j].type = P_PLiloop;
 
-
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_row = -1,best_d=-1,best_dp=-1;
 			if (pair[S_[i]][S_[j]] > 0){
-				if (i+1 <= n && j-1 > 0){
-					//branch 1
-					temp = get_PL(i+1,j-1,k,l) + get_e_stP(i,j);
-					if (temp < min_energy){
-						min_energy = temp;
-						best_row=1;
-					}
-
-					//branch 2
-					// Hosna, August 21, 2014
-					// revising the max_s value
-					// there are j-i+1 bases between i and j, from which we need an ip and jp and at least 3 bases between ip and jp=> j-i+1-2-3
-					//int max_s = MIN(MAX(j-i-5,0),MAXLOOP-1);
-					cand_pos_t max_s = std::min(std::max(j-i-4,0),MAXLOOP-1);
-					// Hosna April 11, 2014 changed s=0 to s=1 to avoid considering stack as internal loop
-					for(cand_pos_t s = 1; s <= max_s; s++){
-						// Hosna, April 2, 2014
-						// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
-						//temp = get_PLiloop5(i,j,k,l,s) + alpha0P + alpha2P(j,i);
-						// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
-						// so the order of alpha2P(i,l,i+1,l-1)
-						//temp = get_PLiloop5(i,j,k,l,s) + alpha0P + alpha2P(int_sequence[j],int_sequence[i],int_sequence[j-1],int_sequence[i+1]);
-						temp = get_PLiloop5(i,j,k,l,s) + alpha0P + alpha2P(i,j);
-						if (temp < min_energy){
+				//branch 1
+				temp = get_PL(i+1,j-1,k,l) + get_e_stP(i,j);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row=1;
+				}
+				//branch 2
+				for(cand_pos_t d= i+1; d<std::min(j,i+MAXLOOP); ++d){
+					for(cand_pos_t dp = j-1; dp > std::max(d+TURN,j-MAXLOOP); --dp){
+						temp = get_e_intP(i,d,dp,j) + get_PL(d,dp,k,l);
+						if(temp < min_energy){
 							min_energy = temp;
+							best_d = d;
+							best_dp = dp;
 							best_row = 2;
-							best_s = s;
 						}
 					}
-				}
+            }	
+				
 			}
 
 			switch (best_row)
@@ -2760,102 +2461,9 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 					insert_node(i+1,l,j-1,k,P_PL);
 					break;
 				case 2:
-					insert_node(i,l,j,k,best_s,P_PLiloop5);
+					insert_node(best_d,l,best_dp,k,P_PL);
 					break;
 			}
-		}
-			break;
-		case P_PLiloop5:
-		{
-			// changing gapped region borders to what we mean in recurrences
-			cand_pos_t i = cur_interval->i;
-			cand_pos_t l = cur_interval->j;
-			cand_pos_t j = cur_interval->k;
-			cand_pos_t k = cur_interval->l;
-			cand_pos_t s = cur_interval->asym;
-			if(debug) printf("At P_PLiloop5 with i=%d,l=%d,j=%d,k=%d,s=%d\n",i,l,j,k,s);
-
-			if (!(i <= j && j < k-1 && k <= l)){
-				std::cerr << "border cases: This should not have happened!, P_PLiloop5" << std::endl;
-				exit(EXIT_FAILURE);
-			}
-
-			if (i<=0 ||j<=0 || k<=0 || l<=0 || s<0 || i>n || j>n || k> n || l> n){
-				std::cerr <<"imposible cases: This should not have happened!, P_PLiloop5" << std::endl;
-				exit(EXIT_FAILURE);
-			}
-
-			energy_t min_energy = INF,temp=INF;
-			cand_pos_t best_row = -1;
-
-			if (s >= 2 && (i+1) <= n && (j-1)>0){
-				// branch 1
-				temp = get_PLiloop5(i+1,j-1,k,l,s-2)+alpha1P(2);
-				if (temp < min_energy){
-					min_energy = temp;
-					best_row = 1;
-				}
-			}
-			// branch 2
-			// Hosna, April 2, 2014
-			// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
-			//temp = get_PL(i+s+1,j-1,k,l) + alpha1P(s) + alpha3P(3) + alpha2P(j-1,i+s+1);
-			if((j-2) > 0 && (i+s+2) <= n){
-				// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
-				// so the order of alpha2P(i,l,i+1,l-1)
-				//temp = get_PL(i+s+1,j-1,k,l) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[j-1],int_sequence[i+s+1],int_sequence[j-2],int_sequence[i+s+2]);
-				temp = get_PL(i+s+1,j-1,k,l) + alpha1P(s) + alpha3P(s) + alpha2P(i+s+1,j-1);
-				//Hosna, August 21, 2014, adding V here is wrong! since a PX will handle its energy in other recurrences
-				/*
-				// Hosna, April 11, 2014
-				// This branch needs to add the energy of the hairpin loop to the internal loop as well, so adding V->get_energy()*penalty
-				// because we have internal loop here, we use the internal loop penalty
-				int hairpin_energy = (int)round(e_intP_penalty * (double)V->get_energy(i+s+1,j-1));
-				temp += hairpin_energy;
-				 */
-				if (temp < min_energy){
-					min_energy = temp;
-					best_row = 2;
-				}
-			}
-
-			//branch 3
-			// Hosna, April 2, 2014
-			// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
-			//temp = get_PL(i+1,j-s-1,k,l) + alpha1P(s) + alpha3P(s) + alpha2P(j-s-1,i+1);
-			if ((j-s-2) > 0 && (i+2) <= n){
-				// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
-				// so the order of alpha2P(i,l,i+1,l-1)
-				//temp = get_PL(i+1,j-s-1,k,l) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[j-s-1],int_sequence[i+1],int_sequence[j-s-2],int_sequence[i+2]);
-				temp = get_PL(i+1,j-s-1,k,l) + alpha1P(s) + alpha3P(s) + alpha2P(i+1,j-s-1);
-				//Hosna, August 21, 2014, adding V here is wrong! since a PX will handle its energy in other recurrences
-				/*
-				// Hosna, April 11, 2014
-				// This branch needs to add the energy of the hairpin loop to the internal loop as well, so adding V->get_energy()*penalty
-				// because we have internal loop here, we use the internal loop penalty
-				int hairpin_energy = (int)round(e_intP_penalty * (double)V->get_energy(i+1,j-s-1));
-				temp += hairpin_energy;
-				 */
-				if (temp < min_energy){
-					min_energy = temp;
-					best_row = 3;
-				}
-
-			}
-
-			switch (best_row)
-			{
-				case 1:
-					insert_node(i+1,l,j-1,k,s-2,P_PLiloop5);
-					break;
-				case 2:
-					insert_node(i+s+1,l,j-1,k,P_PL);
-					break;
-				case 3:
-					insert_node(i+1,l,j-s-1,k,P_PL);
-					break;
-			}
-
 		}
 			break;
 
@@ -3016,34 +2624,23 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			f[l].type = P_PRiloop;
 
 			energy_t min_energy = INF,temp=INF;
-			cand_pos_t best_row=-1,best_s=-1;
+			cand_pos_t best_row=-1,best_d=-1,best_dp=-1;
 			if (pair[S_[k]][S_[l]]>0){
-				if (k+1 <= n && l-1 > 0){
-					//branch 1
-					temp = get_PR(i,j,k+1,l-1) + get_e_stP(k,l);
-					if(temp < min_energy){
-						min_energy = temp;
-						best_row = 1;
-					}
-					//branch 2
-					// Hosna, August 21, 2014
-					// revising the max_s value
-					// there are l-k+1 bases between l and k, from which we need an kp and lp and at least 3 bases between kp and lp => l-k+1-2-3
-					//int max_s = MIN(MAX(l-k-5,0),MAXLOOP-1);
-					cand_pos_t max_s = std::min(std::max(l-k-4,0),MAXLOOP-1);
-					// Hosna April 11, 2014 changed s=0 to s=1 to avoid considering stack as internal loop
-					for(cand_pos_t s = 1; s <= max_s; s++){
-						// Hosna, April 2, 2014
-						// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
-						//temp = get_PRiloop5(i,j,k,l,s) + alpha0P + alpha2P(l,k);
-						// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
-						// so the order of alpha2P(i,l,i+1,l-1)
-						//temp = get_PRiloop5(i,j,k,l,s) + alpha0P + alpha2P(int_sequence[l],int_sequence[k],int_sequence[l-1],int_sequence[k+1]);
-						temp = get_PRiloop5(i,j,k,l,s) + alpha0P + alpha2P(k,l);
-						if (temp < min_energy){
+				//branch 1
+				temp = get_PR(i,j,k+1,l-1) + get_e_stP(k,l);
+				if(temp < min_energy){
+					min_energy = temp;
+					best_row = 1;
+				}
+				//branch 2
+				for(cand_pos_t d= k+1; d<std::min(l,k+MAXLOOP); ++d){
+					for(cand_pos_t dp=l-1; dp > std::max(d+TURN,l-MAXLOOP); --dp){
+						temp = get_e_intP(k,d,dp,l) + get_PR(i,j,d,dp);
+						if(temp < min_energy){
 							min_energy = temp;
+							best_d = d;
+							best_dp = dp;
 							best_row = 2;
-							best_s = s;
 						}
 					}
 				}
@@ -3055,103 +2652,10 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 					insert_node(i,l-1,j,k+1,P_PR);
 					break;
 				case 2:
-					insert_node(i,l,j,k,best_s,P_PRiloop5);
+					insert_node(i,best_dp,j,best_d,P_PR);
 					break;
 			}
 
-		}
-			break;
-
-		case P_PRiloop5:
-		{
-			// changing gapped region borders to what we mean in recurrences
-			cand_pos_t i = cur_interval->i;
-			cand_pos_t l = cur_interval->j;
-			cand_pos_t j = cur_interval->k;
-			cand_pos_t k = cur_interval->l;
-			cand_pos_t s = cur_interval->asym;
-			if(debug) printf("At P_PRiloop5 with i=%d,l=%d,j=%d,k=%d,s=%d\n",i,l,j,k,s);
-
-			if (!(i <= j && j < k-1 && k <= l)){
-				std::cerr << "border cases: This should not have happened!, P_PRiloop5" << std::endl;
-				exit(-1);
-			}
-
-			if (i<=0 ||j<=0 || k<=0 || l<=0 || s<0 || i>n || j>n || k> n || l> n){
-				std::cerr << "impossible cases: This should not have happened!, P_PRiloop5" << std::endl;
-				exit(-1);
-			}
-
-			energy_t min_energy = INF,temp=INF; 
-			cand_pos_t best_row=-1;
-
-			//branch 1
-			if (s >= 2 && (k+1) <=n && (l-1)>0){
-				temp = get_PRiloop5(i,j,k+1,l-1,s-2)+alpha1P(2);
-				if (temp < min_energy){
-					min_energy = temp;
-					best_row =1;
-				}
-			}
-			// branch 2
-			// Hosna, April 2, 2014
-			// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
-			//temp = get_PR(i,j,k+s+1,l-1) + alpha1P(s) + alpha3P(s) + alpha2P(l-1,k+s+1);
-			if ((l-2) > 0 && (k+s+2) <= n){
-				// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
-				// so the order of alpha2P(i,l,i+1,l-1)
-				//temp = get_PR(i,j,k+s+1,l-1) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[l-1],int_sequence[k+s+1],int_sequence[l-2],int_sequence[k+s+2]);
-				temp = get_PR(i,j,k+s+1,l-1) + alpha1P(s) + alpha3P(s) + alpha2P(k+s+1,l-1);
-				//Hosna, August 21, 2014, adding V here is wrong! since a PX will handle its energy in other recurrences
-				/*
-				// Hosna, April 11, 2014
-				// This branch needs to add the energy of the hairpin loop to the internal loop as well, so adding V->get_energy()*penalty
-				// because we have internal loop here, we use the internal loop penalty
-				int hairpin_energy = (int)round(e_intP_penalty * (double)V->get_energy(k+s+1,l-1));
-				temp += hairpin_energy;
-				 */
-				if (temp < min_energy){
-					min_energy = temp;
-					best_row =2;
-				}
-			}
-
-			// branch 3
-			// Hosna, April 2, 2014
-			// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
-			//temp = get_PR(i,j,k+1,l-s-1) + alpha1P(s) + alpha3P(s) + alpha2P(l-s-1,k+1);
-			if ((l-s-2)>0 && (k+2)<= n){
-				// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
-				// so the order of alpha2P(i,l,i+1,l-1)
-				//temp = get_PR(i,j,k+1,l-s-1) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[l-s-1],int_sequence[k+1],int_sequence[l-s-2],int_sequence[k+2]);
-				temp = get_PR(i,j,k+1,l-s-1) + alpha1P(s) + alpha3P(s) + alpha2P(k+1,l-s-1);
-				//Hosna, August 21, 2014, adding V here is wrong! since a PX will handle its energy in other recurrences
-				/*
-				// Hosna, April 11, 2014
-				// This branch needs to add the energy of the hairpin loop to the internal loop as well, so adding V->get_energy()*penalty
-				// because we have internal loop here, we use the internal loop penalty
-				int hairpin_energy = (int)round(e_intP_penalty * (double)V->get_energy(k+1,l-s-1));
-				temp += hairpin_energy;
-				 */
-				if (temp < min_energy){
-					min_energy = temp;
-					best_row =3;
-				}
-
-			}
-
-			switch (best_row)
-			{
-				case 1:
-					insert_node(i,l-1,j,k+1,s-2,P_PRiloop5);
-					break;
-				case 2:
-					insert_node(i,l-1,j,k+s+1,P_PR);
-					break;
-				case 3:
-					insert_node(i,l-s-1,j,k+1,P_PR);
-					break;
-			}
 		}
 			break;
 
@@ -3307,44 +2811,24 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			f[k].type = P_PMiloop;
 			
 			energy_t min_energy = INF,temp=INF;
-			cand_pos_t best_s=-1,best_row=-1;
+			cand_pos_t best_d=-1,best_dp=-1,best_row=-1;
 
 			if (pair[S_[j]][S_[k]]>0){
-				if (j-1 > 0 && k+1 <= n){
 					// branch 1
-					temp = get_PM(i,j-1,k+1,l) + get_e_stP(j-1,k+1);
-					if (temp < min_energy){
-						min_energy = temp;
-						best_row=1;
-					}
-					// branch 2
-					// Hosna, August 21, 2014
-					// revising the max_s value
-					// there are j-i+1 bases between i and j, from which we need one base for ip => j-i+1-1
-					// similarly for l and k
-					//int max_s = MIN(MAX(MAX(j-i-5,l-k-5),0),MAXLOOP-1);
-					energy_t max_s = std::min(std::max(std::max(j-i,l-k),0),MAXLOOP-1);
-					// Hosna April 11, 2014 changed s=0 to s=1 to avoid considering stack as internal loop
-					for(cand_pos_t s = 1; s <= max_s; s++){
-					//for(int s = 0; s < MIN(MAX(j-i-5,l-k-5),MAXLOOP); s++){
-						// Hosna, April 2, 2014
-						// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
-						//temp = get_PMiloop5(i,j,k,l,s) + alpha0P + alpha2P(j,k);
-						// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
-						// so the order of alpha2P(i,l,i+1,l-1)
-						//temp = get_PMiloop5(i,j,k,l,s) + alpha0P + alpha2P(int_sequence[j],int_sequence[k],int_sequence[j-1],int_sequence[k+1]);
-						temp = get_PMiloop5(i,j,k,l,s) + alpha0P + alpha2P(j,k);
-						// Hosna, April 11, 2014
-						// This branch needs to add the energy of the hairpin loop to the internal loop as well, so adding H->get_energy()*penalty
-						// because we have internal loop here, we use the internal loop penalty; however since here the loop expands outward, we need to add this value at PMiloop, not PMiloop5
-						// Hosna, May 3, 2014,
-						// I now think addition of V->energy should be done in PMiloop5 not in PMiloop
-						//int hairpin_energy = (int)round(e_intP_penalty * (double)V->get_energy(j,k));
-						//temp += hairpin_energy;
-						if (temp < min_energy){
+				temp = get_PM(i,j-1,k+1,l) + get_e_stP(j-1,k+1);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row=1;
+				}
+
+				for(cand_pos_t d= j-1; d>std::max(i,j-MAXLOOP); --d){
+					for (cand_pos_t dp=k+1; dp <std::min(l,k+MAXLOOP); ++dp) {
+						temp = get_e_intP(d,j,k,dp) + get_PM(i,d,dp,l);
+						if(temp < min_energy){
 							min_energy = temp;
+							best_d = d;
+							best_dp = dp;
 							best_row = 2;
-							best_s = s;
 						}
 					}
 				}
@@ -3356,107 +2840,9 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 					insert_node(i,l,j-1,k+1,P_PM);
 					break;
 				case 2:
-					insert_node(i,l,j,k,best_s,P_PMiloop5);
+					insert_node(i,l,best_d,best_dp,P_PM);
 					break;
 			}
-		}
-			break;
-
-		case P_PMiloop5:
-		{
-			// changing gapped region borders to what we mean in recurrences
-			cand_pos_t i = cur_interval->i;
-			cand_pos_t l = cur_interval->j;
-			cand_pos_t j = cur_interval->k;
-			cand_pos_t k = cur_interval->l;
-			cand_pos_t s = cur_interval->asym;
-			if(debug) printf("At P_PMiloop5 with i=%d,l=%d,j=%d,k=%d,s=%d\n",i,l,j,k,s);
-
-			if (!(i <= j && j < k-1 && k <= l)){
-				std::cerr << "border cases: This should not have happened!, P_PMiloop5" << std::endl;
-				exit(EXIT_FAILURE);
-			}
-
-			if (i<=0 ||j<=0 || k<=0 || l<=0 || s<0 || i>n || j>n || k> n || l> n){
-				std::cerr << "impossible cases: This should not have happened!, P_PMiloop5" << std::endl;
-				exit(EXIT_FAILURE);
-			}
-
-			energy_t min_energy = INF,temp=INF;
-			cand_pos_t best_row=-1;
-			// branch 1
-			if (s >= 2 && (j-1)> 0 && (k+1)<=n){
-				temp = get_PMiloop5(i,j-1,k+1,l,s-2)+alpha1P(2);
-				if (temp < min_energy){
-					min_energy = temp;
-					best_row = 1;
-				}
-			}
-			// branch 2
-			// Hosna, April 2, 2014
-			// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
-			//temp = get_PM(i,j-s-1,k+1,l) + alpha1P(s) + alpha3P(s) + alpha2P(k+1,j-s-1);
-
-			if ((j-s-1) >0 && (k+1) <= n){
-				// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
-				// so the order of alpha2P(i,l,i+1,l-1)
-				//temp = get_PM(i,j-s-1,k+1,l) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[k+1],int_sequence[j-s-1],int_sequence[k],int_sequence[j-s]);
-				temp = get_PM(i,j-s-1,k+1,l) + alpha1P(s) + alpha3P(s) + alpha2P(j-s-1,k+1);
-				//Hosna, August 21, 2014, adding V here is wrong! since a PX will handle its energy in other recurrences
-				/*
-				// Hosna, April 11, 2014
-				// This branch needs to add the energy of the hairpin loop to the internal loop as well, so adding V->get_energy()*penalty
-				// because we have internal loop here, we use the internal loop penalty; however since here the loop expands outward, we need to add this value at PMiloop, not here
-				// Hosna, May 3, 2014,
-				// I now think addition of V->energy should be done in PMiloop5 not in PMiloop
-				int loop_energy = (int)round(e_intP_penalty * (double)V->get_energy(j-s-1,k+1));
-				temp += loop_energy;
-				 */
-				if (temp < min_energy){
-					min_energy = temp;
-					best_row = 2;
-				}
-			}
-
-			//branch 3
-			// Hosna, April 2, 2014
-			// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
-			//temp = get_PM(i,j-1,k+s+1,l) + alpha1P(s) + alpha3P(s) + alpha2P(k+s+1,j-1);
-
-			if ((j-1) >0 && (k+s+1) <= n ){
-				// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
-				// so the order of alpha2P(i,l,i+1,l-1)
-				//temp = get_PM(i,j-1,k+s+1,l) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[k+s+1],int_sequence[j-1],int_sequence[k+s],int_sequence[j]);
-				temp = get_PM(i,j-1,k+s+1,l) + alpha1P(s) + alpha3P(s) + alpha2P(j-1,k+s+1);
-				//Hosna, August 21, 2014, adding V here is wrong! since a PX will handle its energy in other recurrences
-				/*
-				// Hosna, April 11, 2014
-				// This branch needs to add the energy of the hairpin loop to the internal loop as well, so adding V->get_energy()*penalty
-				// because we have internal loop here, we use the internal loop penalty; however since here the loop expands outward, we need to add this value at PMiloop, not here
-				// Hosna, May 3, 2014,
-				// I now think addition of V->energy should be done in PMiloop5 not in PMiloop
-				int loop_energy = (int)round(e_intP_penalty * (double)V->get_energy(j-1,k+s+1));
-				temp += loop_energy;
-				 */
-				if (temp < min_energy){
-					min_energy = temp;
-					best_row = 3;
-				}
-			}
-
-			switch (best_row)
-			{
-				case 1:
-					insert_node(i,l,j-1,k+1,s-2,P_PMiloop5);
-					break;
-				case 2:
-					insert_node(i,l,j-s-1,k+1,P_PM);
-					break;
-				case 3:
-					insert_node(i,l,j-1,k+s+1,P_PM);
-					break;
-			}
-
 		}
 			break;
 
@@ -3616,37 +3002,27 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			f[l].type = P_POiloop;
 
 
-			energy_t min_energy = INF,temp=INF;
-			cand_pos_t best_s=-1,best_row=-1;
-			if (pair[S_[i]][S_[l]]>0 && i+1 <= n && l-1 > 0){
+			energy_t min_energy = INF;
+			cand_pos_t best_d=-1,best_dp=-1,best_row=-1;
+			if (pair[S_[i]][S_[l]]>0){
 				//branch 1
-				temp = get_PO(i+1,j,k,l-1) + get_e_stP(i,l);
+				energy_t temp = get_PO(i+1,j,k,l-1) + get_e_stP(i,l);
 				if(temp < min_energy){
 					min_energy = temp;
 					best_row=1;
 				}
-
-				// branch 2
-				// Hosna, August 21, 2014
-				// revising the max_s value
-				// there are l-i+1 bases between l and i, from which we need an ip and lp and at least 3 bases between j and k and at least 1 base between ip and lp => l-i+1-2-3-1
-				//int max_s = MIN(MAX(MAX(j-i-5,l-k-5),0),MAXLOOP-1);
-				cand_pos_t max_s = std::min(std::max(l-i-5,0),MAXLOOP-1);
-				// Hosna April 11, 2014 changed s=0 to s=1 to avoid considering stack as internal loop
-				for(int s = 1; s <= max_s; s++){
-					// Hosna, April 2, 2014
-					// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
-					//int temp = get_POiloop5(i,j,k,l,s) + alpha0P + alpha2P(l,i);
-					// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
-					// so the order of alpha2P(i,l,i+1,l-1)
-					//temp = get_POiloop5(i,j,k,l,s) + alpha0P + alpha2P(int_sequence[l],int_sequence[i],int_sequence[l-1],int_sequence[i+1]);
-					temp = get_POiloop5(i,j,k,l,s) + alpha0P + alpha2P(i,l);
-					if(temp < min_energy){
-						min_energy = temp;
-						best_row=2;
-						best_s=s;
+				for(cand_pos_t d= i+1; d<std::min(j,i+MAXLOOP); ++d){
+					for (cand_pos_t dp=l-1; dp >std::max(l-MAXLOOP,k); --dp) {
+						energy_t branch2 = get_e_intP(i,d,dp,l) + get_PO(d,j,dp,k);
+						if(branch2 < min_energy){
+							min_energy = branch2;
+							best_row = 2;
+							best_d = d;
+							best_dp = dp;
+						}
 					}
-				}
+
+    			}
 			}
 
 			switch (best_row)
@@ -3655,101 +3031,10 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 					insert_node(i+1,l-1,j,k,P_PO);
 					break;
 				case 2:
-					insert_node(i,l,j,k,best_s,P_POiloop5);
+					insert_node(best_d,k,j,best_dp,P_PO);
 					break;
 			}
 
-		}
-			break;
-
-		case P_POiloop5:
-		{
-			// changing gapped region borders to what we mean in recurrences
-			cand_pos_t i = cur_interval->i;
-			cand_pos_t l = cur_interval->j;
-			cand_pos_t j = cur_interval->k;
-			cand_pos_t k = cur_interval->l;
-			cand_pos_t s = cur_interval->asym;
-			if(debug) printf("At P_POiloop5 with i=%d,l=%d,j=%d,k=%d,s=%d\n",i,l,j,k,s);
-
-			if (!(i <= j && j < k-1 && k <= l)){
-				std::cerr << "border cases: This should not have happened!, P_POiloop5" << std::endl;
-				exit(EXIT_FAILURE);
-			}
-			// leaving s<0 because asymm is different
-			if (i<=0 ||j<=0 || k<=0 || l<=0 || s<0 || i>n || j>n || k> n || l> n){
-				std::cerr << "imposible cases: This should not have happened!, P_POiloop5" << std::endl;
-				exit(EXIT_FAILURE);
-			}
-
-			energy_t  min_energy = INF,temp=INF;
-			cand_pos_t best_row=-1;
-			// branch 1
-			if (s >= 2 && i+1 <= n && l-1>0){
-				temp = get_POiloop5(i+1,j,k,l-1,s-2)+alpha1P(2);
-				if (temp < min_energy){
-					min_energy = temp;
-					best_row=1;
-				}
-			}
-			// branch 2
-			// Hosna, April 2, 2014
-			// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
-			//temp = get_PO(i+s+1,j,k,l-1) + alpha1P(s) + alpha3P(s) + alpha2P(l-1,i+s+1);
-			if (l-2 > 0 && i+s+2 <= n){
-				// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
-				// so the order of alpha2P(i,l,i+1,l-1)
-				//temp = get_PO(i+s+1,j,k,l-1) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[l-1],int_sequence[i+s+1],int_sequence[l-2],int_sequence[i+s+2]);
-				temp = get_PO(i+s+1,j,k,l-1) + alpha1P(s) + alpha3P(s) + alpha2P(i+s+1,l-1);
-				//Hosna, August 21, 2014, adding V here is wrong! since a PX will handle its energy in other recurrences
-				/*
-				// Hosna, April 11, 2014
-				// This branch needs to add the energy of the hairpin loop to the internal loop as well, so adding V->get_energy()*penalty
-				// because we have internal loop here, we use the internal loop penalty
-				int loop_energy = (int)round(e_intP_penalty * (double)V->get_energy(i,l));
-				temp += loop_energy;
-				 */
-				if (temp < min_energy){
-					min_energy = temp;
-					best_row=2;
-				}
-			}
-
-			// branch 3
-			// Hosna, April 2, 2014
-			// since in h_common.cpp I don't have access to int_sequence, I am changing alpha2P definition to accept 4 values
-			//temp = get_PO(i+1,j,k,l-s-1) + alpha1P(s) + alpha3P(s) + alpha2P(l-s-1,i+1);
-			if (l-s-2 > 0 && i+2 <= n){
-				// Hosna, August 21, 2014 changing indexes in alpha2P so the first index is always less than the second.
-				// so the order of alpha2P(i,l,i+1,l-1)
-				//temp = get_PO(i+1,j,k,l-s-1) + alpha1P(s) + alpha3P(s) + alpha2P(int_sequence[l-s-1],int_sequence[i+1],int_sequence[l-s-2],int_sequence[i+2]);
-				temp = get_PO(i+1,j,k,l-s-1) + alpha1P(s) + alpha3P(s) + alpha2P(i+1,l-s-1);;
-				//Hosna, August 21, 2014, adding V here is wrong! since a PX will handle its energy in other recurrences
-				/*
-				// Hosna, April 11, 2014
-				// This branch needs to add the energy of the hairpin loop to the internal loop as well, so adding V->get_energy()*penalty
-				// because we have internal loop here, we use the internal loop penalty
-				int loop_energy = (int)round(e_intP_penalty * (double)V->get_energy(i,l));
-				temp += loop_energy;
-				 */
-				if (temp < min_energy){
-					min_energy = temp;
-					best_row=3;
-				}
-			}
-
-			switch (best_row)
-			{
-				case 1:
-					insert_node(i+1,l-1,j,k,s-2,P_POiloop5);
-					break;
-				case 2:
-					insert_node(i+s+1,l-1,j,k,P_PO);
-					break;
-				case 3:
-					insert_node(i+1,l-s-1,j,k,P_PO);
-					break;
-			}
 		}
 			break;
 

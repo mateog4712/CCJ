@@ -109,28 +109,24 @@ private:
 	
 	// internal loops and multi loops that span a band
 	std::vector<std::vector<energy_t> > PLiloop;
-	std::vector<std::vector< std::vector<energy_t> > > PLiloop5;
 	std::vector<std::vector<energy_t> > PLmloop;
 	std::vector<std::vector<energy_t> > PLmloop0;
 	std::vector<std::vector<energy_t> > PLmloop1;
 	
 	
 	std::vector<std::vector<energy_t> > PRiloop;
-	std::vector<std::vector< std::vector<energy_t> > > PRiloop5;
 	std::vector<std::vector<energy_t> > PRmloop;
 	std::vector<std::vector<energy_t> > PRmloop0;
 	std::vector<std::vector<energy_t> > PRmloop1;
 	
 	
 	std::vector<std::vector<energy_t> > PMiloop;
-	std::vector<std::vector< std::vector<energy_t> > > PMiloop5;
 	std::vector<std::vector<energy_t> > PMmloop;
 	std::vector<std::vector<energy_t> > PMmloop0;
 	std::vector<std::vector<energy_t> > PMmloop1;
 	
 	
 	std::vector<std::vector<energy_t> > POiloop;
-	std::vector<std::vector< std::vector<energy_t> > > POiloop5;
 	std::vector<std::vector<energy_t> > POmloop;
 	std::vector<std::vector<energy_t> > POmloop0;
 	std::vector<std::vector<energy_t> > POmloop1;
@@ -153,25 +149,21 @@ private:
 	
 	
 	void compute_PLiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PLiloop5(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, cand_pos_t s);
 	void compute_PLmloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PLmloop0(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PLmloop1(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	
 	void compute_PRiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PRiloop5(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, cand_pos_t s);
 	void compute_PRmloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PRmloop0(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PRmloop1(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	
 	void compute_PMiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PMiloop5(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, cand_pos_t s);
 	void compute_PMmloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PMmloop0(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PMmloop1(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	
 	void compute_POiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_POiloop5(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, cand_pos_t s);
 	void compute_POmloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_POmloop0(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_POmloop1(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
