@@ -50,12 +50,12 @@ void create_PS_footer(std::ofstream &out) {
 }
 
 void create_PS_data(std::ofstream &out, std::unordered_map<std::pair<cand_pos_t, cand_pos_t>, cand_pos_t, SzudzikHash> &samples, std::string MFE_structure, int num_samples, cand_pos_t n) {
-    int min_samples = .1 * num_samples;
+    int min_samples = (int) .01 * num_samples;
     for (cand_pos_t i = 1; i <= n; ++i) {
         for (cand_pos_t j = i; j <= n; ++j) {
-            std::pair<cand_pos_tu, cand_pos_tu> base_pair(i, j);
-            if (samples[base_pair] > min_samples) {
-                pf_t prob = (pf_t)sqrt((pf_t)samples[base_pair] / num_samples);
+            std::pair<cand_pos_tu, cand_pos_tu> PS_base_pair(i, j);
+            if (samples[PS_base_pair] > min_samples) {
+                pf_t prob = (pf_t)sqrt((pf_t)samples[PS_base_pair] / num_samples);
                 out << "0 .7 .75 hsb " << i << " " << j << " " << prob << " ubox" << std::endl; 
             }
         }

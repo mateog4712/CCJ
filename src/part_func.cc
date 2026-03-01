@@ -62,7 +62,7 @@ W_final_pf::W_final_pf(std::string &seq, std::string &MFE_structure, double MFE_
 	WPP.resize(total_length,0);
 	P.resize(total_length,0);
 
-    std::vector<energy_t> row;
+    std::vector<pf_t> row;
 	row.resize(total_length,0);
 
     // Mateo - Mirroring ModifiedCCJ, changing PL from n^2xn^2 to nxnxn^2
@@ -117,8 +117,6 @@ W_final_pf::W_final_pf(std::string &seq, std::string &MFE_structure, double MFE_
     rescale_pk_globals();
     exp_params_rescale(MFE_energy);
     W.resize(n + 1, scale[1]);
-    // WI.resize(total_length, scale[1]);
-
 }
 
 W_final_pf::~W_final_pf() {}
@@ -193,13 +191,12 @@ pf_t W_final_pf::ccj_pf(){
 		pf_t contributions = 0;
 		contributions += W[j-1]*scale[1];
 		for (cand_pos_t k=1; k<=j-TURN-1; ++k){
-			energy_t acc = (k>1) ? W[k-1]: 0;
+			pf_t acc = (k>1) ? W[k-1]: 1;
 			contributions += acc*get_energy(k, j)*exp_Extloop(k, j);
 			contributions += acc*get_P(k, j)*expPS_penalty;
 		}
 		W[j] = contributions;
 	}
-
     pf_t energy = to_Energy(W[n], n);
 
     structure = std::string(n, '.');
@@ -397,12 +394,12 @@ void W_final_pf::compute_pk_energies(cand_pos_t i, cand_pos_t l) {
 }
 
 void W_final_pf::compute_WBP(cand_pos_t i, cand_pos_t l){
-	pf_t contributions = 0;
+	pf_t contributions = 0, common = 0;
 
 	cand_pos_t il = index[i]+l-i;
 	for(cand_pos_t d=i; d< l; ++d){
 		for(cand_pos_t e = d+1; e<= l; ++e){
-			energy_t common = get_WB(i,d-1)*expcp_pen[l-e]*expPPS_penalty;
+			common = get_WB(i,d-1)*expcp_pen[l-e]*expPPS_penalty;
 			contributions += get_energy(d,e)*beta2P(e,d)*common;
 			contributions += get_P(d,e)*expPSM_penalty*common;
 		}
@@ -411,12 +408,12 @@ void W_final_pf::compute_WBP(cand_pos_t i, cand_pos_t l){
 }
 
 void W_final_pf::compute_WPP(cand_pos_t i, cand_pos_t l){
-	pf_t contributions = 0;
+	pf_t contributions = 0, common = 0;
 
 	cand_pos_t il = index[i]+l-i;
 	for(cand_pos_t d=i; d<l; ++d){
 		for(cand_pos_t e = d+1; e<= l; ++e){
-			energy_t common = get_WP(i,d-1)*expPUP_pen[l-e]*expPPS_penalty;
+			common = get_WP(i,d-1)*expPUP_pen[l-e]*expPPS_penalty;
 			contributions += get_energy(d,e)*gamma2(e,d)*common;
 			contributions += get_P(d,e)*expPSP_penalty*common;
 		}
@@ -568,7 +565,7 @@ void W_final_pf::compute_PfromR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_p
 	cand_pos_t kl = index[k]+l-k;
 	for(cand_pos_t d=k+1; d< l; ++d){
 		contributions += get_PfromR(i,j,d,l)*get_WP(k,d-1);
-		contributions += get_PfromR(i,j,k,d)+get_WP(d+1,l);
+		contributions += get_PfromR(i,j,k,d)*get_WP(d+1,l);
 	}
 
 	contributions += get_PM(i,j,k,l)*gamma2(j,k)*expPB_penalty;
@@ -628,8 +625,8 @@ void W_final_pf::compute_PLiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 
 		for(cand_pos_t d= i+1; d<std::min(j,i+MAXLOOP); ++d){
         	for(cand_pos_t dp = j-1; dp > std::max(d+TURN,j-MAXLOOP); --dp){
-            	cand_pos_t u1 = d - (i+1) - 1; // check these
-                cand_pos_t u2 = (j-1) - dp - 1;
+            	cand_pos_t u1 = d-(i)-1; // check these
+                cand_pos_t u2 = (j)-dp-1;
                 contributions += get_e_intP(i,d,dp,j)*get_PL(d,dp,k,l)*scale[u1 + u2 + 2];
         	}
     	}
@@ -691,8 +688,8 @@ void W_final_pf::compute_PRiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 
 		for(cand_pos_t d= k+1; d<std::min(l,k+MAXLOOP); ++d){
         	for(cand_pos_t dp=l-1; dp > std::max(d+TURN,l-MAXLOOP); --dp){
-                cand_pos_t u1 = d - (k+1) - 1; // check these
-                cand_pos_t u2 = (l-1) - dp - 1;
+                cand_pos_t u1 = d-(k)-1; // check these
+                cand_pos_t u2 = (l)-dp-1;
             	contributions += get_e_intP(k,d,dp,l)*get_PR(i,j,d,dp)*scale[u1 + u2 + 2];
         	}
     	}
@@ -756,8 +753,8 @@ void W_final_pf::compute_PMiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 
 		for(cand_pos_t d= j-1; d>std::max(i,j-MAXLOOP); --d){
         	for (cand_pos_t dp=k+1; dp <std::min(l,k+MAXLOOP); ++dp) {
-                cand_pos_t u1 = d - (j-1) - 1; // check these
-                cand_pos_t u2 = (k+1) - dp - 1;
+                cand_pos_t u1 = (j)-d-1; // check these
+                cand_pos_t u2 = dp-(k)-1;
             	contributions += get_e_intP(d,j,k,dp)*get_PM(i,d,dp,l)*scale[u1 + u2 + 2];
         	}
     	}
@@ -773,10 +770,10 @@ void W_final_pf::compute_PMmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 
 	contributions += get_PM(i,j,k,l)*beta2P(j,k);
     for(cand_pos_t d=i; d<j; ++d){
-        contributions=get_PMmloop00(i,d,k,l)*get_WB(d+1,j);
+        contributions += get_PMmloop00(i,d,k,l)*get_WB(d+1,j);
     }
     for(cand_pos_t d=k+1; d<=l; ++d){
-        contributions=get_PMmloop00(i,j,d,l)*get_WB(k,d-1);
+        contributions += get_PMmloop00(i,j,d,l)*get_WB(k,d-1);
     }
 	PMmloop00[ij][kl]=contributions;
 }
@@ -822,8 +819,8 @@ void W_final_pf::compute_POiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 
 		for(cand_pos_t d= i+1; d<std::min(j,i+MAXLOOP); ++d){
         	for (cand_pos_t dp=l-1; dp >std::max(l-MAXLOOP,k); --dp) {
-                cand_pos_t u1 = d - (i+1) - 1; // check these
-                cand_pos_t u2 = (l-1) - dp - 1;
+                cand_pos_t u1 = d-(i)-1; // check these
+                cand_pos_t u2 = (l)-dp-1;
             	contributions += get_e_intP(i,d,dp,l)*get_PO(d,j,dp,k)*scale[u1 + u2 + 2];
         	}
     	}
@@ -872,15 +869,15 @@ void W_final_pf::compute_POmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 	POmloop10[i][j][kl] = contributions;
 }
 
-energy_t W_final_pf::get_WB(cand_pos_t i, cand_pos_t j){
+pf_t W_final_pf::get_WB(cand_pos_t i, cand_pos_t j){
 	if (i<=0 || j<=0 || i>n || j>n){
 		return 0;
 	}
 	if (i>j) return 1;
-	return (std::min(cp_penalty*(j-i+1),get_WBP(i,j)));
+	return expcp_pen[j-i+1]+get_WBP(i,j);
 }
 
-energy_t W_final_pf::get_WBP(cand_pos_t i, cand_pos_t j){
+pf_t W_final_pf::get_WBP(cand_pos_t i, cand_pos_t j){
 	if (i > j || i<=0 || j<=0 || i>n || j>n){
 		return 0;
 	}
@@ -888,15 +885,15 @@ energy_t W_final_pf::get_WBP(cand_pos_t i, cand_pos_t j){
 	return WBP[ij];
 }
 
-energy_t W_final_pf::get_WP(cand_pos_t i, cand_pos_t j){
+pf_t W_final_pf::get_WP(cand_pos_t i, cand_pos_t j){
 	if (i<=0 || j<=0 || i>n || j>n){
 		return 0;
 	}
 	if (i>j) return 1; // needed as this will happen 
-	return (std::min(PUP_penalty*(j-i+1),get_WPP(i,j)));
+	return expPUP_pen[j-i+1]+get_WPP(i,j);
 }
 
-energy_t W_final_pf::get_WPP(cand_pos_t i, cand_pos_t j){
+pf_t W_final_pf::get_WPP(cand_pos_t i, cand_pos_t j){
 	if (i > j  || i<=0 || j<=0 || i>n || j>n){
 		return 0;
 	}
@@ -904,7 +901,7 @@ energy_t W_final_pf::get_WPP(cand_pos_t i, cand_pos_t j){
 	return WPP[ij];
 }
 
-energy_t W_final_pf::get_P(cand_pos_t i, cand_pos_t j){
+pf_t W_final_pf::get_P(cand_pos_t i, cand_pos_t j){
 	if (i >= j  || i<=0 || j<=0 || i>n || j>n){
 		return 0;
 	}
@@ -912,7 +909,7 @@ energy_t W_final_pf::get_P(cand_pos_t i, cand_pos_t j){
 	return P[ij];
 }
 
-energy_t W_final_pf::get_PK(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::get_PK(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
@@ -924,7 +921,7 @@ energy_t W_final_pf::get_PK(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t
 	return PK[ij][kl];
 }
 
-energy_t W_final_pf::get_PL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::get_PL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
@@ -935,7 +932,7 @@ energy_t W_final_pf::get_PL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t
 	return PL[i][j][kl];
 }
 
-energy_t W_final_pf::get_PR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::get_PR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
@@ -947,7 +944,7 @@ energy_t W_final_pf::get_PR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t
 	return PR[ij][kl];
 }
 
-energy_t W_final_pf::get_PM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::get_PM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
@@ -966,7 +963,7 @@ energy_t W_final_pf::get_PM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t
 	return PM[ij][kl];
 }
 
-energy_t W_final_pf::get_PO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::get_PO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
@@ -977,7 +974,7 @@ energy_t W_final_pf::get_PO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t
 	return PO[i][j][kl];
 }
 
-energy_t W_final_pf::get_PfromL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::get_PfromL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
@@ -993,7 +990,7 @@ energy_t W_final_pf::get_PfromL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_p
 	return PfromL[i][j][kl];
 }
 
-energy_t W_final_pf::get_PfromR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::get_PfromR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
@@ -1010,7 +1007,7 @@ energy_t W_final_pf::get_PfromR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_p
 	return PfromR[ij][kl];
 }
 
-energy_t W_final_pf::get_PfromM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::get_PfromM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
@@ -1027,7 +1024,7 @@ energy_t W_final_pf::get_PfromM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_p
 	return PfromM[ij][kl];
 }
 
-energy_t W_final_pf::get_PfromO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::get_PfromO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
@@ -1043,7 +1040,7 @@ energy_t W_final_pf::get_PfromO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_p
 	return PfromO[i][j][kl];
 }
 
-energy_t W_final_pf::get_PLiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::get_PLiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
@@ -1058,7 +1055,7 @@ energy_t W_final_pf::get_PLiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 	return PLiloop[ij][kl];
 }
 
-energy_t W_final_pf::get_PLmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::get_PLmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
@@ -1070,7 +1067,7 @@ energy_t W_final_pf::get_PLmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 	return contributions;
 }
 
-energy_t W_final_pf::get_PLmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::get_PLmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
@@ -1082,7 +1079,7 @@ energy_t W_final_pf::get_PLmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 	return PLmloop00[ij][kl];
 }
 
-energy_t W_final_pf::get_PLmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::get_PLmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
@@ -1093,7 +1090,7 @@ energy_t W_final_pf::get_PLmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 	return PLmloop01[i][j][kl];
 }
 
-energy_t W_final_pf::get_PLmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::get_PLmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
@@ -1104,7 +1101,7 @@ energy_t W_final_pf::get_PLmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 	return PLmloop10[i][j][kl];
 }
 
-energy_t W_final_pf::get_PRiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::get_PRiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
@@ -1119,7 +1116,7 @@ energy_t W_final_pf::get_PRiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 	return PRiloop[ij][kl];
 }
 
-energy_t W_final_pf::get_PRmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::get_PRmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
@@ -1131,7 +1128,7 @@ energy_t W_final_pf::get_PRmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 	return contributions;
 }
 
-energy_t W_final_pf::get_PRmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::get_PRmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
@@ -1143,7 +1140,7 @@ energy_t W_final_pf::get_PRmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 	return PRmloop00[ij][kl];
 }
 
-energy_t W_final_pf::get_PRmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::get_PRmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
@@ -1155,7 +1152,7 @@ energy_t W_final_pf::get_PRmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 	return PRmloop01[ij][kl];
 }
 
-energy_t W_final_pf::get_PRmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::get_PRmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
@@ -1167,14 +1164,14 @@ energy_t W_final_pf::get_PRmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 	return PRmloop10[ij][kl];
 }
 
-energy_t W_final_pf::get_PMiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::get_PMiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
 	assert(!(i<=0 || l> n));
 
 	const int ptype_closing = pair[S_[j]][S_[k]];
-	if(ptype_closing == 0) return INF;
+	if(ptype_closing == 0) return 0;
 
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
@@ -1182,7 +1179,7 @@ energy_t W_final_pf::get_PMiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 	return PMiloop[ij][kl];
 }
 
-energy_t W_final_pf::get_PMmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::get_PMmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
@@ -1194,7 +1191,7 @@ energy_t W_final_pf::get_PMmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 	return contributions;
 }
 
-energy_t W_final_pf::get_PMmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::get_PMmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
@@ -1206,7 +1203,7 @@ energy_t W_final_pf::get_PMmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 	return PMmloop00[ij][kl];
 }
 
-energy_t W_final_pf::get_PMmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::get_PMmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
@@ -1218,7 +1215,7 @@ energy_t W_final_pf::get_PMmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 	return PMmloop01[ij][kl];
 }
 
-energy_t W_final_pf::get_PMmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::get_PMmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
@@ -1230,7 +1227,7 @@ energy_t W_final_pf::get_PMmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 	return PMmloop10[ij][kl];
 }
 
-energy_t W_final_pf::get_POiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::get_POiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
@@ -1245,7 +1242,7 @@ energy_t W_final_pf::get_POiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 	return POiloop[ij][kl];
 }
 
-energy_t W_final_pf::get_POmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::get_POmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
@@ -1257,7 +1254,7 @@ energy_t W_final_pf::get_POmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 	return contributions;
 }
 
-energy_t W_final_pf::get_POmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::get_POmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
@@ -1269,7 +1266,7 @@ energy_t W_final_pf::get_POmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 	return POmloop00[ij][kl];
 }
 
-energy_t W_final_pf::get_POmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::get_POmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
@@ -1280,7 +1277,7 @@ energy_t W_final_pf::get_POmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 	return POmloop01[i][j][kl];
 }
 
-energy_t W_final_pf::get_POmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::get_POmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
@@ -1290,9 +1287,6 @@ energy_t W_final_pf::get_POmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 
 	return POmloop10[i][j][kl];
 }
-
-
-
 
 pf_t W_final_pf::compute_int(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l) {
     const pair_type ptype_closing = pair[S_[i]][S_[j]];
@@ -1317,16 +1311,16 @@ pf_t W_final_pf::get_e_intP(cand_pos_t i, cand_pos_t ip, cand_pos_t jp, cand_pos
 
 
 // penalty for closing pair i.l or l.i of an ordinary multiloop
-energy_t W_final_pf::beta2(cand_pos_t i, cand_pos_t l){
+pf_t W_final_pf::beta2(cand_pos_t i, cand_pos_t l){
 	return expb_penalty;
 }
 
 // penalty for closing pair i.l or l.i of a multiloop that spans a band
-energy_t W_final_pf::beta2P(cand_pos_t i, cand_pos_t l){
+pf_t W_final_pf::beta2P(cand_pos_t i, cand_pos_t l){
 	return expbp_penalty;
 }
 
 // penalty for closing pair i.l or l.i of a pseudoloop
-energy_t W_final_pf::gamma2(cand_pos_t i, cand_pos_t l){
-	return 1;
+pf_t W_final_pf::gamma2(cand_pos_t i, cand_pos_t l){
+	return 1.0;
 }

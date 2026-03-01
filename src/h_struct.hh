@@ -8,7 +8,7 @@
 // the data structure stored in the V array
 typedef struct minimum_fold
 {
-    short int pair;
+    cand_pos_t pair;
     char type;                  // type can be 'H', 'S', 'I', 'M'
     minimum_fold()
     {
@@ -16,24 +16,6 @@ typedef struct minimum_fold
         type = NONE;
     }
 } minimum_fold;
-
-// This node is used to keep the intervals that need to be further backtracked
-// struct seq_interval
-// {
-//   int i;
-//   int j;
-//   int energy;                        // it is used
-//   char type;
-//   seq_interval* next;
-
-//   void copy (seq_interval *other)
-//   {
-//     other->i = i;
-//     other->j = j;
-//     other->energy = energy;
-//     other->type = type;
-//   }
-// };
 
 typedef struct brack_type
 	{

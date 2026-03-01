@@ -208,8 +208,8 @@ energy_t s_energy_matrix::E_MbLoop(const energy_t WM2ij, const energy_t WM2ip1j,
 }
 void s_energy_matrix::compute_WMv_WMp(cand_pos_t i, cand_pos_t j, energy_t WMB){
 	if(j-i+1<4) return;
-	cand_pos_t ij = index[(i)]+(j)-(i);
-	cand_pos_t ijminus1 = index[(i)]+(j)-1-(i);
+	cand_pos_t ij = index[i]+(j)-(i);
+	cand_pos_t ijminus1 = index[i]+(j)-1-(i);
 
 	WMv[ij] = E_MLStem(get_energy(i,j),get_energy(i+1,j),get_energy(i,j-1),get_energy(i+1,j-1),S_,params_,i,j,n);
 	WMp[ij] = WMB+PSM_penalty+b_penalty;

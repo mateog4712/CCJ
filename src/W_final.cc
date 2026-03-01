@@ -65,7 +65,6 @@ double W_final::ccj(){
 			V->compute_energy_WM(i,j,P->P);
 		}
 	}
-
 	for (cand_pos_t j= TURN+1; j <= n; j++){
 		energy_t m1 = INF, m2 = INF, m3 = INF;
 		m1 = W[j-1];

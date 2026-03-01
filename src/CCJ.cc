@@ -71,7 +71,7 @@ int main (int argc, char *argv[])
 		if(!args_info.input_file_given) std::getline(std::cin,seq);
 	}
 
-    int dangles = args_info.dangles_given ? dangle_model : 2;
+    int dangle_ccj = args_info.dangles_given ? dangle_model : 2;
 
     std::transform(seq.begin(), seq.end(), seq.begin(), ::toupper);
 	if(!args_info.noConv_given) seqtoRNA(seq);
@@ -89,8 +89,8 @@ int main (int argc, char *argv[])
 	bool PSplot = true;
 	double energy;
 	pf_t pf_energy;
-    std::string structure = ccj(seq,energy,dangles);
-	std::string pf_structure = ccj_pf(seq,pf_energy,structure,energy,dangles,num_samples,PSplot);
+    std::string structure = ccj(seq,energy,dangle_ccj);
+	std::string pf_structure = ccj_pf(seq,pf_energy,structure,energy,dangle_ccj,num_samples,PSplot);
 
     std::cout << seq << std::endl;
     std::cout << structure << " (" << energy << ")" << std::endl;
