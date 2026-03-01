@@ -676,23 +676,27 @@ void W_final::backtrack(seq_interval *cur_interval){
 		case P_PLiloop:
 		case P_PLiloop5:
 		case P_PLmloop:
-		case P_PLmloop0:
-		case P_PLmloop1:
+		case P_PLmloop00:
+		case P_PLmloop01:
+		case P_PLmloop10:
 		case P_PRiloop:
 		case P_PRiloop5:
 		case P_PRmloop:
-		case P_PRmloop0:
-		case P_PRmloop1:
+		case P_PRmloop00:
+		case P_PRmloop01:
+		case P_PRmloop10:
 		case P_PMiloop:
 		case P_PMiloop5:
 		case P_PMmloop:
-		case P_PMmloop0:
-		case P_PMmloop1:
+		case P_PMmloop00:
+		case P_PMmloop01:
+		case P_PMmloop10:
 		case P_POiloop:
 		case P_POiloop5:
 		case P_POmloop:
-		case P_POmloop0:
-		case P_POmloop1:
+		case P_POmloop00:
+		case P_POmloop01:
+		case P_POmloop10:
 		case P_WB:
 		case P_WBP:
 		case P_WP:

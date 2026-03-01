@@ -6,6 +6,7 @@
 #include <iostream>
 #include <math.h>
 #include <algorithm>
+#include <cassert>
 
 #define debug 0
 
@@ -39,38 +40,53 @@ void pseudo_loop::allocate_space()
 
 	std::vector<energy_t> row_5;
 	row_5.resize(MAXLOOP+1,INF);
+	// Mateo - Mirroring ModifiedCCJ, changing PL from n^2xn^2 to nxnxn^2
+	PL.resize(n+1);
+	PO.resize(n+1);
+	PfromL.resize(n+1);
+	PfromO.resize(n+1);
+	PLmloop01.resize(n+1);
+	PLmloop10.resize(n+1);
+	POmloop01.resize(n+1);
+	POmloop10.resize(n+1);
+	for(cand_pos_t i = 0; i <= n; ++i) {
+		for(cand_pos_t j = 0; j <= n; ++j) {
+			PL[i].push_back(row);
+			PO[i].push_back(row);
+			PfromL[i].push_back(row);
+			PfromO[i].push_back(row);
+
+			PLmloop01[i].push_back(row);
+			PLmloop10[i].push_back(row);
+			
+			POmloop01[i].push_back(row);
+			POmloop10[i].push_back(row);
+		}
+	}
 
 	for(cand_pos_t i = 0; i < total_length; ++i) {
 		PK.push_back(row);
-		PL.push_back(row);
 		PR.push_back(row);
 		PM.push_back(row);
-		PO.push_back(row);
 
-		PfromL.push_back(row);
 		PfromR.push_back(row);
 		PfromM.push_back(row);
-		PfromO.push_back(row);
 
 		PLiloop.push_back(row);
-		PLmloop.push_back(row);
-		PLmloop0.push_back(row);
-		PLmloop1.push_back(row);
+		PLmloop00.push_back(row);
 
 		PRiloop.push_back(row);
-		PRmloop.push_back(row);
-		PRmloop0.push_back(row);
-		PRmloop1.push_back(row);
+		PRmloop00.push_back(row);
+		PRmloop01.push_back(row);
+		PRmloop10.push_back(row);
 
 		PMiloop.push_back(row);
-		PMmloop.push_back(row);
-		PMmloop0.push_back(row);
-		PMmloop1.push_back(row);
+		PMmloop00.push_back(row);
+		PMmloop01.push_back(row);
+		PMmloop10.push_back(row);
 
 		POiloop.push_back(row);
-		POmloop.push_back(row);
-		POmloop0.push_back(row);
-		POmloop1.push_back(row);
+		POmloop00.push_back(row);
 	}
 }
 
@@ -96,35 +112,35 @@ void pseudo_loop::compute_energies(cand_pos_t i, cand_pos_t l)
 
 			compute_PLiloop(i,j,k,l);
 
-			compute_PLmloop(i,j,k,l);
+			compute_PLmloop00(i,j,k,l);
 
-			compute_PLmloop0(i,j,k,l);
+			compute_PLmloop01(i,j,k,l);
 
-			compute_PLmloop1(i,j,k,l);
+			compute_PLmloop10(i,j,k,l);
 
 			compute_PRiloop(i,j,k,l);
 
-			compute_PRmloop(i,j,k,l);
+			compute_PRmloop00(i,j,k,l);
 
-			compute_PRmloop0(i,j,k,l);
+			compute_PRmloop01(i,j,k,l);
 
-			compute_PRmloop1(i,j,k,l);
+			compute_PRmloop10(i,j,k,l);
 
 			compute_PMiloop(i,j,k,l);
 
-			compute_PMmloop(i,j,k,l);
+			compute_PMmloop00(i,j,k,l);
 
-			compute_PMmloop0(i,j,k,l);
+			compute_PMmloop01(i,j,k,l);
 
-			compute_PMmloop1(i,j,k,l);
+			compute_PMmloop10(i,j,k,l);
 
 			compute_POiloop(i,j,k,l);
 
-			compute_POmloop(i,j,k,l);
+			compute_POmloop00(i,j,k,l);
 
-			compute_POmloop0(i,j,k,l);
+			compute_POmloop01(i,j,k,l);
 
-			compute_POmloop1(i,j,k,l);
+			compute_POmloop10(i,j,k,l);
 
 			compute_PL(i,j,k,l);
 
@@ -159,9 +175,9 @@ void pseudo_loop::compute_WBP(int i, int l){
 			// Hosna, August 26, 2014
 			// comparing calculation of WI in HFold and WPP in CCJ, I found that
 			// in HFold we add another penalty called PPS_penalty for closed regions inside a pseudoloop or multiloop that spans a band
-			energy_t common = get_WB(i,d-1) + beta1P*(l-e)+PPS_penalty;
+			energy_t common = get_WB(i,d-1) + cp_penalty*(l-e)+PPS_penalty;
 			b1 = V->get_energy(d,e) + beta2P(e,d) + common;
-			b2 = get_P(d,e) + gamma0m + common;
+			b2 = get_P(d,e) + PSM_penalty + common;
 			min_energy = std::min({min_energy,b1,b2});
 		}
 	}
@@ -179,9 +195,9 @@ void pseudo_loop::compute_WPP(cand_pos_t i, cand_pos_t l){
 			// Hosna, August 26, 2014
 			// comparing calculation of WI in HFold and WPP in CCJ, I found that
 			// in HFold we add another penalty called PPS_penalty for closed regions inside a pseudoloop or multiloop that spans a band
-			energy_t common = get_WP(i,d-1) + gamma1*(l-e) +PPS_penalty;
+			energy_t common = get_WP(i,d-1) + PUP_penalty*(l-e) +PPS_penalty;
 			b1 = V->get_energy(d,e) + gamma2(e,d) + common;
-			b2 = get_P(d,e) + gamma0P + common;
+			b2 = get_P(d,e) + PSP_penalty + common;
 			min_energy = std::min({min_energy,b1,b2});
 		}
 	}
@@ -225,7 +241,7 @@ void pseudo_loop::compute_PK(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	// based on original recurrences we should have d<l, and
 	// it is not clear to me why we have d<=l here, so I am changing this back to original
 	// by changing d<=l to d<l
-	for(int d=k+1; d< l; ++d){
+	for(cand_pos_t d=k+1; d< l; ++d){
 		energy_t tmp = get_PK(i,j,d,l) + get_WP(k,d-1);
 		b2=std::min(b2,tmp);
 	}
@@ -244,7 +260,6 @@ void pseudo_loop::compute_PK(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 void pseudo_loop::compute_PL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF,b1=INF,b2=INF,b3=INF;
 
-	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 	const int ptype_closing = pair[S_[i]][S_[j]];
 
@@ -268,7 +283,7 @@ void pseudo_loop::compute_PL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	}
 	min_energy = std::min({min_energy,b1,b2,b3});
 	if (min_energy < INF/2){
-		PL[ij][kl]=min_energy;
+		PL[i][j][kl]=min_energy;
 	}
 }
 
@@ -341,7 +356,6 @@ void pseudo_loop::compute_PM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 void pseudo_loop::compute_PO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF,b1=INF,b2=INF,b3=INF;
 
-	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
 	const int ptype_closing = pair[S_[i]][S_[l]];
@@ -365,14 +379,13 @@ void pseudo_loop::compute_PO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	}
 	min_energy = std::min({min_energy,b1,b2,b3});
 	if (min_energy < INF/2){
-		PO[ij][kl]=min_energy;
+		PO[i][j][kl]=min_energy;
 	}
 }
 
 void pseudo_loop::compute_PfromL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF,b1=INF,b2=INF,b3=INF,b4=INF,b5=INF;
 
-	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
 	for(cand_pos_t d=i+1; d< j; ++d){
@@ -395,7 +408,7 @@ void pseudo_loop::compute_PfromL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 
 	min_energy = std::min({min_energy,b1,b2,b3,b4,b5});
 	if (min_energy < INF/2){
-		PfromL[ij][kl]=min_energy;
+		PfromL[i][j][kl]=min_energy;
 	}
 }
 
@@ -454,7 +467,6 @@ void pseudo_loop::compute_PfromM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 void pseudo_loop::compute_PfromO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF,b1=INF,b2=INF,b3=INF,b4=INF;
 
-	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
 	for(cand_pos_t d=i+1; d< j; ++d){
@@ -476,7 +488,7 @@ void pseudo_loop::compute_PfromO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 
 	min_energy = std::min({min_energy,b1,b2,b3,b4});
 	if (min_energy < INF/2){
-		PfromO[ij][kl]=min_energy;
+		PfromO[i][j][kl]=min_energy;
 	}
 
 }
@@ -503,57 +515,57 @@ void pseudo_loop::compute_PLiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	}
 }
 
-void pseudo_loop::compute_PLmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,b1=INF,b2=INF;
+void pseudo_loop::compute_PLmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	energy_t min_energy = INF,tmp=INF;
 
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
-	for(cand_pos_t d = i+1; d < j-1; ++d){
-		// Hosna, Feb 23, 2014
-		// Since PLmloop comes from PL and in PL i and j must pair, so we must have the same thing here
-		// therefore we should have PLmloop0(d,j-1,k,l)
-		energy_t tmp = get_PLmloop0(d,j-1,k,l) + get_WBP(i+1,d-1) + beta0P + beta2P(j,i);
-		b1 = std::min(b1,tmp);
-		energy_t tmp2 = get_PLmloop1(d,j-1,k,l) + get_WB(i+1,d-1) + beta0P + beta2P(j,i);
-		b2 = std::min(b2,tmp2);
-	}
-	min_energy = std::min(b1,b2);
+	min_energy = get_PL(i,j,k,l)+beta2P(j,i);
+    for(cand_pos_t d = i; d<=j; ++d){
+        if (d>i){
+            tmp=get_WB(i,d-1)+get_PLmloop00(d,j,k,l);
+            min_energy = std::min(min_energy,tmp);
+        }
+        if(d<j){
+            tmp=get_PLmloop00(i,d,k,l)+get_WB(d+1,j);
+            min_energy = std::min(min_energy,tmp);
+        }
+
+    }
 	if (min_energy < INF/2){
-		PLmloop[ij][kl]=min_energy;
+		PLmloop00[ij][kl]=min_energy;
 	}
 }
 
-void pseudo_loop::compute_PLmloop0(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF;
+void pseudo_loop::compute_PLmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	energy_t min_energy = INF,tmp=INF;
 
-	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
-	for(cand_pos_t d = i+1; d < j; ++d){
-		// Hosna, feb 23, 2014
-		// changed the recurrences so that j-1 is accounted for in PLmloop
-		energy_t tmp = get_PL(i,d,k,l) + get_WB(d+1,j) + beta2P(d,i);
-		min_energy = std::min(min_energy,tmp);
-	}
+	for(cand_pos_t d = i; d < j; ++d){
+        tmp = get_PLmloop00(i,d,k,l) + get_WBP(d+1,j);
+        min_energy = std::min(min_energy,tmp);
+    }
 	if (min_energy < INF/2){
-		PLmloop0[ij][kl] = min_energy;
+		PLmloop01[i][j][kl] = min_energy;
 	}
 
 }
 
-void pseudo_loop::compute_PLmloop1(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	cand_pos_t min_energy = INF;
+void pseudo_loop::compute_PLmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	energy_t min_energy = INF,tmp=INF;
 
-	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
-	for(cand_pos_t d = i+1; d < j; ++d){
-		// Hosna, feb 23, 2014
-		// changed the recurrences so that j-1 is accounted for in PLmloop
-		energy_t tmp = get_PL(i,d,k,l) + get_WBP(d+1,j) + beta2P(d,i);
-		min_energy = std::min(min_energy,tmp);
-	}
+	for(cand_pos_t d = i+1; d <= j; ++d){
+        tmp = get_WBP(i,d-1) + get_PLmloop00(d,j,k,l);
+        min_energy = std::min(min_energy,tmp);
+        if(d<j){
+            tmp = get_PLmloop10(i,d,k,l) + get_WB(d+1,j);
+            min_energy = std::min(min_energy,tmp);
+        }
+    }
 	if (min_energy < INF/2){
-		PLmloop1[ij][kl] = min_energy;
+		PLmloop10[i][j][kl] = min_energy;
 	}
 
 }
@@ -581,54 +593,59 @@ void pseudo_loop::compute_PRiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 
 }
 
-void pseudo_loop::compute_PRmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-
-	energy_t min_energy = INF,b1=INF,b2=INF;
+void pseudo_loop::compute_PRmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	energy_t min_energy = INF,tmp=INF;
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
-	//Hosna Feb 23, 2014
-	// changed the recurrences to have l-1 instead of l in PRmloop and removed l-1 from PRmloop0,1, as we are accounting for k.l here
-	for(cand_pos_t d = k+1; d < l-1; ++d){
-		energy_t tmp = get_PRmloop0(i,j,d,l-1) + get_WBP(k+1,d-1) + beta0P + beta2P(l,k);
-		b1 = std::min(b1,tmp);
-		tmp = get_PRmloop1(i,j,d,l-1) + get_WB(k+1,d-1) + beta0P + beta2P(l,k);
-		b2 = std::min(b2,tmp);
-	}
-	min_energy = std::min(b1,b2);
+	min_energy = get_PR(i,j,k,l)+beta2P(l,k);
+	for(cand_pos_t d=k; d<=l; ++d){
+        if(d>k){
+            tmp=get_WB(k,d-1)+get_PRmloop00(i,j,d,l);
+            min_energy = std::min(min_energy,tmp);
+        }
+        if (d<l){
+            tmp = get_PRmloop00(i,j,k,d)+get_WB(d+1,l);
+            min_energy = std::min(min_energy,tmp);
+        }
+    }
 	if (min_energy < INF/2){
-		PRmloop[ij][kl]=min_energy;
+		PRmloop00[ij][kl]=min_energy;
 	}
 
 }
 
 
-void pseudo_loop::compute_PRmloop0(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF;
+void pseudo_loop::compute_PRmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	energy_t min_energy = INF,tmp=INF;
 
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
-	for(cand_pos_t d = k+1; d < l; ++d){
-		energy_t tmp = get_PR(i,j,k,d) + get_WB(d+1,l) + beta2P(k,d);
-		min_energy = std::min(min_energy,tmp);
-	}
+
+	min_energy = get_PRmloop01(i,j,k,l-1)+cp_penalty;
+    for(cand_pos_t d = k; d < l; d++){
+        tmp = get_PRmloop00(i,j,k,d) + get_WBP(d+1,l);
+        min_energy = std::min(min_energy,tmp);
+    }
 	if (min_energy < INF/2){
-		PRmloop0[ij][kl] = min_energy;
+		PRmloop01[ij][kl] = min_energy;
 	}
 
 }
 
-void pseudo_loop::compute_PRmloop1(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF;
+void pseudo_loop::compute_PRmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	energy_t min_energy = INF,tmp=INF;
 
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
-	for(cand_pos_t d = k+1; d < l; ++d){
-		energy_t tmp = get_PR(i,j,k,d) + get_WBP(d+1,l) + beta2P(k,d);
-		min_energy = std::min(min_energy,tmp);
-	}
+
+	min_energy = get_PRmloop10(i,j,k+1,l)+ cp_penalty;
+    for(cand_pos_t d = k+1; d <= l; ++d){
+        tmp = get_WBP(k,d-1) + get_PRmloop00(i,j,d,l);
+        min_energy = std::min(min_energy,tmp);
+    }
 	if (min_energy < INF/2){
-		PRmloop1[ij][kl] = min_energy;
+		PRmloop10[ij][kl] = min_energy;
 	}
 
 }
@@ -657,8 +674,8 @@ void pseudo_loop::compute_PMiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 
 }
 
-void pseudo_loop::compute_PMmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,b1=INF,b2=INF;
+void pseudo_loop::compute_PMmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	energy_t min_energy = INF,tmp=INF;
 
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
@@ -666,47 +683,56 @@ void pseudo_loop::compute_PMmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	// Hosna Feb 23, 2014
 	// changed the recurrence of PMmloop, to have k+1 instead of k when calling PMmloop0,1, and removed k+1 from PMmloop0,1
 	// as j.k pair is accounted for in this recurrence
-	for(cand_pos_t d = i+1; d < j; ++d){
-		energy_t tmp = get_PMmloop0(i,d,k+1,l) + get_WBP(d+1,j-1) + beta0P + beta2P(j,k);
-		b1 = std::min(b1,tmp);
-		energy_t tmp2 = get_PMmloop1(i,d,k+1,l) + get_WB(d+1,j-1) + beta0P + beta2P(j,k);
-		b2 = std::min(b2,tmp2);
-	}
-	min_energy = std::min(b1,b2);
+	min_energy = get_PM(i,j,k,l)+beta2P(j,k);
+    for(cand_pos_t d=i; d<j; ++d){
+        tmp=get_PMmloop00(i,d,k,l)+get_WB(d+1,j);
+        min_energy = std::min(min_energy,tmp);
+    }
+    for(cand_pos_t d=k+1; d<=l; ++d){
+        tmp=get_PMmloop00(i,j,d,l)+get_WB(k,d-1);
+        min_energy = std::min(min_energy,tmp);
+    }
 
 	if (min_energy < INF/2){
-		PMmloop[ij][kl]=min_energy;
+		PMmloop00[ij][kl]=min_energy;
 	}
 }
 
 
-void pseudo_loop::compute_PMmloop0(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF;
+void pseudo_loop::compute_PMmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	energy_t min_energy = INF,tmp=INF;
 
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
-	for(cand_pos_t d = k+1; d < l; ++d){
-		energy_t tmp = get_PM(i,j,d,l) + get_WB(k,d-1) + beta2P(j,d);
-		min_energy = std::min(min_energy,tmp);
-	}
+	min_energy = get_PMmloop01(i,j,k+1,l)+cp_penalty;
+	for(cand_pos_t d = k; d < l; ++d){
+        tmp = get_POmloop00(i,j,k,d) + get_WBP(d+1,l);
+        min_energy = std::min(min_energy,tmp);
+    }
 
 	if (min_energy < INF/2){
-		PMmloop0[ij][kl] = min_energy;
+		PMmloop01[ij][kl] = min_energy;
 	}
 }
 
-void pseudo_loop::compute_PMmloop1(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF;
+void pseudo_loop::compute_PMmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	energy_t min_energy = INF,tmp=INF;
 
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
-	for(cand_pos_t d = k+1; d < l; ++d){
-		energy_t tmp = get_PM(i,j,d,l) + get_WBP(k,d-1) + beta2P(j,d);
-		min_energy = std::min(min_energy,tmp);
-	}
+
+	min_energy = get_PMmloop10(i,j-1,k,l)+cp_penalty;
+	for(cand_pos_t d=i+1; d<=j;++d){
+        tmp=get_WBP(i,d-1)+get_POmloop00(d,j,k,l);
+        min_energy = std::min(min_energy,tmp);
+    }
+    for(cand_pos_t d = k+1; d < l; ++d){
+        tmp = get_POmloop10(i,j,k,d) + get_WB(d+1,l);
+        min_energy = std::min(min_energy,tmp);
+    }
 
 	if (min_energy < INF/2){
-		PMmloop1[ij][kl] = min_energy;
+		PMmloop10[ij][kl] = min_energy;
 	}
 }
 
@@ -734,57 +760,59 @@ void pseudo_loop::compute_POiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 
 }
 
-void pseudo_loop::compute_POmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,b1=INF,b2=INF;
+void pseudo_loop::compute_POmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	energy_t min_energy = INF,tmp=INF;
 
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
-	// Hosna Feb 23, 2014
-	// changed recurrences for POmloop to have l-1 instead of l and removed l-1 from POmloop0,1 as i.l is accounted for here in this recurrence
-	for(cand_pos_t d = i+1; d < j; ++d){
-		energy_t tmp = get_POmloop0(d,j,k,l-1) + get_WBP(i+1,d-1) + beta0P + beta2P(l,i);
-		b1 = std::min(b1,tmp);
-		energy_t tmp2 = get_POmloop1(d,j,k,l-1) + get_WB(i+1,d-1) + beta0P + beta2P(l,i);
-		b2 = std::min(b2,tmp2);
-	}
-	min_energy = std::min(b1,b2);
+	min_energy = get_PO(i,j,k,l)+beta2P(l,i);
+    for(cand_pos_t d=i+1; d<=j; ++d){
+        tmp = get_WB(i,d-1)+get_POmloop00(d,j,k,l);
+        min_energy = std::min(min_energy,tmp);
+    }
+    for(cand_pos_t d=k; d<l; ++d){
+        tmp = get_POmloop00(i,j,k,d)+get_WB(d+1,l);
+        min_energy = std::min(min_energy,tmp);
+    }
 
 	if (min_energy < INF/2){
-		POmloop[ij][kl]=min_energy;
+		POmloop00[ij][kl]=min_energy;
 	}
 
 }
 
 
-void pseudo_loop::compute_POmloop0(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+void pseudo_loop::compute_POmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF;
 
-	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
-	for(cand_pos_t d = k+1; d < l; ++d){
-		energy_t tmp = get_PO(i,j,k,d) + get_WB(d+1,l) + beta2P(d,i);
-		min_energy = std::min(min_energy,tmp);
-	}
+	for(cand_pos_t d = k; d < l; ++d){
+        energy_t tmp = get_POmloop00(i,j,k,d) + get_WBP(d+1,l);
+        min_energy = std::min(min_energy,tmp);
+    }
 
 	if (min_energy < INF/2){
-		POmloop0[ij][kl] = min_energy;
+		POmloop01[i][j][kl] = min_energy;
 	}
 
 }
 
-void pseudo_loop::compute_POmloop1(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF;
+void pseudo_loop::compute_POmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	energy_t min_energy = INF,tmp=INF;
 
-	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
-	for(cand_pos_t d = k+1; d < l; ++d){
-		energy_t tmp = get_PO(i,j,k,d) + get_WBP(d+1,l) + beta2P(d,i);
-		min_energy = std::min(min_energy,tmp);
-	}
+	for(cand_pos_t d=i+1; d<=j;++d){
+        tmp=get_WBP(i,d-1)+get_POmloop00(d,j,k,l);
+        min_energy = std::min(min_energy,tmp);
+    }
+    for(cand_pos_t d = k+1; d < l; ++d){
+        tmp = get_POmloop10(i,j,k,d) + get_WB(d+1,l);
+        min_energy = std::min(min_energy,tmp);
+    }
 
 	if (min_energy < INF/2){
-		POmloop1[ij][kl] = min_energy;
+		POmloop10[i][j][kl] = min_energy;
 	}
 }
 
@@ -793,7 +821,7 @@ energy_t pseudo_loop::get_WB(cand_pos_t i, cand_pos_t j){
 	if (i<=0 || j<=0 || i>n || j>n){
 		return INF;
 	}
-	return (std::min(beta1P*(j-i+1),get_WBP(i,j)));
+	return (std::min(cp_penalty*(j-i+1),get_WBP(i,j)));
 }
 
 energy_t pseudo_loop::get_WBP(cand_pos_t i, cand_pos_t j){
@@ -809,7 +837,7 @@ energy_t pseudo_loop::get_WP(cand_pos_t i, cand_pos_t j){
 		return INF;
 	}
 	if (i>j) return 0; // needed as this will happen 
-	return (std::min(gamma1*(j-i+1),get_WPP(i,j)));
+	return (std::min(PUP_penalty*(j-i+1),get_WPP(i,j)));
 }
 
 energy_t pseudo_loop::get_WPP(cand_pos_t i, cand_pos_t j){
@@ -836,9 +864,8 @@ energy_t pseudo_loop::get_PK(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	// adding impossible cases
 	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
 	// are not needed as they are most likely expensive time-wise
-	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-		return INF;
-	}
+	assert(!(i<=0 || l> n));
+	
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
@@ -853,13 +880,11 @@ energy_t pseudo_loop::get_PL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	// adding impossible cases
 	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
 	// are not needed as they are most likely expensive time-wise
-	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-		return INF;
-	}
-	cand_pos_t ij = index[i]+j-i;
+	assert(!(i<=0 || l> n));
+
 	cand_pos_t kl = index[k]+l-k;
 
-	return PL[ij][kl];
+	return PL[i][j][kl];
 }
 
 energy_t pseudo_loop::get_PR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -870,9 +895,8 @@ energy_t pseudo_loop::get_PR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	// adding impossible cases
 	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
 	// are not needed as they are most likely expensive time-wise
-	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-		return INF;
-	}
+	assert(!(i<=0 || l> n));
+
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
@@ -887,9 +911,8 @@ energy_t pseudo_loop::get_PM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	// adding impossible cases
 	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
 	// are not needed as they are most likely expensive time-wise
-	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-		return INF;
-	}
+	assert(!(i<=0 || l> n));
+
 	int ptype_closing = pair[S_[j]][S_[k]];
 	if (ptype_closing == 0){
 		return INF;
@@ -911,13 +934,11 @@ energy_t pseudo_loop::get_PO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	// adding impossible cases
 	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
 	// are not needed as they are most likely expensive time-wise
-	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-		return INF;
-	}
-	cand_pos_t ij = index[i]+j-i;
+	assert(!(i<=0 || l> n));
+
 	cand_pos_t kl = index[k]+l-k;
 
-	return PO[ij][kl];
+	return PO[i][j][kl];
 }
 
 energy_t pseudo_loop::get_PfromL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -928,9 +949,8 @@ energy_t pseudo_loop::get_PfromL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 	// adding impossible cases
 	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
 	// are not needed as they are most likely expensive time-wise
-	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-		return INF;
-	}
+	assert(!(i<=0 || l> n));
+
 	if (i==j && k==l){
 		// Hosna, August 13, 2014
 		// in some cases it used P_fromM to exit from a case with no band!
@@ -938,10 +958,9 @@ energy_t pseudo_loop::get_PfromL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 		if(ptype_closing == 0) return INF;
 		else return gamma2(j,k) + gamma2(k,j);
 	}
-	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
-	return PfromL[ij][kl];
+	return PfromL[i][j][kl];
 }
 
 energy_t pseudo_loop::get_PfromR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -952,9 +971,8 @@ energy_t pseudo_loop::get_PfromR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 	// adding impossible cases
 	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
 	// are not needed as they are most likely expensive time-wise
-	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-		return INF;
-	}
+	assert(!(i<=0 || l> n));
+
 	if (i==j && k==l){
 		// Hosna, August 13, 2014
 		// in some cases it used P_fromM to exit from a case with no band!
@@ -976,9 +994,8 @@ energy_t pseudo_loop::get_PfromM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 	// adding impossible cases
 	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
 	// are not needed as they are most likely expensive time-wise
-	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-		return INF;
-	}
+	assert(!(i<=0 || l> n));
+
 	if (i==j && k==l){
 		// Hosna, August 13, 2014
 		// in some cases it used P_fromM to exit from a case with no band!
@@ -1000,9 +1017,8 @@ energy_t pseudo_loop::get_PfromO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 	// adding impossible cases
 	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
 	// are not needed as they are most likely expensive time-wise
-	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-		return INF;
-	}
+	assert(!(i<=0 || l> n));
+
 	if (i==j && k==l){
 		// Hosna, August 13, 2014
 		// in some cases it used P_fromM to exit from a case with no band!
@@ -1010,10 +1026,9 @@ energy_t pseudo_loop::get_PfromO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 		if(ptype_closing == 0) return INF;
 		else return 0;
 	}
-	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
-	return PfromO[ij][kl];
+	return PfromO[i][j][kl];
 }
 
 energy_t pseudo_loop::get_PLiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -1024,9 +1039,8 @@ energy_t pseudo_loop::get_PLiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	// adding impossible cases
 	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
 	// are not needed as they are most likely expensive time-wise
-	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-		return INF;
-	}
+	assert(!(i<=0 || l> n));
+
 	const int ptype_closing = pair[S_[i]][S_[j]];
 	if(ptype_closing == 0) return INF;
 
@@ -1044,16 +1058,15 @@ energy_t pseudo_loop::get_PLmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	// adding impossible cases
 	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
 	// are not needed as they are most likely expensive time-wise
-	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-		return INF;
-	}
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
+	assert(!(i<=0 || l> n));
 
-	return PLmloop[ij][kl];
+	energy_t b1 = get_PLmloop10(i+1,j-1,k,l)+ ap_penalty + beta2P(j,i);
+    energy_t b2 = get_PLmloop01(i+1,j-1,k,l)+ ap_penalty + beta2P(j,i);
+
+	return std::min(b1,b2);
 }
 
-energy_t pseudo_loop::get_PLmloop0(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+energy_t pseudo_loop::get_PLmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
@@ -1061,16 +1074,15 @@ energy_t pseudo_loop::get_PLmloop0(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 	// adding impossible cases
 	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
 	// are not needed as they are most likely expensive time-wise
-	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-		return INF;
-	}
+	assert(!(i<=0 || l> n));
+
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
-	return PLmloop0[ij][kl];
+	return PLmloop00[ij][kl];
 }
 
-energy_t pseudo_loop::get_PLmloop1(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+energy_t pseudo_loop::get_PLmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
@@ -1078,13 +1090,26 @@ energy_t pseudo_loop::get_PLmloop1(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 	// adding impossible cases
 	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
 	// are not needed as they are most likely expensive time-wise
-	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-		return INF;
-	}
-	cand_pos_t ij = index[i]+j-i;
+	assert(!(i<=0 || l> n));
+
 	cand_pos_t kl = index[k]+l-k;
 
-	return PLmloop1[ij][kl];
+	return PLmloop01[i][j][kl];
+}
+
+energy_t pseudo_loop::get_PLmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	assert(!(i<=0 || l> n));
+
+	cand_pos_t kl = index[k]+l-k;
+
+	return PLmloop10[i][j][kl];
 }
 
 energy_t pseudo_loop::get_PRiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -1095,9 +1120,8 @@ energy_t pseudo_loop::get_PRiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	// adding impossible cases
 	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
 	// are not needed as they are most likely expensive time-wise
-	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-		return INF;
-	}
+	assert(!(i<=0 || l> n));
+
 	const int ptype_closing = pair[S_[k]][S_[l]];
 	if(ptype_closing == 0) return INF;
 
@@ -1115,16 +1139,15 @@ energy_t pseudo_loop::get_PRmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	// adding impossible cases
 	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
 	// are not needed as they are most likely expensive time-wise
-	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-		return INF;
-	}
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
+	assert(!(i<=0 || l> n));
 
-	return PRmloop[ij][kl];
+	energy_t b1 = get_PRmloop10(i,j,k+1,l-1) + ap_penalty + beta2P(l,k);
+    energy_t b2 = get_PRmloop01(i,j,k+1,l-1) + ap_penalty + beta2P(l,k);
+
+	return std::min(b1,b2);
 }
 
-energy_t pseudo_loop::get_PRmloop0(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+energy_t pseudo_loop::get_PRmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
@@ -1132,16 +1155,15 @@ energy_t pseudo_loop::get_PRmloop0(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 	// adding impossible cases
 	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
 	// are not needed as they are most likely expensive time-wise
-	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-		return INF;
-	}
+	assert(!(i<=0 || l> n));
+
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
-	return PRmloop0[ij][kl];
+	return PRmloop00[ij][kl];
 }
 
-energy_t pseudo_loop::get_PRmloop1(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+energy_t pseudo_loop::get_PRmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
@@ -1149,13 +1171,28 @@ energy_t pseudo_loop::get_PRmloop1(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 	// adding impossible cases
 	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
 	// are not needed as they are most likely expensive time-wise
-	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-		return INF;
-	}
+	assert(!(i<=0 || l> n));
+
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
-	return PRmloop1[ij][kl];
+	return PRmloop01[ij][kl];
+}
+
+energy_t pseudo_loop::get_PRmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	assert(!(i<=0 || l> n));
+
+	cand_pos_t ij = index[i]+j-i;
+	cand_pos_t kl = index[k]+l-k;
+
+	return PRmloop10[ij][kl];
 }
 
 energy_t pseudo_loop::get_PMiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -1166,9 +1203,8 @@ energy_t pseudo_loop::get_PMiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	// adding impossible cases
 	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
 	// are not needed as they are most likely expensive time-wise
-	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-		return INF;
-	}
+	assert(!(i<=0 || l> n));
+
 	const int ptype_closing = pair[S_[j]][S_[k]];
 	if(ptype_closing == 0) return INF;
 
@@ -1186,16 +1222,15 @@ energy_t pseudo_loop::get_PMmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	// adding impossible cases
 	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
 	// are not needed as they are most likely expensive time-wise
-	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-		return INF;
-	}
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
+	assert(!(i<=0 || l> n));
 
-	return PMmloop[ij][kl];
+	energy_t b1 = get_PMmloop10(i,j-1,k+1,l)+ap_penalty+beta2P(j,k);
+    energy_t b2 = get_PMmloop01(i,j-1,k+1,l)+ap_penalty+beta2P(j,k);
+
+	return std::min(b1,b2);
 }
 
-energy_t pseudo_loop::get_PMmloop0(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+energy_t pseudo_loop::get_PMmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
@@ -1203,17 +1238,15 @@ energy_t pseudo_loop::get_PMmloop0(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 	// adding impossible cases
 	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
 	// are not needed as they are most likely expensive time-wise
-	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-		return INF;
-	}
+	assert(!(i<=0 || l> n));
 
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
-	return PMmloop0[ij][kl];
+	return PMmloop00[ij][kl];
 }
 
-energy_t pseudo_loop::get_PMmloop1(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+energy_t pseudo_loop::get_PMmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
@@ -1221,13 +1254,28 @@ energy_t pseudo_loop::get_PMmloop1(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 	// adding impossible cases
 	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
 	// are not needed as they are most likely expensive time-wise
-	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-		return INF;
-	}
+	assert(!(i<=0 || l> n));
+
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
-	return PMmloop1[ij][kl];
+	return PMmloop01[ij][kl];
+}
+
+energy_t pseudo_loop::get_PMmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	assert(!(i<=0 || l> n));
+
+	cand_pos_t ij = index[i]+j-i;
+	cand_pos_t kl = index[k]+l-k;
+
+	return PMmloop10[ij][kl];
 }
 
 energy_t pseudo_loop::get_POiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -1238,9 +1286,8 @@ energy_t pseudo_loop::get_POiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	// adding impossible cases
 	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
 	// are not needed as they are most likely expensive time-wise
-	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-		return INF;
-	}
+	assert(!(i<=0 || l> n));
+
 	const int ptype_closing = pair[S_[i]][S_[l]];
 	if(ptype_closing == 0) return INF;
 
@@ -1258,16 +1305,15 @@ energy_t pseudo_loop::get_POmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	// adding impossible cases
 	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
 	// are not needed as they are most likely expensive time-wise
-	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-		return INF;
-	}
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
+	assert(!(i<=0 || l> n));
 
-	return POmloop[ij][kl];
+	energy_t b1 = get_POmloop10(i+1,j,k,l-1) + ap_penalty + beta2P(l,i);
+    energy_t b2 = get_POmloop01(i+1,j,k,l-1) + ap_penalty + beta2P(l,i);
+
+	return std::min(b1,b2);
 }
 
-energy_t pseudo_loop::get_POmloop0(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+energy_t pseudo_loop::get_POmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
@@ -1275,16 +1321,15 @@ energy_t pseudo_loop::get_POmloop0(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 	// adding impossible cases
 	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
 	// are not needed as they are most likely expensive time-wise
-	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-		return INF;
-	}
+	assert(!(i<=0 || l> n));
+
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
-	return POmloop0[ij][kl];
+	return POmloop00[ij][kl];
 }
 
-energy_t pseudo_loop::get_POmloop1(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+energy_t pseudo_loop::get_POmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
@@ -1292,13 +1337,26 @@ energy_t pseudo_loop::get_POmloop1(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 	// adding impossible cases
 	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
 	// are not needed as they are most likely expensive time-wise
-	if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-		return INF;
-	}
-	cand_pos_t ij = index[i]+j-i;
+	assert(!(i<=0 || l> n));
+
 	cand_pos_t kl = index[k]+l-k;
 
-	return POmloop1[ij][kl];
+	return POmloop01[i][j][kl];
+}
+
+energy_t pseudo_loop::get_POmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	// Hosna, April 3, 2014
+	// adding impossible cases
+	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
+	// are not needed as they are most likely expensive time-wise
+	assert(!(i<=0 || l> n));
+
+	cand_pos_t kl = index[k]+l-k;
+
+	return POmloop10[i][j][kl];
 }
 
 energy_t pseudo_loop::compute_int(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -1503,8 +1561,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				best_d = -1;
 			}
 
-			switch (best_row)
-			{
+			switch (best_row){
 				case 1:
 					if (best_d > -1){
 						insert_node(i,l,best_d,k,P_PK);
@@ -1588,8 +1645,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				}
 			}
 
-			switch (best_row)
-			{
+			switch (best_row){
 				case 1:
 					insert_node(i,l,j,k,P_PLiloop);
 					break;
@@ -1662,8 +1718,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				}
 			}
 
-			switch (best_row)
-			{
+			switch (best_row){
 				case 1:
 					insert_node(i,l,j,k,P_PRiloop);
 					break;
@@ -1745,8 +1800,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				}
 			}
 
-			switch (best_row)
-			{
+			switch (best_row){
 				case 1:
 					insert_node(i,l,j,k,P_PMiloop);
 					break;
@@ -1816,8 +1870,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 					}
 				}
 			}
-			switch (best_row)
-			{
+			switch (best_row){
 				case 1:
 					insert_node(i,l,j,k,P_POiloop);
 					break;
@@ -1908,8 +1961,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				best_row=5;
 				best_d = -1;
 			}
-			switch (best_row)
-			{
+			switch (best_row){
 				case 1:
 					if (best_d > -1){
 						insert_node(best_d,l,j,k,P_PfromL);
@@ -1999,8 +2051,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				best_row=4;
 				best_d = -1;
 			}
-			switch (best_row)
-			{
+			switch (best_row){
 				case 1:
 					if (best_d > -1){
 						insert_node(i,l,j,best_d,P_PfromR);
@@ -2089,8 +2140,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				best_d = -1;
 			}
 
-			switch (best_row)
-			{
+			switch (best_row){
 				case 1:
 					if (best_d > -1){
 						insert_node(i,l,best_d,k,P_PfromM);
@@ -2179,8 +2229,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				best_d = -1;
 			}
 
-			switch (best_row)
-			{
+			switch (best_row){
 				case 1:
 					if (best_d > -1){
 						insert_node(best_d,l,j,k,P_PfromO);
@@ -2228,14 +2277,13 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				best_row=1;
 			}
 
-			temp = beta1P*(l-i+1);
+			temp = cp_penalty*(l-i+1);
 			if (temp < min_energy){
 				min_energy = temp;
 				best_row=2;
 			}
 
-			switch (best_row)
-			{
+			switch (best_row){
 				case 1:
 					insert_node(i,l,P_WBP);
 					break;
@@ -2271,7 +2319,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 					// comparing calculation of WI in HFold and WPP in CCJ, I found that
 					// in HFold we add another penalty called PPS_penalty for closed regions inside a pseudoloop or multiloop that spans a band
 					//int common = get_WB(i,d-1) + beta1P*(l-e);
-					energy_t common = get_WB(i,d-1) + beta1P*(l-e)+PPS_penalty;
+					energy_t common = get_WB(i,d-1) + cp_penalty*(l-e)+PPS_penalty;
 					temp = common + V->get_energy(d,e) +beta2P(e,d);
 					if (temp < min_energy){
 						min_energy = temp;
@@ -2281,7 +2329,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 					}
 
 					//branch 2
-					temp = common + get_P(d,e) + gamma0m;
+					temp = common + get_P(d,e) + PSM_penalty;
 					if (temp < min_energy){
 						min_energy = temp;
 						best_row = 2;
@@ -2291,8 +2339,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				}
 			}
 
-			switch (best_row)
-			{
+			switch (best_row){
 				case 1:
 					insert_node(i,best_d-1,P_WB);
 					insert_node(best_d,best_e,LOOP);
@@ -2330,14 +2377,13 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				best_row=1;
 			}
 
-			temp = gamma1*(l-i+1);
+			temp = PUP_penalty*(l-i+1);
 			if (temp < min_energy){
 				min_energy = temp;
 				best_row=2;
 			}
 
-			switch (best_row)
-			{
+			switch (best_row){
 				case 1:
 					insert_node(i,l,P_WPP);
 					break;
@@ -2372,7 +2418,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 					// comparing calculation of WI in HFold and WPP in CCJ, I found that
 					// in HFold we add another penalty called PPS_penalty for closed regions inside a pseudoloop or multiloop that spans a band
 					//int common = get_WP(i,d-1) + gamma1*(l-e);
-					energy_t common = get_WP(i,d-1) + gamma1*(l-e)+PPS_penalty;
+					energy_t common = get_WP(i,d-1) + PUP_penalty*(l-e)+PPS_penalty;
 					//branch 1
 					temp = V->get_energy(d,e) + gamma2(e,d) + common;
 					if (temp < min_energy){
@@ -2383,7 +2429,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 					}
 
 					//branch 2
-					temp = get_P(d,e) + gamma0P + common;
+					temp = get_P(d,e) + PSP_penalty + common;
 					if (temp < min_energy){
 						min_energy = temp;
 						best_row = 2;
@@ -2393,8 +2439,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				}
 			}
 
-			switch (best_row)
-			{
+			switch (best_row){
 				case 1:
 					insert_node(i,best_d-1,P_WP);
 					insert_node(best_d,best_e,LOOP);
@@ -2455,8 +2500,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				
 			}
 
-			switch (best_row)
-			{
+			switch (best_row){
 				case 1:
 					insert_node(i+1,l,j-1,k,P_PL);
 					break;
@@ -2469,7 +2513,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 
 		case P_PLmloop:
 		{
-			// changing gapped region borders to what we mean in recurrences
 			cand_pos_t i = cur_interval->i;
 			cand_pos_t l = cur_interval->j;
 			cand_pos_t j = cur_interval->k;
@@ -2486,115 +2529,165 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				exit(EXIT_FAILURE);
 			}
 
-			// Hosna, Feb 25, 2014
 			f[i].pair = j;
 			f[j].pair = i;
 			f[i].type = P_PLmloop;
 			f[j].type = P_PLmloop;
 
+			energy_t branch1 = get_PLmloop10(i+1,j-1,k,l)+ ap_penalty + beta2P(j,i);
+            energy_t branch2 = get_PLmloop01(i+1,j-1,k,l)+ ap_penalty + beta2P(j,i);
 
-			energy_t min_energy = INF,temp=INF;
-			cand_pos_t best_row = -1, best_d=-1;
-			for(cand_pos_t d = i+1; d < j-1; d++){
-				//branch 1
-				// Hosna, Feb 23, 2014
-				// Since PLmloop comes from PL and in PL i and j must pair, so we must have the same thing here
-				// therefore we should have PLmloop0(d,j-1,k,l)
-				temp = get_PLmloop0(d,j-1,k,l) + get_WBP(i+1,d-1) + beta0P + beta2P(j,i);
-				if (temp < min_energy){
-					min_energy = temp;
-					best_row = 1;
-					best_d = d;
-				}
-				//branch 2
-				temp = get_PLmloop1(d,j-1,k,l) + get_WB(i+1,d-1) + beta0P + beta2P(j,i);
-				if (temp < min_energy){
-					min_energy = temp;
-					best_row = 2;
-					best_d = d;
-				}
-			}
-			switch (best_row)
-			{
+            cand_pos_t best_row = -1;
+            if (branch1 < branch2) { best_row = 1;} else {best_row = 2;}
+
+			switch (best_row){
 				case 1:
-					insert_node(best_d,l,j-1,k,P_PLmloop0);
-					insert_node(i+1,best_d-1,P_WBP);
+					insert_node(i+1,l,j-1,k,P_PLmloop10);
 					break;
 				case 2:
-					insert_node(best_d,l,j-1,k,P_PLmloop1);
-					insert_node(i+1,best_d-1,P_WB);
+					insert_node(i+1,l,j-1,k,P_PLmloop01);
+					break;
+			}
+
+		}
+		break;
+		case P_PLmloop00:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_PLmloop00 with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "border cases: This should not have happened!, P_PLmloop00" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr << "impossible cases: This should not have happened!, P_PLmloop00" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+
+			energy_t min_energy = get_PL(i,j,k,l)+beta2P(j,i),temp=INF;
+			cand_pos_t best_row = 1, best_d=-1;
+            for(cand_pos_t d = i; d<=j; ++d){
+                if (d>i){
+                    temp=get_WB(i,d-1)+get_PLmloop00(d,j,k,l);
+                    if (temp < min_energy){
+                        min_energy = temp;
+                        best_row = 2;
+                        best_d = d;
+                    }
+
+                }
+                if(d<j){
+                    temp=get_PLmloop00(i,d,k,l)+get_WB(d+1,j);
+                    if (temp < min_energy){
+                        min_energy = temp;
+                        best_row = 3;
+                        best_d = d;
+                    }
+                }
+            }
+			switch (best_row){
+                case 1:
+                    insert_node(i,l,j,k,P_PL);
+                    break;
+				case 2:
+					insert_node(best_d,l,j,k,P_PLmloop00);
+					insert_node(i,best_d-1,P_WB);
+					break;
+				case 3:
+					insert_node(i,l,best_d,k,P_PLmloop00);
+					insert_node(best_d+1,j,P_WB);
 					break;
 			}
 
 		}
 			break;
-		case P_PLmloop0:
+		case P_PLmloop01:
 		{
 			// changing gapped region borders to what we mean in recurrences
 			cand_pos_t i = cur_interval->i;
 			cand_pos_t l = cur_interval->j;
 			cand_pos_t j = cur_interval->k;
 			cand_pos_t k = cur_interval->l;
-			if(debug) printf("At P_PLmloop0 with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+			if(debug) printf("At P_PLmloop01 with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
 
 			if (!(i <= j && j < k-1 && k <= l)){
-				std::cerr << "border cases: This should not have happened!, P_PLmloop0" << std::endl;
+				std::cerr << "border cases: This should not have happened!, P_PLmloop01" << std::endl;
 				exit(EXIT_FAILURE);
 			}
 
 			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-				std::cerr << "impossible cases: This should not have happened!, P_PLmloop0" << std::endl;
+				std::cerr << "impossible cases: This should not have happened!, P_PLmloop01" << std::endl;
 				exit(EXIT_FAILURE);
 			}
 
 			energy_t min_energy = INF,temp=INF;
 			cand_pos_t best_d=-1;
-			for(cand_pos_t d = i+1; d < j; d++){
-				// Hosna, feb 23, 2014
-				// changed the recurrences so that j-1 is accounted for in PLmloop
-				temp = get_PL(i,d,k,l) + get_WB(d+1,j) + beta2P(d,i);
-				if (temp < min_energy){
-					min_energy = temp;
-					best_d = d;
-				}
-			}
-			insert_node(i,l,best_d,k,P_PL);
-			insert_node(best_d+1,j,P_WB);
+			for(cand_pos_t d = i; d < j; ++d){
+                temp = get_PLmloop00(i,d,k,l) + get_WBP(d+1,j);
+                if (temp < min_energy){
+                    min_energy = temp;
+                    best_d = d;
+                }
+            }
+			insert_node(i,l,best_d,k,P_PLmloop00);
+			insert_node(best_d+1,j,P_WBP);
 
 		}
 			break;
-		case P_PLmloop1:
+		case P_PLmloop10:
 		{
 			// changing gapped region borders to what we mean in recurrences
 			cand_pos_t i = cur_interval->i;
 			cand_pos_t l = cur_interval->j;
 			cand_pos_t j = cur_interval->k;
 			cand_pos_t k = cur_interval->l;
-			if(debug) printf("At P_PLmloop1 with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+			if(debug) printf("At P_PLmloop10 with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
 
 			if (!(i <= j && j < k-1 && k <= l)){
-				std::cerr<< "border cases: This should not have happened!, P_PLmloop1" << std::endl;
+				std::cerr<< "border cases: This should not have happened!, P_PLmloop10" << std::endl;
 				exit(EXIT_FAILURE);
 			}
 
 			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-				std::cerr<< "impossible cases: This should not have happened!, P_PLmloop1" << std::endl;
+				std::cerr<< "impossible cases: This should not have happened!, P_PLmloop10" << std::endl;
 				exit(EXIT_FAILURE);
 			}
 
 			energy_t min_energy = INF,temp=INF;
-			cand_pos_t best_d=-1;
-			for(cand_pos_t d = i+1; d < j; d++){
-				// Hosna, feb 23, 2014
-				// changed the recurrences so that j-1 is accounted for in PLmloop
-				temp = get_PL(i,d,k,l) + get_WBP(d+1,j) + beta2P(d,i);
-				if (temp < min_energy){
-					min_energy = temp;
-					best_d = d;
-				}
+			cand_pos_t best_d=-1,best_row=-1;
+			for(cand_pos_t d = i+1; d <= j; ++d){
+                temp = get_WBP(i,d-1) + get_PLmloop00(d,j,k,l);
+                if (temp < min_energy){
+                    min_energy = temp;
+                    best_row = 1;
+                    best_d = d;
+                }
+                if(d<j){
+                    temp = get_PLmloop10(i,d,k,l) + get_WB(d+1,j);
+                    if (temp < min_energy){
+                        min_energy = temp;
+                        best_row = 2;
+                        best_d = d;
+                    }
+                }
+            }
+			switch (best_row){
+				case 1:
+					insert_node(i, best_d-1, P_WBP);
+                    insert_node(best_d,l,j,k, P_PLmloop00);
+					break;
+				case 2:
+					insert_node(i,l,best_d,k, P_PLmloop10);
+					insert_node(best_d+1,j,P_WB);
+					break;
 			}
-			insert_node(i,l,best_d,k,P_PL);
-			insert_node(best_d+1,j,P_WBP);
 		}
 			break;
 
@@ -2657,11 +2750,10 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			}
 
 		}
-			break;
+		break;
 
 		case P_PRmloop:
 		{
-			// changing gapped region borders to what we mean in recurrences
 			cand_pos_t i = cur_interval->i;
 			cand_pos_t l = cur_interval->j;
 			cand_pos_t j = cur_interval->k;
@@ -2677,113 +2769,176 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				exit(EXIT_FAILURE);
 			}
 
-			// Hosna, Feb 25, 2014
 			f[k].pair = l;
 			f[l].pair = k;
 			f[k].type = P_PRmloop;
 			f[l].type = P_PRmloop;
 
-			energy_t min_energy = INF,temp=INF;
-			cand_pos_t best_row=-1, best_d=-1;
-			//Hosna Feb 23, 2014
-			// changed the recurrences to have l-1 instead of l in PRmloop and removed l-1 from PRmloop0,1, as we are accounting for k.l here
-			for(cand_pos_t d = k+1; d < l-1; d++){
-				// branch 1
-				temp = get_PRmloop0(i,j,d,l-1) + get_WBP(k+1,d-1) + beta0P + beta2P(l,k);
-				if (temp < min_energy){
-					min_energy = temp;
-					best_row = 1;
-					best_d=d;
-				}
-				// branch 2
-				temp = get_PRmloop1(i,j,d,l-1) + get_WB(k+1,d-1) + beta0P + beta2P(l,k);
-				if (temp < min_energy){
-					min_energy = temp;
-					best_row=2;
-					best_d = d;
-				}
-			}
-			switch (best_row)
-			{
+			cand_pos_t best_row=-1;
+
+			energy_t branch1 = get_PRmloop10(i,j,k+1,l-1) + ap_penalty + beta2P(l,k);
+            energy_t branch2 = get_PRmloop01(i,j,k+1,l-1) + ap_penalty + beta2P(l,k);
+
+            if (branch1 < branch2) {best_row = 1; } else {best_row = 2;}
+
+			switch (best_row){
 				case 1:
-					insert_node(i,l-1,j,best_d,P_PRmloop0);
-					insert_node(k+1,best_d-1,P_WBP);
+					insert_node(i,l-1,j,k+1,P_PRmloop10);
 					break;
 				case 2:
-					insert_node(i,l-1,j,best_d,P_PRmloop1);
-					insert_node(k+1,best_d-1,P_WB);
+					insert_node(i,l-1,j,k+1,P_PRmloop01);
 					break;
 			}
-
 		}
-			break;
+		break;
 
-		case P_PRmloop0:
+		case P_PRmloop00: // Mateo - This was omitted in the sparse code; not sure why.
 		{
 			// changing gapped region borders to what we mean in recurrences
 			cand_pos_t i = cur_interval->i;
 			cand_pos_t l = cur_interval->j;
 			cand_pos_t j = cur_interval->k;
 			cand_pos_t k = cur_interval->l;
-			if(debug) printf("At P_PRmloop0 with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+			if(debug) printf("At P_PRmloop00 with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
 
 			if (!(i <= j && j < k-1 && k <= l)){
-				std::cerr << "border cases: This should not have happened!, P_PRmloop0" << std::endl;
+				std::cerr << "border cases: This should not have happened!, P_PRmloop00" << std::endl;
 				exit(EXIT_FAILURE);
 			}
 
 			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-				std::cerr << "impossible cases: This should not have happened!, P_PRmloop0" << std::endl;
+				std::cerr << "impossible cases: This should not have happened!, P_PRmloop00" << std::endl;
 				exit(EXIT_FAILURE);
 			}
 
 			energy_t min_energy = INF,temp=INF;
 			cand_pos_t best_d=-1;
-			for(cand_pos_t d = k+1; d < l; d++){
-				temp = get_PR(i,j,k,d) + get_WB(d+1,l) + beta2P(k,d);
-				if (temp < min_energy){
-					min_energy = temp;
-					best_d=d;
+            min_energy = get_PR(i,j,k,l)+beta2P(l,k);
+			cand_pos_t best_row=1;
+			for(cand_pos_t d=k; d<=l; ++d){
+				if(d>k){
+					temp=get_WB(k,d-1)+get_PRmloop00(i,j,d,l);
+					if (temp < min_energy){
+						min_energy = temp;
+						best_row = 2;
+						best_d = d;
+                	}
+				}
+				if (d<l){
+					temp = get_PRmloop00(i,j,k,d)+get_WB(d+1,l);
+					if (temp < min_energy){
+						min_energy = temp;
+						best_row = 3;
+						best_d = d;
+                	}
 				}
 			}
-			insert_node(i,best_d,j,k,P_PR);
-			insert_node(best_d+1,l,P_WB);
+			switch (best_row){
+                case 1:
+                    insert_node(i,j,k,l,P_PR);
+                    break;
+				case 2:
+					insert_node(i,j,best_d,l,P_PRmloop00);
+					insert_node(k,best_d-1,P_WB);
+					break;
+				case 3:
+					insert_node(i,j,k,best_d,P_PRmloop00);
+					insert_node(best_d+1,l,P_WB);
+					break;
+			}
 
 		}
-			break;
-		case P_PRmloop1:
+		break;
+
+		case P_PRmloop01:
 		{
 			// changing gapped region borders to what we mean in recurrences
 			cand_pos_t i = cur_interval->i;
 			cand_pos_t l = cur_interval->j;
 			cand_pos_t j = cur_interval->k;
 			cand_pos_t k = cur_interval->l;
-			if(debug) printf("At P_PRmloop1 with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+			if(debug) printf("At P_PRmloop01 with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
 
 			if (!(i <= j && j < k-1 && k <= l)){
-				std::cerr << "border cases: This should not have happened!, P_PRmloop1" << std::endl;
+				std::cerr << "border cases: This should not have happened!, P_PRmloop01" << std::endl;
 				exit(EXIT_FAILURE);
 			}
 
 			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-				std::cerr << "impossible cases: This should not have happened!, P_PRmloop1" << std::endl;
+				std::cerr << "impossible cases: This should not have happened!, P_PRmloop01" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_d=-1;
+            min_energy = get_PRmloop01(i,j,k,l-1) + cp_penalty;
+            cand_pos_t best_row = 1;
+
+            for(cand_pos_t d = k; d < l; ++d){
+                temp = get_PRmloop00(i,j,k,d) + get_WBP(d+1,l);
+                if (temp < min_energy){
+                    min_energy = temp;
+                    best_row = 2;
+                    best_d = d;
+                }
+            }
+			switch (best_row) {
+                case 1:
+                    insert_node(i,l-1,j,k,P_PRmloop01);
+                    break;
+                case 2:
+                    insert_node(best_d+1,l,P_WBP);
+                    insert_node(i,best_d,j,k,P_PRmloop00);
+                    break;
+            }
+
+		}
+		break;
+
+		case P_PRmloop10:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_PRmloop10 with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "border cases: This should not have happened!, P_PRmloop10" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr << "impossible cases: This should not have happened!, P_PRmloop10" << std::endl;
 				exit(EXIT_FAILURE);
 			}
 
 			energy_t min_energy = INF,temp=INF; 
 			cand_pos_t best_d=-1;
-			for(cand_pos_t d = k+1; d < l; d++){
-				temp = get_PR(i,j,k,d) + get_WBP(d+1,l) + beta2P(k,d);
-				if (temp < min_energy){
-					min_energy = temp;
-					best_d=d;
-				}
-			}
-			insert_node(i,best_d,j,k,P_PR);
-			insert_node(best_d+1,l,P_WBP);
+			min_energy = get_PRmloop10(i,j,k+1,l)+ cp_penalty;
+            cand_pos_t best_row = 1;
+
+            for(cand_pos_t d = k+1; d <= l; ++d){
+                temp = get_WBP(k,d-1) + get_PRmloop00(i,j,d,l);
+                if (temp < min_energy){
+                    min_energy = temp;
+                    best_row = 2;
+                    best_d = d;
+                }
+            }
+			switch (best_row) {
+                case 1:
+                    insert_node(i,l,j,k+1,P_PRmloop10);
+                    break;
+                case 2:
+                    insert_node(k,best_d-1,P_WBP);
+                    insert_node(i,l,j,best_d,P_PRmloop00);
+                    break;
+            }
 
 		}
-			break;
+		break;
 
 		case P_PMiloop:
 		{
@@ -2845,7 +3000,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			}
 		}
 			break;
-
 		case P_PMmloop:
 		{
 			// changing gapped region borders to what we mean in recurrences
@@ -2871,108 +3025,170 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			f[j].type = P_PMmloop;
 			f[k].type = P_PMmloop;
 
-			energy_t min_energy = INF,temp=INF;
-			cand_pos_t best_row=-1, best_d=-1;
-			for(cand_pos_t d = i+1; d < j; d++){
-				// Hosna Feb 23, 2014
-				// changed the recurrence of PMmloop, to have k+1 instead of k when calling PMmloop0,1, and removed k+1 from PMmloop0,1
-				// as j.k pair is accounted for in this recurrence
+			energy_t branch1 = get_PMmloop10(i,j-1,k+1,l)+ap_penalty+beta2P(j,k);
+            energy_t branch2 = get_PMmloop01(i,j-1,k+1,l)+ap_penalty+beta2P(j,k);
 
-				// branch 1
-				temp = get_PMmloop0(i,d,k+1,l) + get_WBP(d+1,j-1) + beta0P + beta2P(j,k);
-				if (temp < min_energy){
-					min_energy = temp;
-					best_row=1;
-					best_d=d;
-				}
-				// branch 2
-				temp = get_PMmloop1(i,d,k+1,l) + get_WB(d+1,j-1) + beta0P + beta2P(j,k);
-				if (temp < min_energy){
-					min_energy = temp;
-					best_row=2;
-					best_d=d;
-				}
-			}
+            cand_pos_t best_row = -1;
+            if (branch1 < branch2) { best_row = 1;}  else { best_row = 2;}
 
-			switch (best_row)
-			{
+			switch (best_row){
 				case 1:
-					insert_node(i,l,best_d,k+1,P_PMmloop0);
-					insert_node(best_d+1,j-1,P_WBP);
+					insert_node(i,l,j-1,k+1,P_PMmloop10);
 					break;
 				case 2:
-					insert_node(i,l,best_d,k+1,P_PMmloop1);
-					insert_node(best_d+1,j-1,P_WB);
+					insert_node(i,l,j-1,k+1,P_PMmloop01);
 					break;
 			}
-
 		}
-			break;
-
-		case P_PMmloop0:
+		break;
+		case P_PMmloop00:
 		{
 			// changing gapped region borders to what we mean in recurrences
 			cand_pos_t i = cur_interval->i;
 			cand_pos_t l = cur_interval->j;
 			cand_pos_t j = cur_interval->k;
 			cand_pos_t k = cur_interval->l;
-			if(debug) printf("At P_PMmloop0 with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+			if(debug) printf("At P_PMmloop00 with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
 
 			if (!(i <= j && j < k-1 && k <= l)){
-				std::cerr << "border cases: This should not have happened!, P_PMmloop0" << std::endl;
+				std::cerr << "border cases: This should not have happened!, P_PMmloop00" << std::endl;
 				exit(EXIT_FAILURE);
 			}
 
 			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-				std::cerr << "impossible cases: This should not have happened!, P_PMmloop0" << std::endl;
+				std::cerr << "impossible cases: This should not have happened!, P_PMmloop00" << std::endl;
 				exit(EXIT_FAILURE);
 			}
 
-			energy_t min_energy = INF,temp=INF;
-			cand_pos_t best_d=-1;
-			for(int d = k+1; d < l; d++){
-				//temp = get_PM(i,j,d,l) + get_WB(k+1,d-1) + beta2P(j,d);
-				temp = get_PM(i,j,d,l) + get_WB(k,d-1) + beta2P(j,d);
-				if (temp < min_energy){
-					min_energy = temp;
-					best_d =d;
-				}
-			}
-			insert_node(i,l,j,best_d,P_PM);
-			insert_node(k,best_d-1,P_WB);
+			// Hosna, Feb 25, 2014
+			f[j].pair = k;
+			f[k].pair = j;
+			f[j].type = P_PMmloop;
+			f[k].type = P_PMmloop;
+
+			energy_t temp=INF;
+			energy_t min_energy = get_PM(i,j,k,l)+beta2P(j,k);
+			cand_pos_t best_row = 1, best_d = -1;
+
+            for(cand_pos_t d=i; d<j; ++d){
+                temp=get_WB(d+1,j)+get_PMmloop00(i,d,k,l);
+                if (temp < min_energy){
+                    min_energy = temp;
+                    best_row = 2;
+                    best_d = d;
+                }
+            }
+            for(cand_pos_t d=k+1; d<=l; d++){
+                temp=get_PMmloop00(i,j,d,l)+get_WB(k,d-1);
+                if (temp < min_energy){
+                    min_energy = temp;
+                    best_row = 3;
+                    best_d = d;
+                }
+            }
+			
+
+			switch (best_row){
+                case 1:
+                	insert_node(i,l,j,k,P_PM);
+                	break;
+                case 2:
+                	insert_node(i,l,best_d,k,P_PMmloop00);
+                	insert_node(best_d+1,j,P_WB);
+                	break;
+                case 3:
+                	insert_node(i,l,j,best_d,P_PMmloop00);
+                	insert_node(k,best_d-1,P_WB);
+                	break;
+            }
 
 		}
 			break;
-		case P_PMmloop1:
+
+		case P_PMmloop01:
 		{
 			// changing gapped region borders to what we mean in recurrences
 			cand_pos_t i = cur_interval->i;
 			cand_pos_t l = cur_interval->j;
 			cand_pos_t j = cur_interval->k;
 			cand_pos_t k = cur_interval->l;
-			if(debug) printf("At P_PMmloop1 with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+			if(debug) printf("At P_PMmloop01 with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
 
 			if (!(i <= j && j < k-1 && k <= l)){
-				std::cerr << "border cases: This should not have happened!, P_PMmloop1" << std::endl;
+				std::cerr << "border cases: This should not have happened!, P_PMmloop01" << std::endl;
 				exit(EXIT_FAILURE);
 			}
 
 			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-				std::cerr << "impossible cases: This should not have happened!, P_PMmloop1" << std::endl;
+				std::cerr << "impossible cases: This should not have happened!, P_PMmloop01" << std::endl;
 				exit(EXIT_FAILURE);
 			}
 
-			energy_t min_energy = INF,temp=INF;
-			cand_pos_t best_d=-1;
-			for(cand_pos_t d = k+1; d < l; d++){
-				temp = get_PM(i,j,d,l) + get_WBP(k,d-1) + beta2P(j,d);
-				if (temp < min_energy){
-					min_energy = temp;
-					best_d=d;
-				}
+			energy_t temp=INF;
+			energy_t min_energy = get_PMmloop01(i,j,k+1,l)+cp_penalty;
+			cand_pos_t best_row = 1, best_d = -1;
+
+            for(cand_pos_t d = k+1; d <= l; ++d){
+                temp = get_PMmloop00(i,j,d,l) + get_WBP(k,d-1);
+                if (temp < min_energy){
+                    min_energy = temp;
+                    best_row = 2;
+                    best_d = d;
+                }
+            }
+			switch (best_row){
+                case 1:
+                	insert_node(i,l,j,k+1,P_PMmloop01);
+                	break;
+                case 2:
+                	insert_node(i,l,j,best_d,P_PMmloop00);
+                	insert_node(k,best_d-1,P_WBP);
+                	break;
+            }
+
+		}
+			break;
+		case P_PMmloop10:
+		{
+			// changing gapped region borders to what we mean in recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_PMmloop10 with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "border cases: This should not have happened!, P_PMmloop10" << std::endl;
+				exit(EXIT_FAILURE);
 			}
-			insert_node(i,l,j,best_d,P_PM);
-			insert_node(k,best_d-1,P_WBP);
+
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr << "impossible cases: This should not have happened!, P_PMmloop10" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			energy_t temp=INF;
+			energy_t min_energy = get_PMmloop10(i,j-1,k,l)+cp_penalty;
+			cand_pos_t best_row = 1, best_d = -1;
+
+            for(cand_pos_t d = i+1; d < j; ++d){
+                temp = get_WBP(d,j) + get_PMmloop00(i,d-1,k,l);
+                if (temp < min_energy){
+                    min_energy = temp;
+                    best_row = 2;
+                    best_d = d;
+                }
+            }
+
+            switch (best_row){
+                case 1:
+                	insert_node(i,l,j-1,k,P_PMmloop10);
+                	break;
+                case 2:
+                	insert_node(i,l,best_d-1,k,P_PMmloop00);
+                	insert_node(best_d,j,P_WBP);
+                	break;
+            }
 
 		}
 			break;
@@ -3037,7 +3253,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 
 		}
 			break;
-
 		case P_POmloop:
 		{
 			// changing gapped region borders to match the recurrences
@@ -3062,104 +3277,159 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			f[i].type = P_POmloop;
 			f[l].type = P_POmloop;
 
+            energy_t branch1 = get_POmloop10(i+1,j,k,l-1) + ap_penalty + beta2P(l,i);
+            energy_t branch2 = get_POmloop01(i+1,j,k,l-1) + ap_penalty + beta2P(l,i);
 
-			energy_t min_energy = INF,temp=INF;
-			cand_pos_t best_row=-1,best_d=-1;
-			// Hosna Feb 23, 2014
-			// changed recurrences for POmloop to have l-1 instead of l and removed l-1 from POmloop0,1 as i.l is accounted for here in this recurrence
-			for(cand_pos_t d = i+1; d < j; d++){
-				//branch 1
-				temp = get_POmloop0(d,j,k,l-1) + get_WBP(i+1,d-1) + beta0P + beta2P(l,i);
-				if (temp < min_energy){
-					min_energy = temp;
-					best_row=1;
-					best_d=d;
-				}
-				//branch 2
-				temp = get_POmloop1(d,j,k,l-1) + get_WB(i+1,d-1) + beta0P + beta2P(l,i);
-				if (temp < min_energy){
-					min_energy = temp;
-					best_row=2;
-					best_d=d;
-				}
-			}
+            cand_pos_t best_row = -1;
+            if (branch1 < branch2) { best_row = 1;} else { best_row = 2;}
 
-			switch (best_row)
-			{
+			switch (best_row){
 				case 1:
-					insert_node(best_d,l-1,j,k,P_POmloop0);
-					insert_node(i+1,best_d-1,P_WBP);
+					insert_node(i+1,l-1,j,k,P_POmloop10);
 					break;
 				case 2:
-					insert_node(best_d,l-1,j,k,P_POmloop1);
-					insert_node(i+1,best_d-1,P_WB);
+					insert_node(i+1,l-1,j,k,P_POmloop01);
+					break;
+			}
+		}
+		break;
+
+		case P_POmloop00:
+		{
+			// changing gapped region borders to match the recurrences
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_POmloop00 with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "border cases: This should not have happened!, P_POmloop00" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr << "impossible cases: This should not have happened!, P_POmloop00" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			energy_t min_energy = get_PO(i,j,k,l)+beta2P(l,i),temp=INF;
+			cand_pos_t best_row=1,best_d=-1;
+
+			for(cand_pos_t d=i+1; d<=j; ++d){
+				temp=get_WB(i,d-1)+get_POmloop00(d,j,k,l);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row = 2;
+					best_d = d;
+				}
+			}
+			for(cand_pos_t d=k; d<l; ++d){
+				temp=get_POmloop00(i,j,k,d)+get_WB(d+1,l);
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row = 3;
+					best_d = d;
+				}
+			}
+
+			switch  (best_row){
+				case 1:
+					insert_node(i,l,j,k,P_PO);
+					break;
+				case 2:
+					insert_node(best_d,l,j,k,P_POmloop00);
+					insert_node(i,best_d-1,P_WBP);
+					break;
+				case 3:
+					insert_node(i,best_d,j,k,P_POmloop00);
+					insert_node(best_d+1,l,P_WB);
 					break;
 			}
 		}
 			break;
 
-		case P_POmloop0:
+		case P_POmloop01:
 		{
 			// changing gapped region borders to match the recurrences
 			cand_pos_t i = cur_interval->i;
 			cand_pos_t l = cur_interval->j;
 			cand_pos_t j = cur_interval->k;
 			cand_pos_t k = cur_interval->l;
-			if(debug) printf("At P_POmloop0 with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+			if(debug) printf("At P_POmloop01 with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
 
 			if (!(i <= j && j < k-1 && k <= l)){
-				std::cerr << "border cases: This should not have happened!, P_POmloop0" << std::endl;
+				std::cerr << "border cases: This should not have happened!, P_POmloop01" << std::endl;
 				exit(EXIT_FAILURE);
 			}
 
 			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-				std::cerr << "impossible cases: This should not have happened!, P_POmloop0" << std::endl;
+				std::cerr << "impossible cases: This should not have happened!, P_POmloop01" << std::endl;
 				exit(EXIT_FAILURE);
 			}
 
 			energy_t min_energy = INF,temp=INF;
 			cand_pos_t best_d=-1;
-			for(int d = k+1; d < l; d++){
-				temp = get_PO(i,j,k,d) + get_WB(d+1,l) + beta2P(d,i);
-				if (temp < min_energy){
-					min_energy = temp;
-					best_d=d;
-				}
-			}
-			insert_node(i,best_d,j,k,P_PO);
-			insert_node(best_d+1,l,P_WB);
+            for(cand_pos_t d = k; d < l; d++){
+                temp = get_POmloop00(i,j,k,d) + get_WBP(d+1,l);
+                if (temp < min_energy){
+                    min_energy = temp;
+					best_d = d;
+                }
+            }
+			insert_node(i,best_d,j,k,P_POmloop00);
+            insert_node(best_d+1,l,P_WBP);
 		}
 			break;
-		case P_POmloop1:
+		case P_POmloop10:
 		{
 			// changing gapped region borders to match the recurrences
 			cand_pos_t i = cur_interval->i;
 			cand_pos_t l = cur_interval->j;
 			cand_pos_t j = cur_interval->k;
 			cand_pos_t k = cur_interval->l;
-			if(debug) printf("At P_POmloop1 with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+			if(debug) printf("At P_POmloop10 with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
 
 			if (!(i <= j && j < k-1 && k <= l)){
-				std::cerr << "border cases: This should not have happened!, P_POmloop1" << std::endl;
+				std::cerr << "border cases: This should not have happened!, P_POmloop10" << std::endl;
 				exit(EXIT_FAILURE);
 			}
 
 			if (i<=0 || j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
-				std::cerr << "impossible cases: This should not have happened!, P_POmloop1" << std::endl;
+				std::cerr << "impossible cases: This should not have happened!, P_POmloop10" << std::endl;
 				exit(EXIT_FAILURE);
 			}
 
 			energy_t min_energy = INF,temp=INF;
-			cand_pos_t best_d=-1;
-			for(int d = k+1; d < l; d++){
-				temp = get_PO(i,j,k,d) + get_WBP(d+1,l) + beta2P(d,i);
-				if (temp < min_energy){
-					min_energy = temp;
-					best_d=d;
-				}
+			cand_pos_t best_d=-1,best_row=-1;
+			for(cand_pos_t d=i+1; d<=j;++d){
+                temp=get_WBP(i,d-1)+get_POmloop00(d,j,k,l);
+                if (temp < min_energy){
+                    min_energy = temp;
+                    best_row = 1;
+                    best_d = d;
+                }
+
+            }
+            for(cand_pos_t d = k+1; d < l; ++d){
+                temp = get_POmloop10(i,j,k,d) + get_WB(d+1,l);
+                if (temp < min_energy){
+                    min_energy = temp;
+                    best_row = 2;
+                    best_d = d;
+                }
+            }
+
+			switch  (best_row){
+                case 1:
+                    insert_node(best_d,l,j,k,P_POmloop00);
+                    insert_node(i,best_d-1,P_WBP);
+                    break;
+                case 2:
+                    insert_node(i,best_d,j,k,P_POmloop10);
+                    insert_node(best_d+1,l,P_WB);
+                    break;
 			}
-			insert_node(i,best_d,j,k,P_PO);
-			insert_node(best_d+1,l,P_WBP);
 		}
 			break;
 	}
