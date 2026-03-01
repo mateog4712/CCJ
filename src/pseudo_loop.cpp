@@ -170,7 +170,7 @@ void pseudo_loop::compute_WBP(int i, int l){
 
 	cand_pos_t il = index[i]+l-i;
 	// Mateo 2025 Changed i to i+1 as get_WB(i,i-1) is wrong
-	for(cand_pos_t d=i+1; d< l; ++d){
+	for(cand_pos_t d=i; d< l; ++d){
 		for(cand_pos_t e = d+1; e<= l; ++e){
 			// Hosna, August 26, 2014
 			// comparing calculation of WI in HFold and WPP in CCJ, I found that
@@ -190,7 +190,7 @@ void pseudo_loop::compute_WPP(cand_pos_t i, cand_pos_t l){
 	energy_t min_energy = INF, b1 = INF, b2=INF;
 
 	cand_pos_t il = index[i]+l-i;
-	for(cand_pos_t d=i+1; d<l; ++d){
+	for(cand_pos_t d=i; d<l; ++d){
 		for(cand_pos_t e = d+1; e<= l; ++e){
 			// Hosna, August 26, 2014
 			// comparing calculation of WI in HFold and WPP in CCJ, I found that
@@ -212,7 +212,7 @@ void pseudo_loop::compute_P(cand_pos_t i, cand_pos_t l){
 	for(cand_pos_t j=i; j<l; ++j){
 		for (cand_pos_t d=j+1; d<l; ++d){
 			for (cand_pos_t k=d+1; k<l; ++k){
-				b1 = get_PK(i,j-1,d+1,k-1) + get_PK(j,d,k,l);
+				b1 = get_PK(i,j,d+1,k) + get_PK(j+1,d,k+1,l);
 				min_energy = std::min(min_energy,b1);
 			}
 		}
@@ -233,7 +233,7 @@ void pseudo_loop::compute_PK(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	// it is not clear to me why we have i<=d here, so I am changing this back to original
 	// by changing d=i to d=i+1
 	for(cand_pos_t d=i+1; d< j; ++d){
-		energy_t tmp = get_PK(i,d,k,l) + get_WP(d+1,j);
+		energy_t tmp = get_PK(i,d,k,l) + get_WP(d+1,j);  //12G1
 		b1=std::min(b1,tmp);
 	}
 
@@ -242,7 +242,7 @@ void pseudo_loop::compute_PK(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	// it is not clear to me why we have d<=l here, so I am changing this back to original
 	// by changing d<=l to d<l
 	for(cand_pos_t d=k+1; d< l; ++d){
-		energy_t tmp = get_PK(i,j,d,l) + get_WP(k,d-1);
+		energy_t tmp = get_PK(i,j,d,l) + get_WP(k,d-1); //1G21
 		b2=std::min(b2,tmp);
 	}
 
@@ -821,6 +821,7 @@ energy_t pseudo_loop::get_WB(cand_pos_t i, cand_pos_t j){
 	if (i<=0 || j<=0 || i>n || j>n){
 		return INF;
 	}
+	if (i>j) return 0;
 	return (std::min(cp_penalty*(j-i+1),get_WBP(i,j)));
 }
 
@@ -1465,7 +1466,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			for(cand_pos_t j=i; j< l; j++){
 				for (cand_pos_t d=j+1; d<l; d++){
 					for (cand_pos_t k=d+1; k<l; k++){
-						b1 = get_PK(i,j,d+1,k) +get_PK(j+1,d,k+1,l);
+						b1 = get_PK(i,j,d+1,k) + get_PK(j+1,d,k+1,l);
 						if(b1 < min_energy){
 							min_energy = b1;
 							best_d = d;
@@ -1506,7 +1507,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			// based on original recurrences we should have i<d, and
 			// it is not clear to me why we have d=i here, so I am changing this back to original
 			// by changing d=i to d=i+1
-			for(cand_pos_t  d=i+1; d< j; d++){
+			for(cand_pos_t  d=i+1; d< j; ++d){
 				temp = get_PK(i,d,k,l) + get_WP(d+1,j);
 				if (temp < min_energy){
 					min_energy=temp;
@@ -1520,7 +1521,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			// based on original recurrences we should have d<l, and
 			// it is not clear to me why we have d<=l here, so I am changing this back to original
 			// by changing d<=l to d<l
-			for(cand_pos_t d=k+1; d< l; d++){
+			for(cand_pos_t d=k+1; d< l; ++d){
 				temp = get_PK(i,j,d,l) + get_WP(k,d-1);
 				if (temp < min_energy){
 					min_energy=temp;
@@ -2315,10 +2316,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			for(cand_pos_t d=i; d< l; d++){
 				for(cand_pos_t e = d+1; e<= l; e++){
 					//branch 1
-					// Hosna, August 26, 2014
-					// comparing calculation of WI in HFold and WPP in CCJ, I found that
-					// in HFold we add another penalty called PPS_penalty for closed regions inside a pseudoloop or multiloop that spans a band
-					//int common = get_WB(i,d-1) + beta1P*(l-e);
 					energy_t common = get_WB(i,d-1) + cp_penalty*(l-e)+PPS_penalty;
 					temp = common + V->get_energy(d,e) +beta2P(e,d);
 					if (temp < min_energy){
@@ -2414,10 +2411,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 
 			for(cand_pos_t d=i; d< l; d++){
 				for(cand_pos_t e = d+1; e<= l; e++){
-					// Hosna, August 26, 2014
-					// comparing calculation of WI in HFold and WPP in CCJ, I found that
-					// in HFold we add another penalty called PPS_penalty for closed regions inside a pseudoloop or multiloop that spans a band
-					//int common = get_WP(i,d-1) + gamma1*(l-e);
+
 					energy_t common = get_WP(i,d-1) + PUP_penalty*(l-e)+PPS_penalty;
 					//branch 1
 					temp = V->get_energy(d,e) + gamma2(e,d) + common;
