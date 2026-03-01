@@ -38,8 +38,6 @@ void pseudo_loop::allocate_space()
 	std::vector<energy_t> row;
 	row.resize(total_length,INF);
 
-	std::vector<energy_t> row_5;
-	row_5.resize(MAXLOOP+1,INF);
 	// Mateo - Mirroring ModifiedCCJ, changing PL from n^2xn^2 to nxnxn^2
 	PL.resize(n+1);
 	PO.resize(n+1);
@@ -169,12 +167,8 @@ void pseudo_loop::compute_WBP(int i, int l){
 	energy_t min_energy= INF, b1 = INF, b2=INF;
 
 	cand_pos_t il = index[i]+l-i;
-	// Mateo 2025 Changed i to i+1 as get_WB(i,i-1) is wrong
 	for(cand_pos_t d=i; d< l; ++d){
 		for(cand_pos_t e = d+1; e<= l; ++e){
-			// Hosna, August 26, 2014
-			// comparing calculation of WI in HFold and WPP in CCJ, I found that
-			// in HFold we add another penalty called PPS_penalty for closed regions inside a pseudoloop or multiloop that spans a band
 			energy_t common = get_WB(i,d-1) + cp_penalty*(l-e)+PPS_penalty;
 			b1 = V->get_energy(d,e) + beta2P(e,d) + common;
 			b2 = get_P(d,e) + PSM_penalty + common;
@@ -192,9 +186,6 @@ void pseudo_loop::compute_WPP(cand_pos_t i, cand_pos_t l){
 	cand_pos_t il = index[i]+l-i;
 	for(cand_pos_t d=i; d<l; ++d){
 		for(cand_pos_t e = d+1; e<= l; ++e){
-			// Hosna, August 26, 2014
-			// comparing calculation of WI in HFold and WPP in CCJ, I found that
-			// in HFold we add another penalty called PPS_penalty for closed regions inside a pseudoloop or multiloop that spans a band
 			energy_t common = get_WP(i,d-1) + PUP_penalty*(l-e) +PPS_penalty;
 			b1 = V->get_energy(d,e) + gamma2(e,d) + common;
 			b2 = get_P(d,e) + PSP_penalty + common;
@@ -228,19 +219,11 @@ void pseudo_loop::compute_PK(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
-	// Hosna, july 8, 2014
-	// based on original recurrences we should have i<d, and
-	// it is not clear to me why we have i<=d here, so I am changing this back to original
-	// by changing d=i to d=i+1
 	for(cand_pos_t d=i+1; d< j; ++d){
 		energy_t tmp = get_PK(i,d,k,l) + get_WP(d+1,j);  //12G1
 		b1=std::min(b1,tmp);
 	}
 
-	// Hosna, july 8, 2014
-	// based on original recurrences we should have d<l, and
-	// it is not clear to me why we have d<=l here, so I am changing this back to original
-	// by changing d<=l to d<l
 	for(cand_pos_t d=k+1; d< l; ++d){
 		energy_t tmp = get_PK(i,j,d,l) + get_WP(k,d-1); //1G21
 		b2=std::min(b2,tmp);
@@ -267,17 +250,11 @@ void pseudo_loop::compute_PL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 
 		b1 = get_PLiloop(i,j,k,l);
 
-		// Hosna, April 11, 2014
-		// we need to add a branch penalty for multiloop that spans a band
 		b2 = get_PLmloop(i,j,k,l) + bp_penalty;
 
 		// Hosna, July 11, 2014
 		// To avoid addition of close base pairs we check for the following here
 		if (j>=(i+TURN+1)){
-			// Hosna April 11, 2014
-			// I think we have already added gamma2(j,i) when coming to PL, so there is no need to add it again here.
-			// Hosna July 17, 2014
-			// I am adding gamma2 back here to avoid single base pair band predictions
 			b3 = get_PfromL(i+1,j-1,k,l) + gamma2(j,i);
 		}
 	}
@@ -298,17 +275,11 @@ void pseudo_loop::compute_PR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	if (ptype_closing>0){
 		b1 = get_PRiloop(i,j,k,l);
 
-		// Hosna, April 11, 2014
-		// we need to add a branch penalty for multiloop that spans a band
 		b2 = get_PRmloop(i,j,k,l)+ bp_penalty;
 
 		// Hosna, July 11, 2014
 		// To avoid addition of close base pairs we check for the following here
 		if (l>=(k+TURN+1)){
-			// Hosna April 11, 2014
-			// I think we have already added gamma2(l,k) when coming to PR, so there is no need to add it again here.
-			// Hosna July 17, 2014
-			// I am adding gamma2 back here to avoid single base pair band predictions
 			b3 = get_PfromR(i,j,k+1,l-1) + gamma2(l,k);
 		}
 	}
@@ -327,22 +298,15 @@ void pseudo_loop::compute_PM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	const int ptype_closing = pair[S_[j]][S_[k]];
 	if (ptype_closing>0){
 		b1 = get_PMiloop(i,j,k,l);
-		// Hosna, April 11, 2014
-		// we need to add a branch penalty for multiloop that spans a band
+
 		b2 = get_PMmloop(i,j,k,l) + bp_penalty;
 
 		// Hosna, July 11, 2014
 		// To avoid addition of close base pairs we check for the following here
 		if (k>=(j+TURN-1)){
-			// Hosna April 11, 2014
-			// I think we have already added gamma2(j,k) when coming to PM, so there is no need to add it again here.
-			// Hosna July 17, 2014
-			// I am adding gamma2 back here to avoid single base pair band predictions
 			b3 = get_PfromM(i,j-1,k+1,l) + gamma2(j,k);
 		}
 
-		// Hosna April 11, 2014
-		// adding calculation of branch 4 here too
 		if(i==j && k==l){
 			b4=gamma2(i,l);
 		}
@@ -363,17 +327,11 @@ void pseudo_loop::compute_PO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	if (ptype_closing>0){
 		b1 = get_POiloop(i,j,k,l);
 
-		// Hosna, April 11, 2014
-		// we need to add a branch penalty for multiloop that spans a band
 		b2 = get_POmloop(i,j,k,l)+ bp_penalty;
 
 		// Hosna, July 11, 2014
 		// To avoid addition of close base pairs we check for the following here
 		if (l>=(i+TURN+1)){
-			// Hosna April 11, 2014
-			// I think we have already added gamma2(l,i) when coming to PO, so there is no need to add it again here.
-			// Hosna July 17, 2014
-			// I am adding gamma2 back here to avoid single base pair band predictions
 			b3 = get_PfromO(i+1,j,k,l-1) + gamma2(l,i);
 		}
 	}
@@ -394,16 +352,11 @@ void pseudo_loop::compute_PfromL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 		tmp = get_PfromL(i,d,k,l)+get_WP(d+1,j);
 		b2 = std::min(b2,tmp);
 	}
-	//Hosna, July 28, 2014
-	// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
+
 	b3 = get_PR(i,j,k,l) + gamma2(l,k) + PB_penalty; //;
 
-	//Hosna, July 28, 2014
-	// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
 	b4 = get_PM(i,j,k,l) + gamma2(j,k)+ PB_penalty;//;
 
-	//Hosna, July 28, 2014
-	// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
 	b5 = get_PO(i,j,k,l) + gamma2(l,i)+ PB_penalty;//;
 
 	min_energy = std::min({min_energy,b1,b2,b3,b4,b5});
@@ -423,12 +376,9 @@ void pseudo_loop::compute_PfromR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 		tmp = get_PfromR(i,j,k,d)+get_WP(d+1,l);
 		b2 = std::min(b2,tmp);
 	}
-	//Hosna, July 28, 2014
-	// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
+
 	b3 = get_PM(i,j,k,l) + gamma2(j,k)+ PB_penalty;//;
 
-	//Hosna, July 28, 2014
-	// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
 	b4 = get_PO(i,j,k,l) + gamma2(l,i)+ PB_penalty;//;
 
 	min_energy = std::min({min_energy,b1,b2,b3,b4});
@@ -451,11 +401,9 @@ void pseudo_loop::compute_PfromM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 		energy_t tmp=get_PfromM(i,j,d,l)+get_WP(k,d-1);
 		b2 = std::min(b2,tmp);
 	}
-	//Hosna, July 28, 2014
-	// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
+
 	b3 = get_PL(i,j,k,l) + gamma2(j,i)+ PB_penalty;//;
-	//Hosna, July 28, 2014
-	// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
+
 	b4 = get_PR(i,j,k,l) + gamma2(l,k)+PB_penalty;
 
 	min_energy = std::min({min_energy,b1,b2,b3,b4});
@@ -478,12 +426,8 @@ void pseudo_loop::compute_PfromO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 		b2 = std::min(b2,tmp);
 	}
 
-	//Hosna, July 28, 2014
-	// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
 	b3 = get_PL(i,j,k,l) + gamma2(j,i) + PB_penalty;
 
-	//Hosna, July 28, 2014
-	// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
 	b4 = get_PR(i,j,k,l) + gamma2(l,k)+PB_penalty;
 
 	min_energy = std::min({min_energy,b1,b2,b3,b4});
@@ -658,7 +602,7 @@ void pseudo_loop::compute_PMiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	int ptype_closing = pair[S_[j]][S_[k]];
 
 	if (ptype_closing>0){
-		b1 = get_PM(i,j-1,k+1,l) + get_e_stP(j-1,k+1); // Why is this j-1,k+1, it makes no sense. Everything else is like j,k
+		b1 = get_PM(i,j-1,k+1,l) + get_e_stP(j-1,k+1);
 
 		for(cand_pos_t d= j-1; d>std::max(i,j-MAXLOOP); --d){
         	for (cand_pos_t dp=k+1; dp <std::min(l,k+MAXLOOP); ++dp) {
@@ -680,9 +624,6 @@ void pseudo_loop::compute_PMmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, ca
 	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
-	// Hosna Feb 23, 2014
-	// changed the recurrence of PMmloop, to have k+1 instead of k when calling PMmloop0,1, and removed k+1 from PMmloop0,1
-	// as j.k pair is accounted for in this recurrence
 	min_energy = get_PM(i,j,k,l)+beta2P(j,k);
     for(cand_pos_t d=i; d<j; ++d){
         tmp=get_PMmloop00(i,d,k,l)+get_WB(d+1,j);
@@ -861,10 +802,6 @@ energy_t pseudo_loop::get_PK(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
 	assert(!(i<=0 || l> n));
 	
 	cand_pos_t ij = index[i]+j-i;
@@ -877,10 +814,6 @@ energy_t pseudo_loop::get_PL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
 	assert(!(i<=0 || l> n));
 
 	cand_pos_t kl = index[k]+l-k;
@@ -892,10 +825,6 @@ energy_t pseudo_loop::get_PR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
 	assert(!(i<=0 || l> n));
 
 	cand_pos_t ij = index[i]+j-i;
@@ -908,10 +837,6 @@ energy_t pseudo_loop::get_PM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
 	assert(!(i<=0 || l> n));
 
 	int ptype_closing = pair[S_[j]][S_[k]];
@@ -931,10 +856,6 @@ energy_t pseudo_loop::get_PO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
 	assert(!(i<=0 || l> n));
 
 	cand_pos_t kl = index[k]+l-k;
@@ -946,15 +867,9 @@ energy_t pseudo_loop::get_PfromL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
 	assert(!(i<=0 || l> n));
 
 	if (i==j && k==l){
-		// Hosna, August 13, 2014
-		// in some cases it used P_fromM to exit from a case with no band!
 		const int ptype_closing = pair[S_[i]][S_[l]];
 		if(ptype_closing == 0) return INF;
 		else return gamma2(j,k) + gamma2(k,j);
@@ -968,15 +883,9 @@ energy_t pseudo_loop::get_PfromR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
 	assert(!(i<=0 || l> n));
 
 	if (i==j && k==l){
-		// Hosna, August 13, 2014
-		// in some cases it used P_fromM to exit from a case with no band!
 		const int ptype_closing = pair[S_[i]][S_[l]];
 		if(ptype_closing == 0) return INF;
 		else return gamma2(j,k) + gamma2(k,j);
@@ -991,15 +900,9 @@ energy_t pseudo_loop::get_PfromM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
 	assert(!(i<=0 || l> n));
 
 	if (i==j && k==l){
-		// Hosna, August 13, 2014
-		// in some cases it used P_fromM to exit from a case with no band!
 		const int ptype_closing = pair[S_[i]][S_[l]];
 		if(ptype_closing == 0) return INF;
 		else return 0;
@@ -1014,15 +917,9 @@ energy_t pseudo_loop::get_PfromO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
 	assert(!(i<=0 || l> n));
 
 	if (i==j && k==l){
-		// Hosna, August 13, 2014
-		// in some cases it used P_fromM to exit from a case with no band!
 		const int ptype_closing = pair[S_[i]][S_[l]];
 		if(ptype_closing == 0) return INF;
 		else return 0;
@@ -1036,10 +933,6 @@ energy_t pseudo_loop::get_PLiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
 	assert(!(i<=0 || l> n));
 
 	const int ptype_closing = pair[S_[i]][S_[j]];
@@ -1055,10 +948,6 @@ energy_t pseudo_loop::get_PLmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
 	assert(!(i<=0 || l> n));
 
 	energy_t b1 = get_PLmloop10(i+1,j-1,k,l)+ ap_penalty + beta2P(j,i);
@@ -1071,10 +960,6 @@ energy_t pseudo_loop::get_PLmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, ca
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
 	assert(!(i<=0 || l> n));
 
 	cand_pos_t ij = index[i]+j-i;
@@ -1087,10 +972,6 @@ energy_t pseudo_loop::get_PLmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, ca
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
 	assert(!(i<=0 || l> n));
 
 	cand_pos_t kl = index[k]+l-k;
@@ -1102,10 +983,6 @@ energy_t pseudo_loop::get_PLmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, ca
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
 	assert(!(i<=0 || l> n));
 
 	cand_pos_t kl = index[k]+l-k;
@@ -1117,10 +994,6 @@ energy_t pseudo_loop::get_PRiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
 	assert(!(i<=0 || l> n));
 
 	const int ptype_closing = pair[S_[k]][S_[l]];
@@ -1136,10 +1009,6 @@ energy_t pseudo_loop::get_PRmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
 	assert(!(i<=0 || l> n));
 
 	energy_t b1 = get_PRmloop10(i,j,k+1,l-1) + ap_penalty + beta2P(l,k);
@@ -1152,10 +1021,6 @@ energy_t pseudo_loop::get_PRmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, ca
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
 	assert(!(i<=0 || l> n));
 
 	cand_pos_t ij = index[i]+j-i;
@@ -1168,10 +1033,6 @@ energy_t pseudo_loop::get_PRmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, ca
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
 	assert(!(i<=0 || l> n));
 
 	cand_pos_t ij = index[i]+j-i;
@@ -1184,10 +1045,6 @@ energy_t pseudo_loop::get_PRmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, ca
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
 	assert(!(i<=0 || l> n));
 
 	cand_pos_t ij = index[i]+j-i;
@@ -1200,10 +1057,6 @@ energy_t pseudo_loop::get_PMiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
 	assert(!(i<=0 || l> n));
 
 	const int ptype_closing = pair[S_[j]][S_[k]];
@@ -1219,10 +1072,6 @@ energy_t pseudo_loop::get_PMmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
 	assert(!(i<=0 || l> n));
 
 	energy_t b1 = get_PMmloop10(i,j-1,k+1,l)+ap_penalty+beta2P(j,k);
@@ -1235,10 +1084,6 @@ energy_t pseudo_loop::get_PMmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, ca
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
 	assert(!(i<=0 || l> n));
 
 	cand_pos_t ij = index[i]+j-i;
@@ -1251,10 +1096,6 @@ energy_t pseudo_loop::get_PMmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, ca
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
 	assert(!(i<=0 || l> n));
 
 	cand_pos_t ij = index[i]+j-i;
@@ -1267,10 +1108,6 @@ energy_t pseudo_loop::get_PMmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, ca
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
 	assert(!(i<=0 || l> n));
 
 	cand_pos_t ij = index[i]+j-i;
@@ -1283,10 +1120,6 @@ energy_t pseudo_loop::get_POiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
 	assert(!(i<=0 || l> n));
 
 	const int ptype_closing = pair[S_[i]][S_[l]];
@@ -1302,10 +1135,6 @@ energy_t pseudo_loop::get_POmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
 	assert(!(i<=0 || l> n));
 
 	energy_t b1 = get_POmloop10(i+1,j,k,l-1) + ap_penalty + beta2P(l,i);
@@ -1318,10 +1147,6 @@ energy_t pseudo_loop::get_POmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, ca
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
 	assert(!(i<=0 || l> n));
 
 	cand_pos_t ij = index[i]+j-i;
@@ -1334,10 +1159,6 @@ energy_t pseudo_loop::get_POmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, ca
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
 	assert(!(i<=0 || l> n));
 
 	cand_pos_t kl = index[k]+l-k;
@@ -1349,10 +1170,6 @@ energy_t pseudo_loop::get_POmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, ca
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
-	// Hosna, April 3, 2014
-	// adding impossible cases
-	// Mateo -These are needed as k > l due to some of the function doing k+1 when k==l. I would prefer to make it so that won't happen so that these ifs 
-	// are not needed as they are most likely expensive time-wise
 	assert(!(i<=0 || l> n));
 
 	cand_pos_t kl = index[k]+l-k;
@@ -1378,36 +1195,6 @@ energy_t pseudo_loop::get_e_intP(cand_pos_t i, cand_pos_t ip, cand_pos_t jp, can
 	energy_t e_int = compute_int(i,j,ip,jp);
 	energy_t energy = lrint(e_intP_penalty * e_int);
 	return energy;
-}
-
-//penalty for z unpaired bases in an internal loop that spans a band
-energy_t pseudo_loop::alpha1P(cand_pos_t z){
-	// Hosna, April 2nd, 2014
-	// for simplicity I am not checking to see what type of internal loop (i.e. I, B, or H) I have that spans a band, and I am assuming it is an intetnal loop of type I
-	// Hosna, August 21, 2014
-	// penalty by size returns inf for size 1
-	if (z== 0) return 0;
-	if (z == 1 || z==2){
-		return (cand_pos_t) lrint(params_->bulge[z]*e_intP_penalty);
-	}
-	return (cand_pos_t) lrint(params_->internal_loop[z]*e_intP_penalty);
-	
-}
-
-// penalty for closing pair i.l of an internal loop that spans a band
-energy_t pseudo_loop::alpha2P(cand_pos_t i, cand_pos_t l){
-	// Hosna April 2, 2014
-	// I added this similar to calculation of closing base pair contribution in a general internal loop in simfold and
-	// multiplied that to the intP_penalty for an internal loop that spans a band
-	int ptype_closing = pair[S_[i]][S_[l]];
-	return (cand_pos_t) lrint(params_->mismatchI[ptype_closing][S_[i+1]][S_[l-1]]*e_intP_penalty);
-}
-
-//penalty for asymmetry of z in an internal loop that spans a band
-energy_t pseudo_loop::alpha3P(cand_pos_t z){
-	if (z== 0) return 0;
-
-	return (energy_t) lrint(std::min(MAX_NINIO,params_->ninio[2]*z)*e_intP_penalty);
 }
 
 // penalty for closing pair i.l or l.i of an ordinary multiloop
@@ -1437,13 +1224,6 @@ energy_t pseudo_loop::gamma2(cand_pos_t i, cand_pos_t l){
 	// return 1;
 }
 
-// Hosna, Feb 18, 2014
-// I am changing the backtrack function such that it does not deal with structure
-// instead it only fills the minimum_fold array, f, and passes it to W_final
-// then in W_final one pass over f, will create the structure in dot bracket format
-// This is the solution I found for the problem of not knowing what kind of brackets and
-// how many different brackets to use when fillinf f and structure at the same time in pseudoloop.cpp
-//void pseudo_loop::back_track(char *structure, minimum_fold *f, seq_interval *cur_interval)
 void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 
 	// this->structure = structure;
@@ -1503,10 +1283,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			cand_pos_t best_row = -1,best_d=-1;
 
 			// branch 1
-			// Hosna, july 8, 2014
-			// based on original recurrences we should have i<d, and
-			// it is not clear to me why we have d=i here, so I am changing this back to original
-			// by changing d=i to d=i+1
 			for(cand_pos_t  d=i+1; d< j; ++d){
 				temp = get_PK(i,d,k,l) + get_WP(d+1,j);
 				if (temp < min_energy){
@@ -1517,10 +1293,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			}
 
 			// branch 2
-			// Hosna, july 8, 2014
-			// based on original recurrences we should have d<l, and
-			// it is not clear to me why we have d<=l here, so I am changing this back to original
-			// by changing d<=l to d<l
 			for(cand_pos_t d=k+1; d< l; ++d){
 				temp = get_PK(i,j,d,l) + get_WP(k,d-1);
 				if (temp < min_energy){
@@ -1622,8 +1394,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				}
 
 				//branch 2
-				// Hosna, April 11, 2014
-				// we need to add a branch penalty for multiloop that spans a band
 				temp = get_PLmloop(i,j,k,l) + bp_penalty;
 				if(temp < min_energy){
 					min_energy = temp;
@@ -1631,13 +1401,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				}
 
 				//branch 3
-				// Hosna, July 11, 2014
-				// To avoid addition of close base pairs we check for the following here
 				if (j>=(i+TURN+1)){
-					// Hosna April 11, 2014
-					// I think we have already added gamma2(j,i) when coming to PL, so there is no need to add it again here.
-					// Hosna July 17, 2014
-					// I am adding gamma2 back here to avoid single base pair band predictions
 					temp = get_PfromL(i+1,j-1,k,l) + gamma2(j,i);
 					if(temp < min_energy){
 						min_energy = temp;
@@ -1695,8 +1459,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				}
 
 				//branch 2
-				// Hosna, April 11, 2014
-				// we need to add a branch penalty for multiloop that spans a band
 				temp = get_PRmloop(i,j,k,l)+ bp_penalty;
 				if(temp < min_energy){
 					min_energy = temp;
@@ -1704,13 +1466,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				}
 
 				//branch 3
-				// Hosna, July 11, 2014
-				// To avoid addition of close base pairs we check for the following here
 				if (l>=(k+TURN+1)){
-					// Hosna April 11, 2014
-					// I think we have already added gamma2(l,k) when coming to PR, so there is no need to add it again here.
-					// Hosna July 17, 2014
-					// I am adding gamma2 back here to avoid single base pair band predictions
 					temp = get_PfromR(i,j,k+1,l-1) + gamma2(l,k);
 					if(temp < min_energy){
 						min_energy = temp;
@@ -1728,7 +1484,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 					break;
 				case 3:
 					insert_node(i,l-1,j,k+1,P_PfromR);
-					// Hosna, Feb 18, 2014
 					f[k].pair = l;
 					f[l].pair = k;
 					f[k].type = P_PR;
@@ -1759,7 +1514,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			}
 
 			if (i==j && k ==l){
-				// Hosna, Feb 25, 2014
 				f[j].pair = k;
 				f[k].pair = j;
 				f[j].type = P_PM;
@@ -1778,21 +1532,13 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 					best_row = 1;
 				}
 				//branch 2
-				// Hosna, April 11, 2014
-				// we need to add a branch penalty for multiloop that spans a band
 				temp = get_PMmloop(i,j,k,l) + bp_penalty;
 				if(temp < min_energy){
 					min_energy = temp;
 					best_row=2;
 				}
 				//branch 3
-				// Hosna, July 11, 2014
-				// To avoid addition of close base pairs we check for the following here
 				if (k>=(j+TURN-1)){
-					// Hosna April 11, 2014
-					// I think we have already added gamma2(j,k) when coming to PM, so there is no need to add it again here.
-					// Hosna July 17, 2014
-					// I am adding gamma2 back here to avoid single base pair band predictions
 					temp = get_PfromM(i,j-1,k+1,l) + gamma2(j,k);
 					if(temp < min_energy){
 						min_energy = temp;
@@ -1810,7 +1556,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 					break;
 				case 3:
 					insert_node(i,l,j-1,k+1,P_PfromM);
-					// Hosna, Feb 18, 2014
 					f[j].pair = k;
 					f[k].pair = j;
 					f[j].type = P_PM;
@@ -1832,8 +1577,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				std::cerr << "border cases: This should not have happened!, P_PO" << std::endl;
 				exit(EXIT_FAILURE);
 			}
-			// Hosna, April 3, 2014
-			// adding impossible cases
+
 			if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
 				std::cerr << "impossible cases: This should not have happened!, P_PO" << std::endl;
 				exit(EXIT_FAILURE);
@@ -1849,21 +1593,13 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 					best_row = 1;
 				}
 				//branch 2
-				// Hosna, April 11, 2014
-				// we need to add a branch penalty for multiloop that spans a band
 				temp = get_POmloop(i,j,k,l)+bp_penalty;
 				if(temp < min_energy){
 					min_energy = temp;
 					best_row=2;
 				}
 				//branch 3
-				// Hosna, July 11, 2014
-				// To avoid addition of close base pairs we check for the following here
 				if (l>=(i+TURN+1)){
-					// Hosna April 11, 2014
-					// I think we have already added gamma2(l,i) when coming to PO, so there is no need to add it again here.
-					// Hosna July 17, 2014
-					// I am adding gamma2 back here to avoid single base pair band predictions
 					temp = get_PfromO(i+1,j,k,l-1) + gamma2(l,i);
 					if(temp < min_energy){
 						min_energy = temp;
@@ -1880,7 +1616,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 					break;
 				case 3:
 					insert_node(i+1,l-1,j,k,P_PfromO);
-					// Hosna, Feb 18, 2014
 					f[i].pair = l;
 					f[l].pair = i;
 					f[i].type = P_PO;
@@ -1934,8 +1669,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				}
 			}
 			// branch 3
-			//Hosna, July 28, 2014
-			// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
 			temp = get_PR(i,j,k,l) + gamma2(l,k)+PB_penalty;
 			if(temp < min_energy){
 				min_energy = temp;
@@ -1944,8 +1677,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			}
 
 			//branch 4
-			//Hosna, July 28, 2014
-			// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
 			temp = get_PM(i,j,k,l) + gamma2(j,k)+PB_penalty;
 			if(temp < min_energy){
 				min_energy = temp;
@@ -1954,8 +1685,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			}
 
 			// branch 5
-			//Hosna, July 28, 2014
-			// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
 			temp = get_PO(i,j,k,l) + gamma2(l,i)+PB_penalty;
 			if(temp < min_energy){
 				min_energy = temp;
@@ -2034,8 +1763,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			}
 
 			//branch 3
-			//Hosna, July 28, 2014
-			// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
 			temp = get_PM(i,j,k,l) + gamma2(j,k)+PB_penalty;
 			if(temp < min_energy){
 				min_energy = temp;
@@ -2044,8 +1771,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			}
 
 			// branch 4
-			//Hosna, July 28, 2014
-			// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
 			temp = get_PO(i,j,k,l) + gamma2(l,i)+PB_penalty;
 			if(temp < min_energy){
 				min_energy = temp;
@@ -2122,8 +1847,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				}
 			}
 			// branch 3
-			//Hosna, July 28, 2014
-			// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
 			temp = get_PL(i,j,k,l) + gamma2(j,i)+PB_penalty;
 			if(temp < min_energy){
 				min_energy = temp;
@@ -2132,8 +1855,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			}
 
 			//branch 4
-			//Hosna, July 28, 2014
-			// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
 			temp = get_PR(i,j,k,l) + gamma2(l,k)+PB_penalty;
 			if(temp < min_energy){
 				min_energy = temp;
@@ -2211,8 +1932,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				}
 			}
 			// branch 3
-			//Hosna, July 28, 2014
-			// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
 			temp = get_PL(i,j,k,l) + gamma2(j,i)+PB_penalty;
 			if(temp < min_energy){
 				min_energy = temp;
@@ -2221,8 +1940,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			}
 
 			//branch 4
-			//Hosna, July 28, 2014
-			// I think going from PfromX to PX we are changing bands and so should be paying a band penalty
 			temp = get_PR(i,j,k,l) + gamma2(l,k)+PB_penalty;
 			if(temp < min_energy){
 				min_energy = temp;
@@ -2392,7 +2109,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 		}
 			break;
 		case P_WPP:
-		{//TODO: change WPP
+		{
 			cand_pos_t i = cur_interval->i;
 			cand_pos_t l = cur_interval->j;
 			if(debug) printf("At P_WPP with i=%d,l=%d\n",i,l);
@@ -2447,7 +2164,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			break;
 		case P_PLiloop:
 		{
-			// changing gapped region borders to what we mean in recurrences
 			cand_pos_t i = cur_interval->i;
 			cand_pos_t l = cur_interval->j;
 			cand_pos_t j = cur_interval->k;
@@ -2464,7 +2180,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				exit(EXIT_FAILURE);
 			}
 
-			// Hosna, Feb 25, 2014
 			f[i].pair = j;
 			f[j].pair = i;
 			f[i].type = P_PLiloop;
@@ -2547,7 +2262,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 		break;
 		case P_PLmloop00:
 		{
-			// changing gapped region borders to what we mean in recurrences
 			cand_pos_t i = cur_interval->i;
 			cand_pos_t l = cur_interval->j;
 			cand_pos_t j = cur_interval->k;
@@ -2604,7 +2318,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			break;
 		case P_PLmloop01:
 		{
-			// changing gapped region borders to what we mean in recurrences
 			cand_pos_t i = cur_interval->i;
 			cand_pos_t l = cur_interval->j;
 			cand_pos_t j = cur_interval->k;
@@ -2637,7 +2350,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			break;
 		case P_PLmloop10:
 		{
-			// changing gapped region borders to what we mean in recurrences
 			cand_pos_t i = cur_interval->i;
 			cand_pos_t l = cur_interval->j;
 			cand_pos_t j = cur_interval->k;
@@ -2687,7 +2399,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 
 		case P_PRiloop:
 		{
-			// changing gapped region borders to what we mean in recurrences
 			cand_pos_t i = cur_interval->i;
 			cand_pos_t l = cur_interval->j;
 			cand_pos_t j = cur_interval->k;
@@ -2704,7 +2415,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				exit(EXIT_FAILURE);
 			}
 
-			// Hosna, Feb 25, 2014
 			f[k].pair = l;
 			f[l].pair = k;
 			f[k].type = P_PRiloop;
@@ -2788,7 +2498,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 
 		case P_PRmloop00: // Mateo - This was omitted in the sparse code; not sure why.
 		{
-			// changing gapped region borders to what we mean in recurrences
 			cand_pos_t i = cur_interval->i;
 			cand_pos_t l = cur_interval->j;
 			cand_pos_t j = cur_interval->k;
@@ -2846,7 +2555,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 
 		case P_PRmloop01:
 		{
-			// changing gapped region borders to what we mean in recurrences
 			cand_pos_t i = cur_interval->i;
 			cand_pos_t l = cur_interval->j;
 			cand_pos_t j = cur_interval->k;
@@ -2891,7 +2599,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 
 		case P_PRmloop10:
 		{
-			// changing gapped region borders to what we mean in recurrences
 			cand_pos_t i = cur_interval->i;
 			cand_pos_t l = cur_interval->j;
 			cand_pos_t j = cur_interval->k;
@@ -2936,7 +2643,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 
 		case P_PMiloop:
 		{
-			// changing gapped region borders to what we mean in recurrences
 			cand_pos_t i = cur_interval->i;
 			cand_pos_t l = cur_interval->j;
 			cand_pos_t j = cur_interval->k;
@@ -2953,7 +2659,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				exit(EXIT_FAILURE);
 			}
 
-			// Hosna, Feb 25, 2014
 			f[j].pair = k;
 			f[k].pair = j;
 			f[j].type = P_PMiloop;
@@ -2996,7 +2701,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			break;
 		case P_PMmloop:
 		{
-			// changing gapped region borders to what we mean in recurrences
 			cand_pos_t i = cur_interval->i;
 			cand_pos_t l = cur_interval->j;
 			cand_pos_t j = cur_interval->k;
@@ -3013,7 +2717,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				exit(EXIT_FAILURE);
 			}
 
-			// Hosna, Feb 25, 2014
 			f[j].pair = k;
 			f[k].pair = j;
 			f[j].type = P_PMmloop;
@@ -3037,7 +2740,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 		break;
 		case P_PMmloop00:
 		{
-			// changing gapped region borders to what we mean in recurrences
 			cand_pos_t i = cur_interval->i;
 			cand_pos_t l = cur_interval->j;
 			cand_pos_t j = cur_interval->k;
@@ -3054,7 +2756,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				exit(EXIT_FAILURE);
 			}
 
-			// Hosna, Feb 25, 2014
 			f[j].pair = k;
 			f[k].pair = j;
 			f[j].type = P_PMmloop;
@@ -3101,7 +2802,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 
 		case P_PMmloop01:
 		{
-			// changing gapped region borders to what we mean in recurrences
 			cand_pos_t i = cur_interval->i;
 			cand_pos_t l = cur_interval->j;
 			cand_pos_t j = cur_interval->k;
@@ -3144,7 +2844,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			break;
 		case P_PMmloop10:
 		{
-			// changing gapped region borders to what we mean in recurrences
 			cand_pos_t i = cur_interval->i;
 			cand_pos_t l = cur_interval->j;
 			cand_pos_t j = cur_interval->k;
@@ -3188,7 +2887,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			break;
 		case P_POiloop:
 		{
-			// changing gapped region borders to what we mean in recurrences
 			cand_pos_t i = cur_interval->i;
 			cand_pos_t l = cur_interval->j;
 			cand_pos_t j = cur_interval->k;
@@ -3205,7 +2903,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				exit(EXIT_FAILURE);
 			}
 
-			// Hosna, Feb 25, 2014
 			f[i].pair = l;
 			f[l].pair = i;
 			f[i].type = P_POiloop;
@@ -3249,7 +2946,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			break;
 		case P_POmloop:
 		{
-			// changing gapped region borders to match the recurrences
 			cand_pos_t i = cur_interval->i;
 			cand_pos_t l = cur_interval->j;
 			cand_pos_t j = cur_interval->k;
@@ -3265,7 +2961,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				std::cerr << "impossible cases: This should not have happened!, P_POmloop" << std::endl;
 				exit(EXIT_FAILURE);
 			}
-			// Hosna, Feb 25, 2014
 			f[i].pair = l;
 			f[l].pair = i;
 			f[i].type = P_POmloop;
@@ -3290,7 +2985,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 
 		case P_POmloop00:
 		{
-			// changing gapped region borders to match the recurrences
 			cand_pos_t i = cur_interval->i;
 			cand_pos_t l = cur_interval->j;
 			cand_pos_t j = cur_interval->k;
@@ -3345,7 +3039,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 
 		case P_POmloop01:
 		{
-			// changing gapped region borders to match the recurrences
 			cand_pos_t i = cur_interval->i;
 			cand_pos_t l = cur_interval->j;
 			cand_pos_t j = cur_interval->k;
@@ -3377,7 +3070,6 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			break;
 		case P_POmloop10:
 		{
-			// changing gapped region borders to match the recurrences
 			cand_pos_t i = cur_interval->i;
 			cand_pos_t l = cur_interval->j;
 			cand_pos_t j = cur_interval->k;
@@ -3450,21 +3142,6 @@ void pseudo_loop::insert_node(int i, int j, int k, int l, char type){
     tmp->j = j;
 	tmp->k = k;
 	tmp->l = l;
-	tmp->asym = -1;
-    tmp->type = type;
-    tmp->next = stack_interval;
-    stack_interval = tmp;
-}
-
-// corresponds to region [i,k]U[l,j] with asymmetry s (used for Pxiloop5, where x=L,R,M,O)
-void pseudo_loop::insert_node(int i, int j, int k, int l, int s, char type){
-	seq_interval *tmp;
-    tmp = new seq_interval;
-    tmp->i = i;
-    tmp->j = j;
-	tmp->k = k;
-	tmp->l = l;
-	tmp->asym = s;
     tmp->type = type;
     tmp->next = stack_interval;
     stack_interval = tmp;

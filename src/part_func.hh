@@ -1,39 +1,78 @@
-#ifndef PSEUDO_LOOP_H_
-#define PSEUDO_LOOP_H_
+#ifndef PART_FUNC
+#define PART_FUNC
 #include "base_types.hh"
-#include "h_struct.hh"
-#include "constants.hh"
-#include <stdio.h>
-#include <string.h>
-#include "s_energy_matrix.hh"
+#include <cstring>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
-class VM_final;
-class V_final;
-class pseudo_loop{
+extern "C" {
+#include "ViennaRNA/loops/all.h"
+#include "ViennaRNA/pair_mat.h"
+#include "ViennaRNA/params/default.h"
+#include "ViennaRNA/params/io.h"
+}
 
-public:
-	// constructor
-	pseudo_loop(std::string seq, s_energy_matrix *V, short *S, short *S1, vrna_param_t *params);
+struct SzudzikHash {
+    cand_pos_t operator()(const std::pair<cand_pos_t, cand_pos_t> pair) const {
+        cand_pos_t a = pair.first;
+        cand_pos_t b = pair.second;
+        return (a >= b) ? (a * a + a + b) : (b * b + a);
+    }
+};
 
-	// destructor
-	~pseudo_loop();
+inline cand_pos_t boustrophedon_at(cand_pos_t start, cand_pos_t end, cand_pos_t pos);
+std::vector<cand_pos_t> boustrophedon(cand_pos_t start, cand_pos_t end);
 
-    void compute_energies(cand_pos_t i, cand_pos_t j);
+class W_final_pf {
 
-	void backtrack(minimum_fold *f, seq_interval *cur_interval);
-    void set_stack_interval(seq_interval *stack_interval);
-    seq_interval *get_stack_interval(){return stack_interval;}
-    std::string get_structure(){return structure;}
-    minimum_fold *get_minimum_fold(){return f;}
+  public:
+    std::string structure;
+    int num_samples;
+    std::unordered_map<std::string, int> structures;
 
-	energy_t get_WB(cand_pos_t i, cand_pos_t j);
+    W_final_pf(std::string &seq, std::string &MFE_structure, double MFE_energy, int dangle, int num_samples, bool PSplot);
+    // constructor for the restricted mfe case
+
+    ~W_final_pf();
+    // The destructor
+
+    pf_t ccj_pf();
+
+    vrna_exp_param_t *exp_params_;
+
+    energy_t get_WB(cand_pos_t i, cand_pos_t j);
 	energy_t get_WBP(cand_pos_t i, cand_pos_t j);
 	
 	// nested substr in a pseudoloop
 	energy_t get_WP(cand_pos_t i, cand_pos_t j);
 	energy_t get_WPP(cand_pos_t i, cand_pos_t j);
 	
-	energy_t get_energy(cand_pos_t i, cand_pos_t j){return get_P(i,j);}
+	pf_t get_energy(cand_pos_t i, cand_pos_t j) {
+        if (i >= j) return 0;
+        cand_pos_t ij = index[i] + j - i;
+        return V[ij];
+    }
+    pf_t get_energy_VM(cand_pos_t i, cand_pos_t j) {
+        if (i >= j) return 0;
+        cand_pos_t ij = index[i] + j - i;
+        return VM[ij];
+    }
+    pf_t get_energy_WM(cand_pos_t i, cand_pos_t j) {
+        if (i >= j) return 0;
+        cand_pos_t ij = index[i] + j - i;
+        return WM[ij];
+    }
+    pf_t get_energy_WMv(cand_pos_t i, cand_pos_t j) {
+        if (i >= j) return 0;
+        cand_pos_t ij = index[i] + j - i;
+        return WMv[ij];
+    }
+    pf_t get_energy_WMp(cand_pos_t i, cand_pos_t j) {
+        if (i >= j) return 0;
+        cand_pos_t ij = index[i] + j - i;
+        return WMp[ij];
+    }
 	energy_t get_P(cand_pos_t i, cand_pos_t j);
 	energy_t get_PK(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	energy_t get_PL(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
@@ -76,26 +115,27 @@ public:
 	energy_t get_POmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	energy_t get_POmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 
-	std::vector<energy_t> P;					// the main loop for pseudoloops and bands
-private:
+	std::vector<energy_t> P; // the main loop for pseudoloops and bands
 
-	cand_pos_t n;
-	std::string res;
-	std::string seq;
+  private:
+    std::string seq;
+    std::string MFE_structure;
+    bool PSplot;
+    cand_pos_t n;
+    std::vector<cand_pos_t> index;
 
-    s_energy_matrix *V;		        // the V object
+    short *S_;
+    short *S1_;
 
-	seq_interval *stack_interval;
-	std::string structure;
-	minimum_fold *f;
-	vrna_param_t *params_;
-
-	std::vector<cand_pos_t> index;				// the array to keep the index of two dimensional arrays like WI and weakly_closed
-
-	short *S_;
-	short *S1_;
-
-	std::vector<energy_t> WPP;								// similar to WP but has at least one base pair
+    // PK Free
+    std::vector<pf_t> V;
+    std::vector<pf_t> VM;
+    std::vector<pf_t> WMv;
+    std::vector<pf_t> WMp;
+    std::vector<pf_t> WM;
+    std::vector<pf_t> W;
+    // PK
+    std::vector<energy_t> WPP;								// similar to WP but has at least one base pair
 	std::vector<energy_t> WBP;								// similar to WB but has at least one base pair
 	
 	std::vector<std::vector<energy_t> > PK;					// MFE of a TGB structure over gapped region [i,j] U [k,l]
@@ -134,6 +174,14 @@ private:
 	std::vector<std::vector< std::vector<energy_t> > > POmloop01;
 	std::vector<std::vector< std::vector<energy_t> > > POmloop10;
 
+    // Extra
+    std::vector<pf_t> scale;
+    std::vector<pf_t> expMLbase;
+    std::vector<pf_t> expcp_pen;
+    std::vector<pf_t> expPUP_pen;
+
+    std::unordered_map<std::pair<cand_pos_t, cand_pos_t>, cand_pos_t, SzudzikHash> samples;
+
 	void compute_WBP(cand_pos_t i, cand_pos_t l);
 	void compute_WPP(cand_pos_t i, cand_pos_t l);
 		
@@ -171,21 +219,42 @@ private:
 	void compute_POmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_POmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 
-    // function to allocate space for the arrays
-    void allocate_space();
+    double to_Energy(pf_t energy, cand_pos_t length);
+    void rescale_pk_globals();
 
-	energy_t get_e_stP(cand_pos_t i, cand_pos_t j);
-	energy_t get_e_intP(cand_pos_t i,cand_pos_t ip, cand_pos_t jp, cand_pos_t j);
-	energy_t compute_int(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l);
+    void exp_params_rescale(double mfe);
+
+    void compute_energy(cand_pos_t i, cand_pos_t j);
+
+    void compute_WMv_WMp(cand_pos_t i, cand_pos_t j);
+
+    void compute_energy_WM(cand_pos_t i, cand_pos_t j);
+
+	pf_t compute_energy_VM(cand_pos_t i, cand_pos_t j);
+
+    void compute_pk_energies(cand_pos_t i, cand_pos_t l);
+
+
+    pf_t exp_Extloop(cand_pos_t i, cand_pos_t j);
+
+    pf_t exp_MLstem(cand_pos_t i, cand_pos_t j);
+
+    pf_t exp_Mbloop(cand_pos_t i, cand_pos_t j);
+
+    pf_t HairpinE(cand_pos_t i, cand_pos_t j);
+
+    pf_t compute_internal(cand_pos_t i, cand_pos_t j);
+
+    pf_t compute_int(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l);
+
+    pf_t get_e_stP(cand_pos_t i, cand_pos_t j);
+
+    pf_t get_e_intP(cand_pos_t i, cand_pos_t ip, cand_pos_t jp, cand_pos_t j);
 
 	energy_t beta2(cand_pos_t i, cand_pos_t l);
 	energy_t beta2P(cand_pos_t i, cand_pos_t l);
 	energy_t gamma2(cand_pos_t i, cand_pos_t l);
-
-  	// Hosna: Feb 19th 2007
-  	// used for backtracking
-  	void insert_node (cand_pos_t i, cand_pos_t j, char type);//, seq_interval *stack_interval);
-	void insert_node(int i, int j, int k, int l, char type);
-
 };
-#endif /*PSEUDO_LOOP_H_*/
+
+
+#endif

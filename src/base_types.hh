@@ -11,4 +11,6 @@ typedef uint_least32_t cand_pos_tu;
 typedef int_least16_t pair_type;
 typedef int_least16_t base_type;
 
+typedef double pf_t;
+
 #endif

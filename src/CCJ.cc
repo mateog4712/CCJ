@@ -2,6 +2,7 @@
 // a simple driver for CCJ
 #include "cmdline.hh"
 #include "W_final.hh"
+#include "part_func.hh"
 #include "h_globals.hh"
 //
 #include <iostream>
@@ -47,6 +48,13 @@ std::string ccj(std::string seq,double &energy, int dangle){
     return structure;
 }
 
+std::string ccj_pf(std::string seq,pf_t &energy,std::string mfe_structure,double mfe_energy, int dangle, int num_samples,bool PSplot){
+	W_final_pf min_fold(seq,mfe_structure,mfe_energy,dangle,num_samples,PSplot);
+	energy = min_fold.ccj_pf();
+    std::string structure = min_fold.structure;
+    return structure;
+}
+
 int main (int argc, char *argv[])
 {
     args_info args_info;
@@ -77,11 +85,16 @@ int main (int argc, char *argv[])
 	else if (seq.find('T') != std::string::npos){
 		vrna_params_load_DNA_Mathews2004();
 	}
+	int num_samples = 1000; 
+	bool PSplot = true;
 	double energy;
+	pf_t pf_energy;
     std::string structure = ccj(seq,energy,dangles);
+	std::string pf_structure = ccj_pf(seq,pf_energy,structure,energy,dangles,num_samples,PSplot);
 
     std::cout << seq << std::endl;
     std::cout << structure << " (" << energy << ")" << std::endl;
+	std::cout << pf_structure << " (" << pf_energy << ")" << std::endl;
 
     cmdline_parser_free(&args_info);
 

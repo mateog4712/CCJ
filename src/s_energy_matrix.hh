@@ -2,7 +2,6 @@
 #define ENERGY_MATRIX_H
 
 #include "base_types.hh"
-#include "sparse_tree.hh"
 #include <string>
 #include <vector>
 
