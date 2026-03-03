@@ -394,30 +394,28 @@ void W_final_pf::compute_pk_energies(cand_pos_t i, cand_pos_t l) {
 }
 
 void W_final_pf::compute_WBP(cand_pos_t i, cand_pos_t l){
-	pf_t contributions = 0, common = 0;
+	pf_t contributions = 0;
 
 	cand_pos_t il = index[i]+l-i;
+	cand_pos_t ilm1 = index[i]+l-1-i;
 	for(cand_pos_t d=i; d< l; ++d){
-		for(cand_pos_t e = d+1; e<= l; ++e){
-			common = get_WB(i,d-1)*expcp_pen[l-e]*expPPS_penalty;
-			contributions += get_energy(d,e)*beta2P(e,d)*common;
-			contributions += get_P(d,e)*expPSM_penalty*common;
-		}
+		contributions += get_energy(d,l)*beta2P(l,d)*expPPS_penalty;
+		contributions += get_P(d,l)*expPSM_penalty*expPPS_penalty;
 	}
+	contributions+=WBP[ilm1]*expcp_pen[1];
 	WBP[il] = contributions;
 }
 
 void W_final_pf::compute_WPP(cand_pos_t i, cand_pos_t l){
-	pf_t contributions = 0, common = 0;
+	pf_t contributions = 0;
 
 	cand_pos_t il = index[i]+l-i;
+	cand_pos_t ilm1 = index[i]+l-1-i;
 	for(cand_pos_t d=i; d<l; ++d){
-		for(cand_pos_t e = d+1; e<= l; ++e){
-			common = get_WP(i,d-1)*expPUP_pen[l-e]*expPPS_penalty;
-			contributions += get_energy(d,e)*gamma2(e,d)*common;
-			contributions += get_P(d,e)*expPSP_penalty*common;
-		}
+		contributions += get_WP(i,d-1)*get_energy(d,l)*gamma2(l,d)*expPPS_penalty;
+		contributions += get_WP(i,d-1)*get_P(d,l)*expPSP_penalty*expPPS_penalty;
 	}
+	contributions+=WBP[ilm1]*expPUP_pen[1];
 	WPP[il] = contributions;
 }
 

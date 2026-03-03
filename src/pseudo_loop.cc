@@ -164,34 +164,36 @@ void pseudo_loop::compute_energies(cand_pos_t i, cand_pos_t l)
 }
 
 void pseudo_loop::compute_WBP(int i, int l){
-	energy_t min_energy= INF, b1 = INF, b2=INF;
+	energy_t min_energy= INF, b1 = INF, b2=INF, b3 = INF,tmp =INF;
 
 	cand_pos_t il = index[i]+l-i;
+	cand_pos_t ilm1 = index[i]+l-1-i;
 	for(cand_pos_t d=i; d< l; ++d){
-		for(cand_pos_t e = d+1; e<= l; ++e){
-			energy_t common = get_WB(i,d-1) + cp_penalty*(l-e)+PPS_penalty;
-			b1 = V->get_energy(d,e) + beta2P(e,d) + common;
-			b2 = get_P(d,e) + PSM_penalty + common;
-			min_energy = std::min({min_energy,b1,b2});
-		}
+		tmp = get_WB(i,d-1) + V->get_energy(d,l) + beta2P(l,d) + PPS_penalty;
+		b1 = std::min(b1,tmp);
+		tmp = get_WB(i,d-1) + get_P(d,l) + PSM_penalty + PPS_penalty;
+		b2 = std::min(b2,tmp);
 	}
+	b3 = WBP[ilm1]+cp_penalty;
+	min_energy = std::min({b1,b2,b3});
 	if (min_energy < INF/2){
 		WBP[il] = min_energy;
 	}
 }
 
 void pseudo_loop::compute_WPP(cand_pos_t i, cand_pos_t l){
-	energy_t min_energy = INF, b1 = INF, b2=INF;
+	energy_t min_energy = INF, b1 = INF, b2=INF, b3 =INF, tmp = INF;
 
 	cand_pos_t il = index[i]+l-i;
+	cand_pos_t ilm1 = index[i]+l-1-i;
 	for(cand_pos_t d=i; d<l; ++d){
-		for(cand_pos_t e = d+1; e<= l; ++e){
-			energy_t common = get_WP(i,d-1) + PUP_penalty*(l-e) +PPS_penalty;
-			b1 = V->get_energy(d,e) + gamma2(e,d) + common;
-			b2 = get_P(d,e) + PSP_penalty + common;
-			min_energy = std::min({min_energy,b1,b2});
-		}
+		tmp = get_WP(i,d-1) + V->get_energy(d,l) + gamma2(l,d) + PPS_penalty;
+		b1 = std::min(b1,tmp);
+		tmp = get_WP(i,d-1) + get_P(d,l) + PSP_penalty + PPS_penalty;
+		b2 = std::min(b2,tmp);
 	}
+	b3 = WPP[ilm1]+PUP_penalty;
+	min_energy = std::min({b1,b2,b3});
 	if (min_energy < INF/2){
 		WPP[il] = min_energy;
 	}
@@ -929,6 +931,7 @@ energy_t pseudo_loop::get_PfromO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 	return PfromO[i][j][kl];
 }
 
+// I will decide at a later time if this should be grabbing from a matrix or calculated every time it is called
 energy_t pseudo_loop::get_PLiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
@@ -2028,40 +2031,42 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			}
 
 			energy_t min_energy = INF,temp=INF;
-			cand_pos_t best_row = -1,best_d=-1,best_e=-1;
+			cand_pos_t best_row = -1,best_d=-1;
 
 			for(cand_pos_t d=i; d< l; d++){
-				for(cand_pos_t e = d+1; e<= l; e++){
-					//branch 1
-					energy_t common = get_WB(i,d-1) + cp_penalty*(l-e)+PPS_penalty;
-					temp = common + V->get_energy(d,e) +beta2P(e,d);
-					if (temp < min_energy){
-						min_energy = temp;
-						best_row = 1;
-						best_d = d;
-						best_e = e;
-					}
-
-					//branch 2
-					temp = common + get_P(d,e) + PSM_penalty;
-					if (temp < min_energy){
-						min_energy = temp;
-						best_row = 2;
-						best_d = d;
-						best_e = e;
-					}
+				//branch 1
+				temp = get_WB(i,d-1) + V->get_energy(d,l) +beta2P(l,d) + PPS_penalty;
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row = 1;
+					best_d = d;
 				}
+
+				//branch 2
+				temp = get_WB(i,d-1) + get_P(d,l) + PSM_penalty + PPS_penalty;
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row = 2;
+					best_d = d;
+				}
+			}
+			temp = get_WBP(i,l-1) + cp_penalty;
+			if(temp< min_energy){
+				min_energy = temp;
+				best_row = 3;
 			}
 
 			switch (best_row){
 				case 1:
 					insert_node(i,best_d-1,P_WB);
-					insert_node(best_d,best_e,LOOP);
+					insert_node(best_d,l,LOOP);
 					break;
 				case 2:
 					insert_node(i,best_d-1,P_WB);
-					insert_node(best_d,best_e,P_P);
-
+					insert_node(best_d,l,P_P);
+					break;
+				case 3:
+					insert_node(i,l-1,P_WBP);
 					break;
 			}
 		}
@@ -2124,40 +2129,42 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			}
 
 			energy_t min_energy = INF,temp=INF;
-			cand_pos_t best_row = -1,best_d=-1,best_e=-1;
+			cand_pos_t best_row = -1,best_d=-1;
 
 			for(cand_pos_t d=i; d< l; d++){
-				for(cand_pos_t e = d+1; e<= l; e++){
-
-					energy_t common = get_WP(i,d-1) + PUP_penalty*(l-e)+PPS_penalty;
-					//branch 1
-					temp = V->get_energy(d,e) + gamma2(e,d) + common;
-					if (temp < min_energy){
-						min_energy = temp;
-						best_row = 1;
-						best_d = d;
-						best_e = e;
-					}
-
-					//branch 2
-					temp = get_P(d,e) + PSP_penalty + common;
-					if (temp < min_energy){
-						min_energy = temp;
-						best_row = 2;
-						best_d = d;
-						best_e = e;
-					}
+				//branch 1
+				temp = get_WP(i,d-1) + V->get_energy(d,l) + gamma2(l,d) + PPS_penalty;
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row = 1;
+					best_d = d;
 				}
+
+				//branch 2
+				temp = get_WP(i,d-1) + get_P(d,l) + PSP_penalty + PPS_penalty;
+				if (temp < min_energy){
+					min_energy = temp;
+					best_row = 2;
+					best_d = d;
+				}
+			}
+			temp = get_WPP(i,l-1) + PUP_penalty;
+			if(temp<min_energy){
+				min_energy = temp;
+				best_row = 3;
 			}
 
 			switch (best_row){
 				case 1:
 					insert_node(i,best_d-1,P_WP);
-					insert_node(best_d,best_e,LOOP);
+					insert_node(best_d,l,LOOP);
 					break;
 				case 2:
 					insert_node(i,best_d-1,P_WP);
-					insert_node(best_d,best_e,P_P);
+					insert_node(best_d,l,P_P);
+					break;
+				case 3:
+					insert_node(i,l-1,P_WPP);
 					break;
 			}
 		}
