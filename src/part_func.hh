@@ -151,25 +151,18 @@ class W_final_pf {
 	std::vector<std::vector< std::vector<pf_t> > > PfromO;
 	
 	// internal loops and multi loops that span a band
-	std::vector<std::vector<pf_t> > PLiloop;
 	std::vector<std::vector<pf_t> > PLmloop00;
 	std::vector<std::vector< std::vector<pf_t> > > PLmloop01;
 	std::vector<std::vector< std::vector<pf_t> > > PLmloop10;
 	
-	
-	std::vector<std::vector<pf_t> > PRiloop;
 	std::vector<std::vector<pf_t> > PRmloop00;
 	std::vector<std::vector<pf_t> > PRmloop01;
 	std::vector<std::vector<pf_t> > PRmloop10;
 	
-	
-	std::vector<std::vector<pf_t> > PMiloop;
 	std::vector<std::vector<pf_t> > PMmloop00;
 	std::vector<std::vector<pf_t> > PMmloop01;
 	std::vector<std::vector<pf_t> > PMmloop10;
 	
-	
-	std::vector<std::vector<pf_t> > POiloop;
 	std::vector<std::vector<pf_t> > POmloop00;
 	std::vector<std::vector< std::vector<pf_t> > > POmloop01;
 	std::vector<std::vector< std::vector<pf_t> > > POmloop10;
@@ -199,22 +192,18 @@ class W_final_pf {
 	void compute_PfromO(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	
 	
-	void compute_PLiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PLmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PLmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PLmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	
-	void compute_PRiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PRmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PRmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PRmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	
-	void compute_PMiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PMmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PMmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PMmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	
-	void compute_POiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_POmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_POmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_POmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);

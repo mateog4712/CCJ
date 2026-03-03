@@ -97,20 +97,16 @@ W_final_pf::W_final_pf(std::string &seq, std::string &MFE_structure, double MFE_
 		PfromR.push_back(row);
 		PfromM.push_back(row);
 
-		PLiloop.push_back(row);
 		PLmloop00.push_back(row);
 
-		PRiloop.push_back(row);
 		PRmloop00.push_back(row);
 		PRmloop01.push_back(row);
 		PRmloop10.push_back(row);
 
-		PMiloop.push_back(row);
 		PMmloop00.push_back(row);
 		PMmloop01.push_back(row);
 		PMmloop10.push_back(row);
 
-		POiloop.push_back(row);
 		POmloop00.push_back(row);
 	}
 
@@ -339,15 +335,11 @@ void W_final_pf::compute_pk_energies(cand_pos_t i, cand_pos_t l) {
 	for(cand_pos_t j = i; j<l; ++j){
 		for(cand_pos_t k = l; k>=j+2; --k){
 
-			compute_PLiloop(i,j,k,l);
-
 			compute_PLmloop00(i,j,k,l);
 
 			compute_PLmloop01(i,j,k,l);
 
 			compute_PLmloop10(i,j,k,l);
-
-			compute_PRiloop(i,j,k,l);
 
 			compute_PRmloop00(i,j,k,l);
 
@@ -355,15 +347,11 @@ void W_final_pf::compute_pk_energies(cand_pos_t i, cand_pos_t l) {
 
 			compute_PRmloop10(i,j,k,l);
 
-			compute_PMiloop(i,j,k,l);
-
 			compute_PMmloop00(i,j,k,l);
 
 			compute_PMmloop01(i,j,k,l);
 
 			compute_PMmloop10(i,j,k,l);
-
-			compute_POiloop(i,j,k,l);
 
 			compute_POmloop00(i,j,k,l);
 
@@ -612,26 +600,6 @@ void W_final_pf::compute_PfromO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_p
     PfromO[i][j][kl]=contributions;
 }
 
-void W_final_pf::compute_PLiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	pf_t contributions = 0;
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-	int ptype_closing = pair[S_[i]][S_[j]];
-	if (ptype_closing>0){
-		contributions += get_PL(i+1,j-1,k,l)*get_e_stP(i,j);
-
-		for(cand_pos_t d= i+1; d<std::min(j,i+MAXLOOP); ++d){
-        	for(cand_pos_t dp = j-1; dp > std::max(d+TURN,j-MAXLOOP); --dp){
-            	cand_pos_t u1 = d-(i)-1; // check these
-                cand_pos_t u2 = (j)-dp-1;
-                contributions += get_e_intP(i,d,dp,j)*get_PL(d,dp,k,l)*scale[u1 + u2 + 2];
-        	}
-    	}
-	}
-	PLiloop[ij][kl]=contributions;
-}
-
 void W_final_pf::compute_PLmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
 
@@ -673,26 +641,6 @@ void W_final_pf::compute_PLmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
         }
     }
 	PLmloop10[i][j][kl] = contributions;
-}
-
-void W_final_pf::compute_PRiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	pf_t contributions = 0;
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-	int ptype_closing = pair[S_[k]][S_[l]];
-	if (ptype_closing>0){
-		contributions += get_PR(i,j,k+1,l-1)*get_e_stP(k,l);
-
-		for(cand_pos_t d= k+1; d<std::min(l,k+MAXLOOP); ++d){
-        	for(cand_pos_t dp=l-1; dp > std::max(d+TURN,l-MAXLOOP); --dp){
-                cand_pos_t u1 = d-(k)-1; // check these
-                cand_pos_t u2 = (l)-dp-1;
-            	contributions += get_e_intP(k,d,dp,l)*get_PR(i,j,d,dp)*scale[u1 + u2 + 2];
-        	}
-    	}
-	}
-	PRiloop[ij][kl]=contributions;
 }
 
 void W_final_pf::compute_PRmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -739,27 +687,6 @@ void W_final_pf::compute_PRmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 	PRmloop10[ij][kl] = contributions;
 }
 
-void W_final_pf::compute_PMiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	pf_t contributions = 0;
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-	int ptype_closing = pair[S_[j]][S_[k]];
-
-	if (ptype_closing>0){
-		contributions += get_PM(i,j-1,k+1,l)*get_e_stP(j-1,k+1);
-
-		for(cand_pos_t d= j-1; d>std::max(i,j-MAXLOOP); --d){
-        	for (cand_pos_t dp=k+1; dp <std::min(l,k+MAXLOOP); ++dp) {
-                cand_pos_t u1 = (j)-d-1; // check these
-                cand_pos_t u2 = dp-(k)-1;
-            	contributions += get_e_intP(d,j,k,dp)*get_PM(i,d,dp,l)*scale[u1 + u2 + 2];
-        	}
-    	}
-	}
-	PMiloop[ij][kl]=contributions;
-}
-
 void W_final_pf::compute_PMmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
 
@@ -803,27 +730,6 @@ void W_final_pf::compute_PMmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
         contributions += get_POmloop10(i,j,k,d)*get_WB(d+1,l);
     }
 	PMmloop10[ij][kl] = contributions;
-}
-
-void W_final_pf::compute_POiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	pf_t contributions = 0;
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-	int ptype_closing = pair[S_[i]][S_[l]];
-
-	if (ptype_closing>0){
-		contributions += get_PO(i+1,j,k,l-1)*get_e_stP(i,l);
-
-		for(cand_pos_t d= i+1; d<std::min(j,i+MAXLOOP); ++d){
-        	for (cand_pos_t dp=l-1; dp >std::max(l-MAXLOOP,k); --dp) {
-                cand_pos_t u1 = d-(i)-1; // check these
-                cand_pos_t u2 = (l)-dp-1;
-            	contributions += get_e_intP(i,d,dp,l)*get_PO(d,j,dp,k)*scale[u1 + u2 + 2];
-        	}
-    	}
-	}
-	POiloop[ij][kl]=contributions;
 }
 
 void W_final_pf::compute_POmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -1047,10 +953,17 @@ pf_t W_final_pf::get_PLiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	const int ptype_closing = pair[S_[i]][S_[j]];
 	if(ptype_closing == 0) return 0;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
+	pf_t contributions = 0;
+	contributions += get_PL(i+1,j-1,k,l)*get_e_stP(i,j);
 
-	return PLiloop[ij][kl];
+	for(cand_pos_t d= i+1; d<std::min(j,i+MAXLOOP); ++d){
+		for(cand_pos_t dp = j-1; dp > std::max(d+TURN,j-MAXLOOP); --dp){
+			cand_pos_t u1 = d-(i)-1; // check these
+			cand_pos_t u2 = (j)-dp-1;
+			contributions += get_e_intP(i,d,dp,j)*get_PL(d,dp,k,l)*scale[u1 + u2 + 2];
+		}
+	}
+	return contributions;
 }
 
 pf_t W_final_pf::get_PLmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -1108,10 +1021,17 @@ pf_t W_final_pf::get_PRiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	const int ptype_closing = pair[S_[k]][S_[l]];
 	if(ptype_closing == 0) return 0;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
+	pf_t contributions = 0;
+	contributions += get_PR(i,j,k+1,l-1)*get_e_stP(k,l);
 
-	return PRiloop[ij][kl];
+	for(cand_pos_t d= k+1; d<std::min(l,k+MAXLOOP); ++d){
+		for(cand_pos_t dp=l-1; dp > std::max(d+TURN,l-MAXLOOP); --dp){
+			cand_pos_t u1 = d-(k)-1; // check these
+			cand_pos_t u2 = (l)-dp-1;
+			contributions += get_e_intP(k,d,dp,l)*get_PR(i,j,d,dp)*scale[u1 + u2 + 2];
+		}
+	}
+	return contributions;
 }
 
 pf_t W_final_pf::get_PRmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -1171,10 +1091,17 @@ pf_t W_final_pf::get_PMiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	const int ptype_closing = pair[S_[j]][S_[k]];
 	if(ptype_closing == 0) return 0;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
+	pf_t contributions = 0;
+	contributions += get_PM(i,j-1,k+1,l)*get_e_stP(j-1,k+1);
 
-	return PMiloop[ij][kl];
+	for(cand_pos_t d= j-1; d>std::max(i,j-MAXLOOP); --d){
+		for (cand_pos_t dp=k+1; dp <std::min(l,k+MAXLOOP); ++dp) {
+			cand_pos_t u1 = (j)-d-1; // check these
+			cand_pos_t u2 = dp-(k)-1;
+			contributions += get_e_intP(d,j,k,dp)*get_PM(i,d,dp,l)*scale[u1 + u2 + 2];
+		}
+	}
+	return contributions;
 }
 
 pf_t W_final_pf::get_PMmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -1234,10 +1161,17 @@ pf_t W_final_pf::get_POiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	const int ptype_closing = pair[S_[i]][S_[l]];
 	if(ptype_closing == 0) return 0;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
+	pf_t contributions = 0;
+	contributions += get_PO(i+1,j,k,l-1)*get_e_stP(i,l);
 
-	return POiloop[ij][kl];
+	for(cand_pos_t d= i+1; d<std::min(j,i+MAXLOOP); ++d){
+		for (cand_pos_t dp=l-1; dp >std::max(l-MAXLOOP,k); --dp) {
+			cand_pos_t u1 = d-(i)-1; // check these
+			cand_pos_t u2 = (l)-dp-1;
+			contributions += get_e_intP(i,d,dp,l)*get_PO(d,j,dp,k)*scale[u1 + u2 + 2];
+		}
+	}
+	return contributions;
 }
 
 pf_t W_final_pf::get_POmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){

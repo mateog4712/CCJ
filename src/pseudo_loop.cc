@@ -70,20 +70,16 @@ void pseudo_loop::allocate_space()
 		PfromR.push_back(row);
 		PfromM.push_back(row);
 
-		PLiloop.push_back(row);
 		PLmloop00.push_back(row);
 
-		PRiloop.push_back(row);
 		PRmloop00.push_back(row);
 		PRmloop01.push_back(row);
 		PRmloop10.push_back(row);
 
-		PMiloop.push_back(row);
 		PMmloop00.push_back(row);
 		PMmloop01.push_back(row);
 		PMmloop10.push_back(row);
 
-		POiloop.push_back(row);
 		POmloop00.push_back(row);
 	}
 }
@@ -108,7 +104,7 @@ void pseudo_loop::compute_energies(cand_pos_t i, cand_pos_t l)
 		// in original recurrences we have j< k-1, so I am changing k=j+1 to k=j+2
 		for(cand_pos_t k = l; k>=j+2; --k){
 
-			compute_PLiloop(i,j,k,l);
+			// compute_PLiloop(i,j,k,l);
 
 			compute_PLmloop00(i,j,k,l);
 
@@ -116,7 +112,7 @@ void pseudo_loop::compute_energies(cand_pos_t i, cand_pos_t l)
 
 			compute_PLmloop10(i,j,k,l);
 
-			compute_PRiloop(i,j,k,l);
+			// compute_PRiloop(i,j,k,l);
 
 			compute_PRmloop00(i,j,k,l);
 
@@ -124,7 +120,7 @@ void pseudo_loop::compute_energies(cand_pos_t i, cand_pos_t l)
 
 			compute_PRmloop10(i,j,k,l);
 
-			compute_PMiloop(i,j,k,l);
+			// compute_PMiloop(i,j,k,l);
 
 			compute_PMmloop00(i,j,k,l);
 
@@ -132,7 +128,7 @@ void pseudo_loop::compute_energies(cand_pos_t i, cand_pos_t l)
 
 			compute_PMmloop10(i,j,k,l);
 
-			compute_POiloop(i,j,k,l);
+			// compute_POiloop(i,j,k,l);
 
 			compute_POmloop00(i,j,k,l);
 
@@ -439,28 +435,6 @@ void pseudo_loop::compute_PfromO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 
 }
 
-void pseudo_loop::compute_PLiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,b1=INF,b2=INF,tmp=INF;
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-	int ptype_closing = pair[S_[i]][S_[j]];
-	if (ptype_closing>0){
-		b1 = get_PL(i+1,j-1,k,l) + get_e_stP(i,j);
-
-		for(cand_pos_t d= i+1; d<std::min(j,i+MAXLOOP); ++d){
-        	for(cand_pos_t dp = j-1; dp > std::max(d+TURN,j-MAXLOOP); --dp){
-            	tmp = get_e_intP(i,d,dp,j) + get_PL(d,dp,k,l);
-            	b2 = std::min(b2,tmp);
-        	}
-    	}
-		min_energy = std::min(b1,b2);
-	}
-	if (min_energy < INF/2){
-		PLiloop[ij][kl]=min_energy;
-	}
-}
-
 void pseudo_loop::compute_PLmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF,tmp=INF;
 
@@ -512,29 +486,6 @@ void pseudo_loop::compute_PLmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, ca
     }
 	if (min_energy < INF/2){
 		PLmloop10[i][j][kl] = min_energy;
-	}
-
-}
-
-void pseudo_loop::compute_PRiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,b1=INF,b2=INF,tmp=INF;
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-	int ptype_closing = pair[S_[k]][S_[l]];
-	if (ptype_closing>0){
-		b1 = get_PR(i,j,k+1,l-1) + get_e_stP(k,l);
-
-		for(cand_pos_t d= k+1; d<std::min(l,k+MAXLOOP); ++d){
-        	for(cand_pos_t dp=l-1; dp > std::max(d+TURN,l-MAXLOOP); --dp){
-            	tmp = get_e_intP(k,d,dp,l) + get_PR(i,j,d,dp);
-            	b2 = std::min(b2,tmp);
-        	}
-    	}
-		min_energy = std::min(b1,b2);
-	}
-	if (min_energy < INF/2){
-		PRiloop[ij][kl]=min_energy;
 	}
 
 }
@@ -596,30 +547,6 @@ void pseudo_loop::compute_PRmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, ca
 
 }
 
-void pseudo_loop::compute_PMiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,b1=INF,b2=INF,tmp=INF;
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-	int ptype_closing = pair[S_[j]][S_[k]];
-
-	if (ptype_closing>0){
-		b1 = get_PM(i,j-1,k+1,l) + get_e_stP(j-1,k+1);
-
-		for(cand_pos_t d= j-1; d>std::max(i,j-MAXLOOP); --d){
-        	for (cand_pos_t dp=k+1; dp <std::min(l,k+MAXLOOP); ++dp) {
-            	tmp = get_e_intP(d,j,k,dp) + get_PM(i,d,dp,l);
-            	b2= std::min(b2,tmp);
-        	}
-    	}
-		min_energy = std::min(b1,b2);
-	}
-	if (min_energy < INF/2){
-		PMiloop[ij][kl]=min_energy;
-	}
-
-}
-
 void pseudo_loop::compute_PMmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF,tmp=INF;
 
@@ -677,30 +604,6 @@ void pseudo_loop::compute_PMmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, ca
 	if (min_energy < INF/2){
 		PMmloop10[ij][kl] = min_energy;
 	}
-}
-
-void pseudo_loop::compute_POiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,b1=INF,b2=INF,tmp=INF;
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-	int ptype_closing = pair[S_[i]][S_[l]];
-
-	if (ptype_closing>0){
-		b1 = get_PO(i+1,j,k,l-1) + get_e_stP(i,l);
-
-		for(cand_pos_t d= i+1; d<std::min(j,i+MAXLOOP); ++d){
-        	for (cand_pos_t dp=l-1; dp >std::max(l-MAXLOOP,k); --dp) {
-            	tmp = get_e_intP(i,d,dp,l) + get_PO(d,j,dp,k);
-            	b2 = std::min(b2,tmp);
-        	}
-    	}
-		min_energy = std::min(b1,b2);
-	}
-	if (min_energy < INF/2){
-		POiloop[ij][kl]=min_energy;
-	}
-
 }
 
 void pseudo_loop::compute_POmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -941,10 +844,16 @@ energy_t pseudo_loop::get_PLiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	const int ptype_closing = pair[S_[i]][S_[j]];
 	if(ptype_closing == 0) return INF;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
+	energy_t tmp=INF;
+	energy_t min_energy = get_PL(i+1,j-1,k,l) + get_e_stP(i,j);
 
-	return PLiloop[ij][kl];
+	for(cand_pos_t d= i+1; d<std::min(j,i+MAXLOOP); ++d){
+		for(cand_pos_t dp = j-1; dp > std::max(d+TURN,j-MAXLOOP); --dp){
+			tmp = get_e_intP(i,d,dp,j) + get_PL(d,dp,k,l);
+			min_energy = std::min(min_energy,tmp);
+		}
+	}
+	return min_energy;
 }
 
 energy_t pseudo_loop::get_PLmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -1002,10 +911,16 @@ energy_t pseudo_loop::get_PRiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	const int ptype_closing = pair[S_[k]][S_[l]];
 	if(ptype_closing == 0) return INF;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
+	energy_t tmp = INF;
+	energy_t min_energy = get_PR(i,j,k+1,l-1) + get_e_stP(k,l);
 
-	return PRiloop[ij][kl];
+	for(cand_pos_t d= k+1; d<std::min(l,k+MAXLOOP); ++d){
+		for(cand_pos_t dp=l-1; dp > std::max(d+TURN,l-MAXLOOP); --dp){
+			tmp = get_e_intP(k,d,dp,l) + get_PR(i,j,d,dp);
+			min_energy = std::min(min_energy,tmp);
+		}
+	}
+	return min_energy;
 }
 
 energy_t pseudo_loop::get_PRmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -1065,10 +980,17 @@ energy_t pseudo_loop::get_PMiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	const int ptype_closing = pair[S_[j]][S_[k]];
 	if(ptype_closing == 0) return INF;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
+	energy_t tmp=INF;
 
-	return PMiloop[ij][kl];
+	energy_t min_energy = get_PM(i,j-1,k+1,l) + get_e_stP(j-1,k+1);
+
+	for(cand_pos_t d= j-1; d>std::max(i,j-MAXLOOP); --d){
+		for (cand_pos_t dp=k+1; dp <std::min(l,k+MAXLOOP); ++dp) {
+			tmp = get_e_intP(d,j,k,dp) + get_PM(i,d,dp,l);
+			min_energy = std::min(min_energy,tmp);
+		}
+	}
+	return min_energy;
 }
 
 energy_t pseudo_loop::get_PMmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -1128,10 +1050,16 @@ energy_t pseudo_loop::get_POiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	const int ptype_closing = pair[S_[i]][S_[l]];
 	if(ptype_closing == 0) return INF;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
+	energy_t tmp = INF;
+	energy_t min_energy = get_PO(i+1,j,k,l-1) + get_e_stP(i,l);
 
-	return POiloop[ij][kl];
+	for(cand_pos_t d= i+1; d<std::min(j,i+MAXLOOP); ++d){
+		for (cand_pos_t dp=l-1; dp >std::max(l-MAXLOOP,k); --dp) {
+			tmp = get_e_intP(i,d,dp,l) + get_PO(d,j,dp,k);
+			min_energy = std::min(min_energy,tmp);
+		}
+	}
+	return min_energy;
 }
 
 energy_t pseudo_loop::get_POmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){

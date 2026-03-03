@@ -103,6 +103,8 @@ private:
 	std::vector<std::vector<energy_t> > PR;					// MFE of a TGB structure s.t. k.l is paired
 	std::vector<std::vector<energy_t> > PM;					// MFE of a TGB structure s.t. j.k is paired
 	std::vector<std::vector< std::vector<energy_t> > > PO;	// MFE of a TGB structure s.t. i.l is paired
+	std::vector<std::vector< std::vector<energy_t> > > POs;	// MFE of a TGB structure s.t. i.l is paired single
+	std::vector<std::vector< std::vector<energy_t> > > POm;	// MFE of a TGB structure s.t. i.l is paired multiple
 	
 	// transition recurrences
 	std::vector<std::vector< std::vector<energy_t> > > PfromL;
@@ -111,25 +113,21 @@ private:
 	std::vector<std::vector< std::vector<energy_t> > > PfromO;
 	
 	// internal loops and multi loops that span a band
-	std::vector<std::vector<energy_t> > PLiloop;
 	std::vector<std::vector<energy_t> > PLmloop00;
 	std::vector<std::vector< std::vector<energy_t> > > PLmloop01;
 	std::vector<std::vector< std::vector<energy_t> > > PLmloop10;
 	
 	
-	std::vector<std::vector<energy_t> > PRiloop;
 	std::vector<std::vector<energy_t> > PRmloop00;
 	std::vector<std::vector<energy_t> > PRmloop01;
 	std::vector<std::vector<energy_t> > PRmloop10;
 	
 	
-	std::vector<std::vector<energy_t> > PMiloop;
 	std::vector<std::vector<energy_t> > PMmloop00;
 	std::vector<std::vector<energy_t> > PMmloop01;
 	std::vector<std::vector<energy_t> > PMmloop10;
 	
 	
-	std::vector<std::vector<energy_t> > POiloop;
 	std::vector<std::vector<energy_t> > POmloop00;
 	std::vector<std::vector< std::vector<energy_t> > > POmloop01;
 	std::vector<std::vector< std::vector<energy_t> > > POmloop10;
@@ -142,6 +140,7 @@ private:
 	void compute_PL(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PR(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PM(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PM(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PO(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	
 	
@@ -150,23 +149,18 @@ private:
 	void compute_PfromM(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PfromO(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	
-	
-	void compute_PLiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PLmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PLmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PLmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	
-	void compute_PRiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PRmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PRmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PRmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	
-	void compute_PMiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PMmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PMmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PMmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	
-	void compute_POiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_POmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_POmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_POmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
