@@ -11,7 +11,7 @@ endif()
 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native") # conside -NDEBUG if I want to disable asserts for performance gain
 
 SET(SOURCE
   src/W_final.cc 

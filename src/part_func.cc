@@ -699,7 +699,7 @@ void W_final_pf::compute_PMmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 	cand_pos_t kl = index[k]+l-k;
 	contributions += get_PMmloop01(i,j,k+1,l)+expcp_pen[1];
 	for(cand_pos_t d = k; d < l; ++d){
-        contributions += get_POmloop00(i,j,k,d)*get_WBP(d+1,l);
+        contributions += get_PMmloop00(i,j,k,d)*get_WBP(d+1,l);
     }
 	PMmloop01[ij][kl] = contributions;
 }
@@ -712,7 +712,7 @@ void W_final_pf::compute_PMmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 
 	contributions += get_PMmloop10(i,j-1,k,l)*expcp_pen[1];
 	for(cand_pos_t d=i+1; d<=j;++d){
-        contributions += get_WBP(i,d-1)*get_POmloop00(d,j,k,l);
+        contributions += get_WBP(i,d-1)*get_PMmloop00(d,j,k,l);
     }
     for(cand_pos_t d = k+1; d < l; ++d){
         contributions += get_POmloop10(i,j,k,d)*get_WB(d+1,l);

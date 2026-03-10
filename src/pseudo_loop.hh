@@ -130,7 +130,7 @@ private:
 
 	//! @brief check whether two positions can pair
     //! checks for canonical base pairing *and* distance (TURN)
-    int can_pair(cand_pos_t i, cand_pos_t j) const {
+    inline int can_pair(cand_pos_t i, cand_pos_t j) const {
         assert(i<=j);
         return can_pair_[i*(n+1)+j];
     }
