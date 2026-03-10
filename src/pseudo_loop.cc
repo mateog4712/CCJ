@@ -131,45 +131,40 @@ void pseudo_loop::compute_energies(cand_pos_t i, cand_pos_t l)
 
 }
 
-void pseudo_loop::compute_WBP(int i, int l){
+void pseudo_loop::compute_WBP(cand_pos_t i, cand_pos_t l){
 	energy_t min_energy= INF, b1 = INF, b2=INF, b3 = INF,tmp =INF;
 
-	cand_pos_t il = index[i]+l-i;
-	cand_pos_t ilm1 = index[i]+l-1-i;
 	for(cand_pos_t d=i; d< l; ++d){
 		tmp = get_WB(i,d-1) + V->get_energy(d,l) + beta2P(l,d) + PPS_penalty;
 		b1 = std::min(b1,tmp);
 		tmp = get_WB(i,d-1) + P.get(d,l) + PSM_penalty + PPS_penalty;
 		b2 = std::min(b2,tmp);
 	}
-	b3 = WBP[ilm1]+cp_penalty;
+	b3 = WBP.get(i,l-1)+cp_penalty;
 	min_energy = std::min({b1,b2,b3});
 	if (min_energy < INF/2){
-		WBP[il] = min_energy;
+		WBP.set(i,l) = min_energy;
 	}
 }
 
 void pseudo_loop::compute_WPP(cand_pos_t i, cand_pos_t l){
 	energy_t min_energy = INF, b1 = INF, b2=INF, b3 =INF, tmp = INF;
 
-	cand_pos_t il = index[i]+l-i;
-	cand_pos_t ilm1 = index[i]+l-1-i;
 	for(cand_pos_t d=i; d<l; ++d){
 		tmp = get_WP(i,d-1) + V->get_energy(d,l) + gamma2(l,d) + PPS_penalty;
 		b1 = std::min(b1,tmp);
 		tmp = get_WP(i,d-1) + P.get(d,l) + PSP_penalty + PPS_penalty;
 		b2 = std::min(b2,tmp);
 	}
-	b3 = WPP[ilm1]+PUP_penalty;
+	b3 = WPP.get(i,l-1)+PUP_penalty;
 	min_energy = std::min({b1,b2,b3});
 	if (min_energy < INF/2){
-		WPP[il] = min_energy;
+		WPP.set(i,l) = min_energy;
 	}
 }
 
 void pseudo_loop::compute_P(cand_pos_t i, cand_pos_t l){
 	energy_t min_energy = INF,b1=INF;
-	cand_pos_t il = index[i]+l-i;
 	for(cand_pos_t j=i; j<l; ++j){
 		for (cand_pos_t d=j+1; d<l; ++d){
 			for (cand_pos_t k=d+1; k<l; ++k){
@@ -179,7 +174,7 @@ void pseudo_loop::compute_P(cand_pos_t i, cand_pos_t l){
 		}
 	}
 	if (min_energy < INF/2){
-		P[il]=min_energy;
+		P.set(i,l) = min_energy;
 	}
 }
 

@@ -46,55 +46,50 @@ W_final_pf::W_final_pf(std::string &seq, std::string &MFE_structure, double MFE_
     expMLbase.resize(n + 1);
     expcp_pen.resize(n + 1);
     expPUP_pen.resize(n + 1);
-    cand_pos_t total_length = ((n + 1) * (n + 2)) / 2;
 	TriangleMatrix_PF::new_index(index,n+1);
+	Matrix4DPF::construct_index(index3D,n);
     // Allocate space
-    V.init(n,index);
-    VM.init(n,index);
-    WM.init(n,index);
-    WMv.init(n,index);
-    WMp.init(n,index);
+    V.init(n+1,index);
+    VM.init(n+1,index);
+    WM.init(n+1,index);
+    WMv.init(n+1,index);
+    WMp.init(n+1,index);
 
     // PK
-    WBP.init(n,index);
-	WPP.init(n,index);
-	P.init(n,index);
+    WBP.init(n+1,index);
+	WPP.init(n+1,index);
+	P.init(n+1,index);
 
-    std::vector<pf_t> row;
-	row.resize(total_length,0.0);
+	// 4D matrix initialization
+	PK.init(n,index3D);
+	PL.init(n,index3D);
+	PR.init(n,index3D);
+	PM.init(n,index3D);
+	PO.init(n,index3D);
+	PfromL.init(n,index3D);
+	PfromR.init(n,index3D);
+	PfromM.init(n,index3D);
+	PfromO.init(n,index3D);
 
-	for(cand_pos_t i = 0; i < total_length; ++i) {
-		PK.push_back(row);
-		PL.push_back(row);
-		PR.push_back(row);
-		PM.push_back(row);
-		PO.push_back(row);
+	PLmloop00.init(n,index3D);
+	PLmloop01.init(n,index3D);
+	PLmloop10.init(n,index3D);
 
-		PfromL.push_back(row);
-		PfromR.push_back(row);
-		PfromM.push_back(row);
-		PfromO.push_back(row);
+	PRmloop00.init(n,index3D);
+	PRmloop01.init(n,index3D);
+	PRmloop10.init(n,index3D);
 
-		PLmloop00.push_back(row);
-		PLmloop01.push_back(row);
-		PLmloop10.push_back(row);
+	PMmloop00.init(n,index3D);
+	PMmloop01.init(n,index3D);
+	PMmloop10.init(n,index3D);
 
-		PRmloop00.push_back(row);
-		PRmloop01.push_back(row);
-		PRmloop10.push_back(row);
-
-		PMmloop00.push_back(row);
-		PMmloop01.push_back(row);
-		PMmloop10.push_back(row);
-
-		POmloop00.push_back(row);
-		POmloop01.push_back(row);
-		POmloop10.push_back(row);
-	}
+	POmloop00.init(n,index3D);
+	POmloop01.init(n,index3D);
+	POmloop10.init(n,index3D);
 
     rescale_pk_globals();
     exp_params_rescale(MFE_energy);
-    W.init(n,index,scale[1]);
+    W.resize(n+1,scale[1]);
 }
 
 W_final_pf::~W_final_pf() {}
@@ -171,7 +166,7 @@ pf_t W_final_pf::ccj_pf(){
 		for (cand_pos_t k=1; k<=j-TURN-1; ++k){
 			pf_t acc = (k>1) ? W[k-1]: 1;
 			contributions += acc*get_energy(k, j)*exp_Extloop(k, j);
-			contributions += acc*get_P(k, j)*expPS_penalty;
+			contributions += acc*P.get(k,j)*expPS_penalty;
 		}
 		W[j] = contributions;
 	}
@@ -252,9 +247,9 @@ void W_final_pf::compute_WMv_WMp(cand_pos_t i, cand_pos_t j) {
     pf_t WMp_contributions = 0;
 
     WMv_contributions += (get_energy(i, j) * exp_MLstem(i, j));
-    WMp_contributions += (get_P(i, j) * expPSM_penalty * expb_penalty);
-    WMv_contributions += (get_energy_WMv(i, j - 1) * expMLbase[1]);
-    WMp_contributions += (get_energy_WMp(i, j - 1) * expMLbase[1]);
+    WMp_contributions += (P.get(i,j) * expPSM_penalty * expb_penalty);
+    WMv_contributions += (WMv.get(i,j-1) * expMLbase[1]);
+    WMp_contributions += (WMp.get(i,j-1) * expMLbase[1]);
 
     WMv[ij] = WMv_contributions;
     WMp[ij] = WMp_contributions;
@@ -268,11 +263,11 @@ void W_final_pf::compute_energy_WM(cand_pos_t i, cand_pos_t j) {
 
     for (cand_pos_t k = i; k < j - TURN; ++k) {
         pf_t qbt1 = get_energy(k, j) * exp_MLstem(k, j);
-        pf_t qbt2 = get_P(k, j) * expPSM_penalty * expb_penalty;
+        pf_t qbt2 = P.get(k,j) * expPSM_penalty * expb_penalty;
         contributions += (static_cast<pf_t>(expMLbase[k - i]) * qbt1);
         contributions += (static_cast<pf_t>(expMLbase[k - i]) * qbt2);
-        contributions += (get_energy_WM(i, k - 1) * qbt1);
-        contributions += (get_energy_WM(i, k - 1) * qbt2);
+        contributions += (WM.get(i,k-1) * qbt1);
+        contributions += (WM.get(i,k-1) * qbt2);
     }
     contributions += WM[ijminus1] * expMLbase[1];
     WM[ij] = contributions;
@@ -282,9 +277,9 @@ pf_t W_final_pf::compute_energy_VM(cand_pos_t i, cand_pos_t j) {
     pf_t contributions = 0;
     cand_pos_t ij = index[(i)] + (j) - (i);
     for (cand_pos_t k = i + 1; k <= j - TURN - 1; ++k) {
-        contributions += (get_energy_WM(i + 1, k - 1) * get_energy_WMv(k, j - 1) * exp_Mbloop(i, j) * exp_params_->expMLclosing);
-        contributions += (get_energy_WM(i + 1, k - 1) * get_energy_WMp(k, j - 1) * exp_Mbloop(i, j) * exp_params_->expMLclosing);
-        contributions += (expMLbase[k - i - 1] * get_energy_WMp(k, j - 1) * exp_Mbloop(i, j) * exp_params_->expMLclosing);
+        contributions += (WM.get(i+1,k-1) * WMv.get(k,j-1) * exp_Mbloop(i, j) * exp_params_->expMLclosing);
+        contributions += (WM.get(i+1,k-1) * WMp.get(k,j-1) * exp_Mbloop(i, j) * exp_params_->expMLclosing);
+        contributions += (expMLbase[k - i - 1] * WMp.get(k,j-1) * exp_Mbloop(i, j) * exp_params_->expMLclosing);
     }
 
     contributions *= scale[2];
@@ -366,69 +361,59 @@ void W_final_pf::compute_pk_energies(cand_pos_t i, cand_pos_t l) {
 void W_final_pf::compute_WBP(cand_pos_t i, cand_pos_t l){
 	pf_t contributions = 0;
 
-	cand_pos_t il = index[i]+l-i;
-	cand_pos_t ilm1 = index[i]+l-1-i;
 	for(cand_pos_t d=i; d< l; ++d){
 		contributions += get_energy(d,l)*beta2P(l,d)*expPPS_penalty;
-		contributions += get_P(d,l)*expPSM_penalty*expPPS_penalty;
+		contributions += P.get(d,l)*expPSM_penalty*expPPS_penalty;
 	}
-	contributions+=WBP[ilm1]*expcp_pen[1];
-	WBP[il] = contributions;
+	contributions+=WBP.get(i,l-1)*expcp_pen[1];
+	WBP.set(i,l) = contributions;
 }
 
 void W_final_pf::compute_WPP(cand_pos_t i, cand_pos_t l){
 	pf_t contributions = 0;
 
-	cand_pos_t il = index[i]+l-i;
-	cand_pos_t ilm1 = index[i]+l-1-i;
 	for(cand_pos_t d=i; d<l; ++d){
 		contributions += get_WP(i,d-1)*get_energy(d,l)*gamma2(l,d)*expPPS_penalty;
-		contributions += get_WP(i,d-1)*get_P(d,l)*expPSP_penalty*expPPS_penalty;
+		contributions += get_WP(i,d-1)*P.get(d,l)*expPSP_penalty*expPPS_penalty;
 	}
-	contributions+=WBP[ilm1]*expPUP_pen[1];
-	WPP[il] = contributions;
+	contributions+=WBP.get(i,l-1)*expPUP_pen[1];
+	WPP.set(i,l) = contributions;
 }
 
 void W_final_pf::compute_P(cand_pos_t i, cand_pos_t l){
-	cand_pos_t il = index[i]+l-i;
     pf_t contributions = 0;
 	for(cand_pos_t j=i; j<l; ++j){
 		for (cand_pos_t d=j+1; d<l; ++d){
 			for (cand_pos_t k=d+1; k<l; ++k){
-				contributions += get_PK(i,j,d+1,k)*get_PK(j+1,d,k+1,l);
+				contributions += PK.get(i,j,d+1,k)*PK.get(j+1,d,k+1,l);
 			}
 		}
 	}
-	P[il]=contributions;
+	P.set(i,l) = contributions;
 }
 
 void W_final_pf::compute_PK(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
 	for(cand_pos_t d=i+1; d< j; ++d){
-		contributions += get_PK(i,d,k,l)*get_WP(d+1,j);  //12G1
+		contributions += PK.get(i,d,k,l)*get_WP(d+1,j);  //12G1
 	}
 
 	for(cand_pos_t d=k+1; d< l; ++d){
-		contributions += get_PK(i,j,d,l)*get_WP(k,d-1); //1G21
+		contributions += PK.get(i,j,d,l)*get_WP(k,d-1); //1G21
 	}
 
-	contributions += get_PL(i,j,k,l)*gamma2(j,i)*expPB_penalty;
-	contributions += get_PM(i,j,k,l)*gamma2(j,k)*expPB_penalty;
-	contributions += get_PR(i,j,k,l)*gamma2(l,k)*expPB_penalty;
-	contributions += get_PO(i,j,k,l)*gamma2(l,i)*expPB_penalty;
+	contributions += PL.get(i,j,k,l)*gamma2(j,i)*expPB_penalty;
+	contributions += PM.get(i,j,k,l)*gamma2(j,k)*expPB_penalty;
+	contributions += PR.get(i,j,k,l)*gamma2(l,k)*expPB_penalty;
+	contributions += PO.get(i,j,k,l)*gamma2(l,i)*expPB_penalty;
 	
-    PK[ij][kl]=contributions;
+    PK.set(i,j,k,l,contributions);
 }
 
 void W_final_pf::compute_PL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
 	const int ptype_closing = pair[S_[i]][S_[j]];
 
 	if (ptype_closing>0){
@@ -438,17 +423,14 @@ void W_final_pf::compute_PL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t
 		contributions += get_PLmloop(i,j,k,l)*expbp_penalty;
 
 		if (j>=(i+TURN+1)){
-			contributions += get_PfromL(i+1,j-1,k,l)*gamma2(j,i);
+			contributions += PfromL.get(i+1,j-1,k,l)*gamma2(j,i);
 		}
 	}
-	PL[ij][kl]=contributions;
+	PL.set(i,j,k,l,contributions);
 }
 
 void W_final_pf::compute_PR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
 
 	const int ptype_closing = pair[S_[k]][S_[l]];
 
@@ -458,17 +440,14 @@ void W_final_pf::compute_PR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t
 		contributions += get_PRmloop(i,j,k,l)*expbp_penalty;
 
 		if (l>=(k+TURN+1)){
-			contributions += get_PfromR(i,j,k+1,l-1)*gamma2(l,k);
+			contributions += PfromR.get(i,j,k+1,l-1)*gamma2(l,k);
 		}
 	}
-	PR[ij][kl]=contributions;
+	PR.set(i,j,k,l,contributions);
 }
 
 void W_final_pf::compute_PM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
 
 	const int ptype_closing = pair[S_[j]][S_[k]];
 	if (ptype_closing>0){
@@ -477,21 +456,18 @@ void W_final_pf::compute_PM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t
 		contributions += get_PMmloop(i,j,k,l)*expbp_penalty;
 
 		if (k>=(j+TURN-1)){
-			contributions += get_PfromM(i,j-1,k+1,l)*gamma2(j,k);
+			contributions += PfromM.get(i,j-1,k+1,l)*gamma2(j,k);
 		}
 
 		if(i==j && k==l){
 			contributions += gamma2(i,l);
 		}
 	}
-	PM[ij][kl]=contributions;
+	PM.set(i,j,k,l,contributions);
 }
 
 void W_final_pf::compute_PO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
 
 	const int ptype_closing = pair[S_[i]][S_[l]];
 
@@ -503,264 +479,223 @@ void W_final_pf::compute_PO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t
 		// Hosna, July 11, 2014
 		// To avoid addition of close base pairs we check for the following here
 		if (l>=(i+TURN+1)){
-			contributions += get_PfromO(i+1,j,k,l-1)*gamma2(l,i);
+			contributions += PfromO.get(i+1,j,k,l-1)*gamma2(l,i);
 		}
 	}
-	PO[ij][kl]=contributions;
+	PO.set(i,j,k,l,contributions);
 }
 
 void W_final_pf::compute_PfromL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
 	for(cand_pos_t d=i+1; d< j; ++d){
-		contributions += get_PfromL(d,j,k,l)*get_WP(i,d-1);
-		contributions += get_PfromL(i,d,k,l)*get_WP(d+1,j);
+		contributions += PfromL.get(d,j,k,l)*get_WP(i,d-1);
+		contributions += PfromL.get(i,d,k,l)*get_WP(d+1,j);
 	}
 
-	contributions += get_PR(i,j,k,l)*gamma2(l,k)*expPB_penalty;
+	contributions += PR.get(i,j,k,l)*gamma2(l,k)*expPB_penalty;
 
-	contributions += get_PM(i,j,k,l)*gamma2(j,k)*expPB_penalty;
+	contributions += PM.get(i,j,k,l)*gamma2(j,k)*expPB_penalty;
 
-	contributions += get_PO(i,j,k,l)*gamma2(l,i)*expPB_penalty;
+	contributions += PO.get(i,j,k,l)*gamma2(l,i)*expPB_penalty;
 
-	PfromL[ij][kl]=contributions;
+	PfromL.set(i,j,k,l,contributions);
 }
 
 void W_final_pf::compute_PfromR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
 	for(cand_pos_t d=k+1; d< l; ++d){
-		contributions += get_PfromR(i,j,d,l)*get_WP(k,d-1);
-		contributions += get_PfromR(i,j,k,d)*get_WP(d+1,l);
+		contributions += PfromR.get(i,j,d,l)*get_WP(k,d-1);
+		contributions += PfromR.get(i,j,k,d)*get_WP(d+1,l);
 	}
 
-	contributions += get_PM(i,j,k,l)*gamma2(j,k)*expPB_penalty;
+	contributions += PM.get(i,j,k,l)*gamma2(j,k)*expPB_penalty;
 
-	contributions += get_PO(i,j,k,l)*gamma2(l,i)*expPB_penalty;
+	contributions += PO.get(i,j,k,l)*gamma2(l,i)*expPB_penalty;
 
-	PfromR[ij][kl]=contributions;
+	PfromR.set(i,j,k,l,contributions);
 }
 
 void W_final_pf::compute_PfromM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
 	for(cand_pos_t d=i+1; d<j; ++d){
-		contributions += get_PfromM(i,d,k,l)*get_WP(d+1,j);
+		contributions += PfromM.get(i,d,k,l)*get_WP(d+1,j);
 	}
 	for(cand_pos_t d=k+1; d<l; ++d){
-		contributions += get_PfromM(i,j,d,l)*get_WP(k,d-1);
+		contributions += PfromM.get(i,j,d,l)*get_WP(k,d-1);
 	}
 
-	contributions += get_PL(i,j,k,l)*gamma2(j,i)*expPB_penalty;
+	contributions += PL.get(i,j,k,l)*gamma2(j,i)*expPB_penalty;
 
-	contributions += get_PR(i,j,k,l)*gamma2(l,k)*expPB_penalty;
+	contributions += PR.get(i,j,k,l)*gamma2(l,k)*expPB_penalty;
 
-	PfromM[ij][kl]=contributions;
+	PfromM.set(i,j,k,l,contributions);
 }
 
 void W_final_pf::compute_PfromO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
 	for(cand_pos_t d=i+1; d< j; ++d){
-		contributions += get_PfromO(d,j,k,l)*get_WP(i,d-1);
+		contributions += PfromO.get(d,j,k,l)*get_WP(i,d-1);
 	}
 	for(cand_pos_t d=k+1; d<l; ++d){
-		contributions += get_PfromO(i,j,k,d)*get_WP(d+1,l);
+		contributions += PfromO.get(i,j,k,d)*get_WP(d+1,l);
 	}
 
-	contributions += get_PL(i,j,k,l)*gamma2(j,i)*expPB_penalty;
+	contributions += PL.get(i,j,k,l)*gamma2(j,i)*expPB_penalty;
 
-	contributions += get_PR(i,j,k,l)*gamma2(l,k)*expPB_penalty;
+	contributions += PR.get(i,j,k,l)*gamma2(l,k)*expPB_penalty;
 
-    PfromO[ij][kl]=contributions;
+    PfromO.set(i,j,k,l,contributions);
 }
 
 void W_final_pf::compute_PLmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	contributions += get_PL(i,j,k,l)*beta2P(j,i);
+	contributions += PL.get(i,j,k,l)*beta2P(j,i);
     for(cand_pos_t d = i; d<=j; ++d){
         if (d>i){
-            contributions += get_WB(i,d-1)*get_PLmloop00(d,j,k,l);
+            contributions += get_WB(i,d-1)*PLmloop00.get(d,j,k,l);
         }
         if(d<j){
-            contributions += get_PLmloop00(i,d,k,l)*get_WB(d+1,j);
+            contributions += PLmloop00.get(i,d,k,l)*get_WB(d+1,j);
         }
 
     }
-	PLmloop00[ij][kl]=contributions;	
+	PLmloop00.set(i,j,k,l,contributions);	
 }
 
 void W_final_pf::compute_PLmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
 	
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
 	for(cand_pos_t d = i; d < j; ++d){
-        contributions += get_PLmloop00(i,d,k,l)*get_WBP(d+1,j);
+        contributions += PLmloop00.get(i,d,k,l)*WBP.get(d+1,j);
     }
-	PLmloop01[ij][kl] = contributions;
+	PLmloop01.set(i,j,k,l,contributions);
 
 }
 
 void W_final_pf::compute_PLmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
 	for(cand_pos_t d = i+1; d <= j; ++d){
-        contributions += get_WBP(i,d-1)*get_PLmloop00(d,j,k,l);
+        contributions += WBP.get(i,d-1)*PLmloop00.get(d,j,k,l);
         if(d<j){
-            contributions += get_PLmloop10(i,d,k,l)*get_WB(d+1,j);
+            contributions += PLmloop10.get(i,d,k,l)*get_WB(d+1,j);
         }
     }
-	PLmloop10[ij][kl] = contributions;
+	PLmloop10.set(i,j,k,l,contributions);
 }
 
 void W_final_pf::compute_PRmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
 
-	contributions += get_PR(i,j,k,l)*beta2P(l,k);
+	contributions += PR.get(i,j,k,l)*beta2P(l,k);
 	for(cand_pos_t d=k; d<=l; ++d){
         if(d>k){
-            contributions += get_WB(k,d-1)*get_PRmloop00(i,j,d,l);
+            contributions += get_WB(k,d-1)*PRmloop00.get(i,j,d,l);
         }
         if (d<l){
-            contributions += get_PRmloop00(i,j,k,d)*get_WB(d+1,l);
+            contributions += PRmloop00.get(i,j,k,d)*get_WB(d+1,l);
         }
     }
-	PRmloop00[ij][kl]=contributions;
+	PRmloop00.set(i,j,k,l,contributions);
 }
 
 
 void W_final_pf::compute_PRmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	contributions += get_PRmloop01(i,j,k,l-1)*expcp_pen[1];
+	contributions += PRmloop01.get(i,j,k,l-1)*expcp_pen[1];
     for(cand_pos_t d = k; d < l; d++){
-        contributions += get_PRmloop00(i,j,k,d)*get_WBP(d+1,l);
+        contributions += PRmloop00.get(i,j,k,d)*WBP.get(d+1,l);
     }
-	PRmloop01[ij][kl] = contributions;
+	PRmloop01.set(i,j,k,l,contributions);
 }
 
 void W_final_pf::compute_PRmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	contributions += get_PRmloop10(i,j,k+1,l)*expcp_pen[1];
+	contributions += PRmloop10.get(i,j,k+1,l)*expcp_pen[1];
     for(cand_pos_t d = k+1; d <= l; ++d){
-        contributions += get_WBP(k,d-1)*get_PRmloop00(i,j,d,l);
+        contributions += WBP.get(k,d-1)*PRmloop00.get(i,j,d,l);
     }
-	PRmloop10[ij][kl] = contributions;
+	PRmloop10.set(i,j,k,l,contributions);
 }
 
 void W_final_pf::compute_PMmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	contributions += get_PM(i,j,k,l)*beta2P(j,k);
+	contributions += PM.get(i,j,k,l)*beta2P(j,k);
     for(cand_pos_t d=i; d<j; ++d){
-        contributions += get_PMmloop00(i,d,k,l)*get_WB(d+1,j);
+        contributions += PMmloop00.get(i,d,k,l)*get_WB(d+1,j);
     }
     for(cand_pos_t d=k+1; d<=l; ++d){
-        contributions += get_PMmloop00(i,j,d,l)*get_WB(k,d-1);
+        contributions += PMmloop00.get(i,j,d,l)*get_WB(k,d-1);
     }
-	PMmloop00[ij][kl]=contributions;
+	PMmloop00.set(i,j,k,l,contributions);
 }
 
 
 void W_final_pf::compute_PMmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-	contributions += get_PMmloop01(i,j,k+1,l)+expcp_pen[1];
+	contributions += PMmloop01.get(i,j,k+1,l)+expcp_pen[1];
 	for(cand_pos_t d = k; d < l; ++d){
-        contributions += get_PMmloop00(i,j,k,d)*get_WBP(d+1,l);
+        contributions += PMmloop00.get(i,j,k,d)*WBP.get(d+1,l);
     }
-	PMmloop01[ij][kl] = contributions;
+	PMmloop01.set(i,j,k,l,contributions);
 }
 
 void W_final_pf::compute_PMmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	contributions += get_PMmloop10(i,j-1,k,l)*expcp_pen[1];
+	contributions += PMmloop10.get(i,j-1,k,l)*expcp_pen[1];
 	for(cand_pos_t d=i+1; d<=j;++d){
-        contributions += get_WBP(i,d-1)*get_PMmloop00(d,j,k,l);
+        contributions += WBP.get(i,d-1)*PMmloop00.get(d,j,k,l);
     }
     for(cand_pos_t d = k+1; d < l; ++d){
-        contributions += get_POmloop10(i,j,k,d)*get_WB(d+1,l);
+        contributions += POmloop10.get(i,j,k,d)*get_WB(d+1,l);
     }
-	PMmloop10[ij][kl] = contributions;
+	PMmloop10.set(i,j,k,l,contributions);
 }
 
 void W_final_pf::compute_POmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	contributions += get_PO(i,j,k,l)*beta2P(l,i);
+	contributions += PO.get(i,j,k,l)*beta2P(l,i);
     for(cand_pos_t d=i+1; d<=j; ++d){
-        contributions += get_WB(i,d-1)*get_POmloop00(d,j,k,l);
+        contributions += get_WB(i,d-1)*POmloop00.get(d,j,k,l);
     }
     for(cand_pos_t d=k; d<l; ++d){
-        contributions = get_POmloop00(i,j,k,d)*get_WB(d+1,l);
+        contributions = POmloop00.get(i,j,k,d)*get_WB(d+1,l);
     }
-	POmloop00[ij][kl]=contributions;
+	POmloop00.set(i,j,k,l,contributions);
 }
 
 
 void W_final_pf::compute_POmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
 	for(cand_pos_t d = k; d < l; ++d){
-        contributions += get_POmloop00(i,j,k,d)*get_WBP(d+1,l);
+        contributions += POmloop00.get(i,j,k,d)*WBP.get(d+1,l);
     }
-	POmloop01[ij][kl] = contributions;
+	POmloop01.set(i,j,k,l,contributions);
 }
 
 void W_final_pf::compute_POmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
 	for(cand_pos_t d=i+1; d<=j;++d){
-        contributions += get_WBP(i,d-1)*get_POmloop00(d,j,k,l);
+        contributions += WBP.get(i,d-1)*POmloop00.get(d,j,k,l);
     }
     for(cand_pos_t d = k+1; d < l; ++d){
-        contributions += get_POmloop10(i,j,k,d) + get_WB(d+1,l);
+        contributions += POmloop10.get(i,j,k,d) + get_WB(d+1,l);
     }
 
-	POmloop10[ij][kl] = contributions;
+	POmloop10.set(i,j,k,l,contributions);
 }
 
 pf_t W_final_pf::get_WB(cand_pos_t i, cand_pos_t j){
@@ -768,15 +703,7 @@ pf_t W_final_pf::get_WB(cand_pos_t i, cand_pos_t j){
 		return 0;
 	}
 	if (i>j) return 1;
-	return expcp_pen[j-i+1]+get_WBP(i,j);
-}
-
-pf_t W_final_pf::get_WBP(cand_pos_t i, cand_pos_t j){
-	if (i > j || i<=0 || j<=0 || i>n || j>n){
-		return 0;
-	}
-	cand_pos_t ij = index[i]+j-i;
-	return WBP[ij];
+	return expcp_pen[j-i+1]+WBP.get(i,j);
 }
 
 pf_t W_final_pf::get_WP(cand_pos_t i, cand_pos_t j){
@@ -784,159 +711,27 @@ pf_t W_final_pf::get_WP(cand_pos_t i, cand_pos_t j){
 		return 0;
 	}
 	if (i>j) return 1; // needed as this will happen 
-	return expPUP_pen[j-i+1]+get_WPP(i,j);
+	return expPUP_pen[j-i+1]+WPP.get(i,j);
 }
 
-pf_t W_final_pf::get_WPP(cand_pos_t i, cand_pos_t j){
-	if (i > j  || i<=0 || j<=0 || i>n || j>n){
-		return 0;
-	}
-	cand_pos_t ij = index[i]+j-i;
-	return WPP[ij];
-}
+// pf_t W_final_pf::get_PM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+// 	if (!(i <= j && j < k-1 && k <= l)){
+// 		return 0;
+// 	}
+// 	assert(!(i<=0 || l> n));
 
-pf_t W_final_pf::get_P(cand_pos_t i, cand_pos_t j){
-	if (i >= j  || i<=0 || j<=0 || i>n || j>n){
-		return 0;
-	}
-	cand_pos_t ij = index[i]+j-i;
-	return P[ij];
-}
+// 	int ptype_closing = pair[S_[j]][S_[k]];
+// 	if (ptype_closing == 0){
+// 		return 0;
+// 	}
+// 	cand_pos_t ij = index[i]+j-i;
+// 	cand_pos_t kl = index[k]+l-k;
+// 	if (i ==j && k ==l){
+// 		return gamma2(i,l);   ////// Does this suggest I could be missing a case or would it be set to this already?
+// 	}
 
-pf_t W_final_pf::get_PK(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return 0;
-	}
-	assert(!(i<=0 || l> n));
-	
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PK[ij][kl];
-}
-
-pf_t W_final_pf::get_PL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return 0;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PL[ij][kl];
-}
-
-pf_t W_final_pf::get_PR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return 0;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PR[ij][kl];
-}
-
-pf_t W_final_pf::get_PM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return 0;
-	}
-	assert(!(i<=0 || l> n));
-
-	int ptype_closing = pair[S_[j]][S_[k]];
-	if (ptype_closing == 0){
-		return 0;
-	}
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-	if (i ==j && k ==l){
-		return gamma2(i,l);
-	}
-
-	return PM[ij][kl];
-}
-
-pf_t W_final_pf::get_PO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return 0;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PO[ij][kl];
-}
-
-pf_t W_final_pf::get_PfromL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return 0;
-	}
-	assert(!(i<=0 || l> n));
-
-	if (i==j && k==l){
-		const int ptype_closing = pair[S_[i]][S_[l]];
-		if(ptype_closing == 0) return 0;
-		else return gamma2(j,k)*gamma2(k,j);
-	}
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PfromL[ij][kl];
-}
-
-pf_t W_final_pf::get_PfromR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return 0;
-	}
-	assert(!(i<=0 || l> n));
-
-	if (i==j && k==l){
-		const int ptype_closing = pair[S_[i]][S_[l]];
-		if(ptype_closing == 0) return 0;
-		else return gamma2(j,k)*gamma2(k,j);
-	}
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PfromR[ij][kl];
-}
-
-pf_t W_final_pf::get_PfromM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return 0;
-	}
-	assert(!(i<=0 || l> n));
-
-	if (i==j && k==l){
-		const int ptype_closing = pair[S_[i]][S_[l]];
-		if(ptype_closing == 0) return 0;
-		else return 1;
-	}
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PfromM[ij][kl];
-}
-
-pf_t W_final_pf::get_PfromO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return 0;
-	}
-	assert(!(i<=0 || l> n));
-
-	if (i==j && k==l){
-		const int ptype_closing = pair[S_[i]][S_[l]];
-		if(ptype_closing == 0) return 0;
-		else return 1;
-	}
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PfromO[ij][kl];
-}
+// 	return PM[ij][kl];
+// }
 
 pf_t W_final_pf::get_PLiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
@@ -948,13 +743,13 @@ pf_t W_final_pf::get_PLiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	if(ptype_closing == 0) return 0;
 
 	pf_t contributions = 0;
-	contributions += get_PL(i+1,j-1,k,l)*get_e_stP(i,j);
+	contributions += PL.get(i+1,j-1,k,l)*get_e_stP(i,j);
 
 	for(cand_pos_t d= i+1; d<std::min(j,i+MAXLOOP); ++d){
 		for(cand_pos_t dp = j-1; dp > std::max(d+TURN,j-MAXLOOP); --dp){
 			cand_pos_t u1 = d-(i)-1; // check these
 			cand_pos_t u2 = (j)-dp-1;
-			contributions += get_e_intP(i,d,dp,j)*get_PL(d,dp,k,l)*scale[u1 + u2 + 2];
+			contributions += get_e_intP(i,d,dp,j)*PL.get(d,dp,k,l)*scale[u1 + u2 + 2];
 		}
 	}
 	return contributions;
@@ -966,46 +761,10 @@ pf_t W_final_pf::get_PLmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	}
 	assert(!(i<=0 || l> n));
     pf_t contributions = 0;
-	contributions += get_PLmloop10(i+1,j-1,k,l)*expap_penalty*beta2P(j,i);
-    contributions += get_PLmloop01(i+1,j-1,k,l)*ap_penalty*beta2P(j,i);
+	contributions += PLmloop10.get(i+1,j-1,k,l)*expap_penalty*beta2P(j,i);
+    contributions += PLmloop01.get(i+1,j-1,k,l)*ap_penalty*beta2P(j,i);
 
 	return contributions;
-}
-
-pf_t W_final_pf::get_PLmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return 0;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PLmloop00[ij][kl];
-}
-
-pf_t W_final_pf::get_PLmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return 0;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PLmloop01[ij][kl];
-}
-
-pf_t W_final_pf::get_PLmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return 0;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PLmloop10[ij][kl];
 }
 
 pf_t W_final_pf::get_PRiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -1018,13 +777,13 @@ pf_t W_final_pf::get_PRiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	if(ptype_closing == 0) return 0;
 
 	pf_t contributions = 0;
-	contributions += get_PR(i,j,k+1,l-1)*get_e_stP(k,l);
+	contributions += PR.get(i,j,k+1,l-1)*get_e_stP(k,l);
 
 	for(cand_pos_t d= k+1; d<std::min(l,k+MAXLOOP); ++d){
 		for(cand_pos_t dp=l-1; dp > std::max(d+TURN,l-MAXLOOP); --dp){
 			cand_pos_t u1 = d-(k)-1; // check these
 			cand_pos_t u2 = (l)-dp-1;
-			contributions += get_e_intP(k,d,dp,l)*get_PR(i,j,d,dp)*scale[u1 + u2 + 2];
+			contributions += get_e_intP(k,d,dp,l)*PR.get(i,j,d,dp)*scale[u1 + u2 + 2];
 		}
 	}
 	return contributions;
@@ -1036,46 +795,10 @@ pf_t W_final_pf::get_PRmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	}
 	assert(!(i<=0 || l> n));
     pf_t contributions = 0;
-	contributions += get_PRmloop10(i,j,k+1,l-1)*expap_penalty*beta2P(l,k);
-    contributions += get_PRmloop01(i,j,k+1,l-1)*expap_penalty*beta2P(l,k);
+	contributions += PRmloop10.get(i,j,k+1,l-1)*expap_penalty*beta2P(l,k);
+    contributions += PRmloop01.get(i,j,k+1,l-1)*expap_penalty*beta2P(l,k);
 
 	return contributions;
-}
-
-pf_t W_final_pf::get_PRmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return 0;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PRmloop00[ij][kl];
-}
-
-pf_t W_final_pf::get_PRmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return 0;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PRmloop01[ij][kl];
-}
-
-pf_t W_final_pf::get_PRmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return 0;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PRmloop10[ij][kl];
 }
 
 pf_t W_final_pf::get_PMiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -1088,13 +811,13 @@ pf_t W_final_pf::get_PMiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	if(ptype_closing == 0) return 0;
 
 	pf_t contributions = 0;
-	contributions += get_PM(i,j-1,k+1,l)*get_e_stP(j-1,k+1);
+	contributions += PM.get(i,j-1,k+1,l)*get_e_stP(j-1,k+1);
 
 	for(cand_pos_t d= j-1; d>std::max(i,j-MAXLOOP); --d){
 		for (cand_pos_t dp=k+1; dp <std::min(l,k+MAXLOOP); ++dp) {
 			cand_pos_t u1 = (j)-d-1; // check these
 			cand_pos_t u2 = dp-(k)-1;
-			contributions += get_e_intP(d,j,k,dp)*get_PM(i,d,dp,l)*scale[u1 + u2 + 2];
+			contributions += get_e_intP(d,j,k,dp)*PM.get(i,d,dp,l)*scale[u1 + u2 + 2];
 		}
 	}
 	return contributions;
@@ -1106,46 +829,10 @@ pf_t W_final_pf::get_PMmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	}
 	assert(!(i<=0 || l> n));
     pf_t contributions = 0;
-	contributions += get_PMmloop10(i,j-1,k+1,l)*expap_penalty*beta2P(j,k);
-    contributions += get_PMmloop01(i,j-1,k+1,l)*expap_penalty*beta2P(j,k);
+	contributions += PMmloop10.get(i,j-1,k+1,l)*expap_penalty*beta2P(j,k);
+    contributions += PMmloop01.get(i,j-1,k+1,l)*expap_penalty*beta2P(j,k);
 
 	return contributions;
-}
-
-pf_t W_final_pf::get_PMmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return 0;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PMmloop00[ij][kl];
-}
-
-pf_t W_final_pf::get_PMmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return 0;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PMmloop01[ij][kl];
-}
-
-pf_t W_final_pf::get_PMmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return 0;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PMmloop10[ij][kl];
 }
 
 pf_t W_final_pf::get_POiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -1158,13 +845,13 @@ pf_t W_final_pf::get_POiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	if(ptype_closing == 0) return 0;
 
 	pf_t contributions = 0;
-	contributions += get_PO(i+1,j,k,l-1)*get_e_stP(i,l);
+	contributions += PO.get(i+1,j,k,l-1)*get_e_stP(i,l);
 
 	for(cand_pos_t d= i+1; d<std::min(j,i+MAXLOOP); ++d){
 		for (cand_pos_t dp=l-1; dp >std::max(l-MAXLOOP,k); --dp) {
 			cand_pos_t u1 = d-(i)-1; // check these
 			cand_pos_t u2 = (l)-dp-1;
-			contributions += get_e_intP(i,d,dp,l)*get_PO(d,j,dp,k)*scale[u1 + u2 + 2];
+			contributions += get_e_intP(i,d,dp,l)*PO.get(d,j,dp,k)*scale[u1 + u2 + 2];
 		}
 	}
 	return contributions;
@@ -1176,46 +863,10 @@ pf_t W_final_pf::get_POmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	}
 	assert(!(i<=0 || l> n));
     pf_t contributions = 0;
-	contributions += get_POmloop10(i+1,j,k,l-1)*expap_penalty*beta2P(l,i);
-    contributions += get_POmloop01(i+1,j,k,l-1)*expap_penalty*beta2P(l,i);
+	contributions += POmloop10.get(i+1,j,k,l-1)*expap_penalty*beta2P(l,i);
+    contributions += POmloop01.get(i+1,j,k,l-1)*expap_penalty*beta2P(l,i);
 
 	return contributions;
-}
-
-pf_t W_final_pf::get_POmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return 0;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return POmloop00[ij][kl];
-}
-
-pf_t W_final_pf::get_POmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return 0;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return POmloop01[ij][kl];
-}
-
-pf_t W_final_pf::get_POmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return 0;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return POmloop10[ij][kl];
 }
 
 pf_t W_final_pf::compute_int(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l) {

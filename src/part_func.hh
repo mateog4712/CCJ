@@ -50,71 +50,20 @@ class W_final_pf {
 	pf_t get_WPP(cand_pos_t i, cand_pos_t j);
 	
 	pf_t get_energy(cand_pos_t i, cand_pos_t j) {
-        if (i >= j) return 0;
-        cand_pos_t ij = index[i] + j - i;
-        return V[ij];
+        return V.get(i,j);
     }
-    pf_t get_energy_VM(cand_pos_t i, cand_pos_t j) {
-        if (i >= j) return 0;
-        cand_pos_t ij = index[i] + j - i;
-        return VM[ij];
-    }
-    pf_t get_energy_WM(cand_pos_t i, cand_pos_t j) {
-        if (i >= j) return 0;
-        cand_pos_t ij = index[i] + j - i;
-        return WM[ij];
-    }
-    pf_t get_energy_WMv(cand_pos_t i, cand_pos_t j) {
-        if (i >= j) return 0;
-        cand_pos_t ij = index[i] + j - i;
-        return WMv[ij];
-    }
-    pf_t get_energy_WMp(cand_pos_t i, cand_pos_t j) {
-        if (i >= j) return 0;
-        cand_pos_t ij = index[i] + j - i;
-        return WMp[ij];
-    }
-	pf_t get_P(cand_pos_t i, cand_pos_t j);
-	pf_t get_PK(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	pf_t get_PL(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	pf_t get_PR(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	pf_t get_PM(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	pf_t get_PO(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	
-	
-	pf_t get_PfromL(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-    pf_t get_PfromR(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	pf_t get_PfromM(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	pf_t get_PfromO(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	
 	
 	pf_t get_PLiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	pf_t get_PLiloop5(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, cand_pos_t s);
 	pf_t get_PLmloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	pf_t get_PLmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	pf_t get_PLmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	pf_t get_PLmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	
 	pf_t get_PRiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	pf_t get_PRiloop5(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, cand_pos_t s);
 	pf_t get_PRmloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	pf_t get_PRmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	pf_t get_PRmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	pf_t get_PRmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	
 	pf_t get_PMiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	pf_t get_PMiloop5(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, cand_pos_t s);
 	pf_t get_PMmloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	pf_t get_PMmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	pf_t get_PMmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	pf_t get_PMmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	
 	pf_t get_POiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	pf_t get_POiloop5(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, cand_pos_t s);
 	pf_t get_POmloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	pf_t get_POmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	pf_t get_POmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	pf_t get_POmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 
 	TriangleMatrix_PF P; // the main loop for pseudoloops and bands
 
@@ -124,6 +73,7 @@ class W_final_pf {
     bool PSplot;
     cand_pos_t n;
     std::vector<cand_pos_t> index;
+	index_offset_t index3D;
 
     short *S_;
     short *S1_;
@@ -134,39 +84,39 @@ class W_final_pf {
     TriangleMatrix_PF WMv;
     TriangleMatrix_PF WMp;
     TriangleMatrix_PF WM;
-    TriangleMatrix_PF W;
+    std::vector<pf_t> W;
     // PK
     TriangleMatrix_PF WPP;								// similar to WP but has at least one base pair
 	TriangleMatrix_PF WBP;								// similar to WB but has at least one base pair
 	
-	std::vector<std::vector<pf_t> > PK;					// MFE of a TGB structure over gapped region [i,j] U [k,l]
-	std::vector<std::vector<pf_t> > PL;	// MFE of a TGB structure s.t. i.j is paired
-	std::vector<std::vector<pf_t> > PR;					// MFE of a TGB structure s.t. k.l is paired
-	std::vector<std::vector<pf_t> > PM;					// MFE of a TGB structure s.t. j.k is paired
-	std::vector<std::vector<pf_t> > PO;	// MFE of a TGB structure s.t. i.l is paired
+	Matrix4DPF PK;					// MFE of a TGB structure over gapped region [i,j] U [k,l]
+	Matrix4DPF PL;					// MFE of a TGB structure s.t. i.j is paired
+	Matrix4DPF PR;					// MFE of a TGB structure s.t. k.l is paired
+	Matrix4DPF PM;					// MFE of a TGB structure s.t. j.k is paired
+	Matrix4DPF PO;					// MFE of a TGB structure s.t. i.l is paired
 	
 	// transition recurrences
-	std::vector<std::vector<pf_t> > PfromL;
-	std::vector<std::vector<pf_t> > PfromR;
-	std::vector<std::vector<pf_t> > PfromM;
-	std::vector<std::vector<pf_t> > PfromO;
+	Matrix4DPF PfromL;
+	Matrix4DPF PfromR;
+	Matrix4DPF PfromM;
+	Matrix4DPF PfromO;
 	
 	// internal loops and multi loops that span a band
-	std::vector<std::vector<pf_t> > PLmloop00;
-	std::vector<std::vector<pf_t> > PLmloop01;
-	std::vector<std::vector<pf_t> > PLmloop10;
+	Matrix4DPF PLmloop00;
+	Matrix4DPF PLmloop01;
+	Matrix4DPF PLmloop10;
 	
-	std::vector<std::vector<pf_t> > PRmloop00;
-	std::vector<std::vector<pf_t> > PRmloop01;
-	std::vector<std::vector<pf_t> > PRmloop10;
+	Matrix4DPF PRmloop00;
+	Matrix4DPF PRmloop01;
+	Matrix4DPF PRmloop10;
 	
-	std::vector<std::vector<pf_t> > PMmloop00;
-	std::vector<std::vector<pf_t> > PMmloop01;
-	std::vector<std::vector<pf_t> > PMmloop10;
+	Matrix4DPF PMmloop00;
+	Matrix4DPF PMmloop01;
+	Matrix4DPF PMmloop10;
 	
-	std::vector<std::vector<pf_t> > POmloop00;
-	std::vector<std::vector<pf_t> > POmloop01;
-	std::vector<std::vector<pf_t> > POmloop10;
+	Matrix4DPF POmloop00;
+	Matrix4DPF POmloop01;
+	Matrix4DPF POmloop10;
 
     // Extra
     std::vector<pf_t> scale;

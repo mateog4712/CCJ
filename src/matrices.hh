@@ -205,8 +205,67 @@ public:
     size_t index(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l) const {
         return index3D_[i-1][j-1][k-1] + (l-k);
     }
+};
 
+class Matrix4DPF {
+public:
 
+    //! construct empty
+    Matrix4DPF() {}
+
+    void
+    init(cand_pos_t n, index_offset_t &index3D) {
+        n_=n;
+        index3D_ = index3D;
+        int slice_size_ = index3D_[n-1][n-1][n-1] + 1;
+        assert( slice_size_ == n*(n+1)*(n+2)*(n+3)/24);
+        m_.clear();
+        m_.resize(slice_size_,0.0);
+
+    }
+
+    int get_uc(int i, int j, int k, int l) const {
+        assert(!(i<=0 || l> n_));
+
+        int val = m_[index(i,j,k,l)];
+        return val;
+    }
+
+    int get(int i, int j, int k, int l) const {
+        if (!(i <= j && j < k-1 && k <= l)){
+            return 0.0;
+        }
+        return get_uc(i,j,k,l);
+    }
+
+    void set(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e) {
+        m_[index(i,j,k,l)] = e;
+    }
+
+    static void construct_index(index_offset_t &index, cand_pos_t n){
+        // Construct for i<=j<=k<=l (even if j<k-1)
+        index.resize(n);
+        size_t idx = 0;
+        for (cand_pos_t i = 0; i < n; ++i) {
+            index[i].resize(n);
+            for (cand_pos_t j = i; j < n; ++j) {
+                index[i][j].resize(n);
+                for (cand_pos_t k = j; k < n; ++k) {
+                    index[i][j][k] = idx;
+                    idx += (n - k);  // remaining values from k to n
+                }
+            }
+        }
+    }
+
+    private:
+    cand_pos_t n_;
+    std::vector<pf_t> m_; // I had m as a 16 bit int. This seemed to result in some kind of of overflow or underflow, most likely because I allowed pushing INF(32 bit int/10) despite being 16 bit
+    index_offset_t index3D_;
+
+    size_t index(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l) const {
+        return index3D_[i-1][j-1][k-1] + (l-k);
+    }
 };
 
 #endif
