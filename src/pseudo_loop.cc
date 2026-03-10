@@ -25,63 +25,40 @@ void pseudo_loop::allocate_space()
 {
     n = seq.length();
 
-    index.resize(n+1);
-    cand_pos_t total_length = ((n+1) *(n+2))/2;
-    index[1] = 0;
-    for (cand_pos_t i=2; i <= n; i++)
-        index[i] = index[i-1]+(n+1)-i+1;
+	TriangleMatrix::new_index(index,n+1);
+	Matrix4D::construct_index(index3D,n);
 
-    WBP.resize(total_length,INF);
-	WPP.resize(total_length,INF);
-	P.resize(total_length,INF);
+    WBP.init(n+1,index);
+	WPP.init(n+1,index);
+	P.init(n+1,index);
+	
+	// 4D matrix initialization
+	PK.init(n,index3D);
+	PL.init(n,index3D);
+	PR.init(n,index3D);
+	PM.init(n,index3D);
+	PO.init(n,index3D);
+	PfromL.init(n,index3D);
+	PfromR.init(n,index3D);
+	PfromM.init(n,index3D);
+	PfromMprime.init(n,index3D);
+	PfromO.init(n,index3D);
 
-	std::vector<energy_t> row;
-	row.resize(total_length,INF);
+	PLmloop00.init(n,index3D);
+	PLmloop01.init(n,index3D);
+	PLmloop10.init(n,index3D);
 
-	// Mateo - Mirroring ModifiedCCJ, changing PL from n^2xn^2 to nxnxn^2
-	PL.resize(n+1);
-	PO.resize(n+1);
-	PfromL.resize(n+1);
-	PfromO.resize(n+1);
-	PLmloop01.resize(n+1);
-	PLmloop10.resize(n+1);
-	POmloop01.resize(n+1);
-	POmloop10.resize(n+1);
-	for(cand_pos_t i = 0; i <= n; ++i) {
-		for(cand_pos_t j = 0; j <= n; ++j) {
-			PL[i].push_back(row);
-			PO[i].push_back(row);
-			PfromL[i].push_back(row);
-			PfromO[i].push_back(row);
+	PRmloop00.init(n,index3D);
+	PRmloop01.init(n,index3D);
+	PRmloop10.init(n,index3D);
 
-			PLmloop01[i].push_back(row);
-			PLmloop10[i].push_back(row);
-			
-			POmloop01[i].push_back(row);
-			POmloop10[i].push_back(row);
-		}
-	}
+	PMmloop00.init(n,index3D);
+	PMmloop01.init(n,index3D);
+	PMmloop10.init(n,index3D);
 
-	for(cand_pos_t i = 0; i < total_length; ++i) {
-		PK.push_back(row);
-		PR.push_back(row);
-		PM.push_back(row);
-
-		PfromR.push_back(row);
-		PfromM.push_back(row);
-
-		PLmloop00.push_back(row);
-
-		PRmloop00.push_back(row);
-		PRmloop01.push_back(row);
-		PRmloop10.push_back(row);
-
-		PMmloop00.push_back(row);
-		PMmloop01.push_back(row);
-		PMmloop10.push_back(row);
-
-		POmloop00.push_back(row);
-	}
+	POmloop00.init(n,index3D);
+	POmloop01.init(n,index3D);
+	POmloop10.init(n,index3D);
 }
 
 pseudo_loop::~pseudo_loop()
@@ -104,15 +81,11 @@ void pseudo_loop::compute_energies(cand_pos_t i, cand_pos_t l)
 		// in original recurrences we have j< k-1, so I am changing k=j+1 to k=j+2
 		for(cand_pos_t k = l; k>=j+2; --k){
 
-			// compute_PLiloop(i,j,k,l);
-
 			compute_PLmloop00(i,j,k,l);
 
 			compute_PLmloop01(i,j,k,l);
 
 			compute_PLmloop10(i,j,k,l);
-
-			// compute_PRiloop(i,j,k,l);
 
 			compute_PRmloop00(i,j,k,l);
 
@@ -120,15 +93,11 @@ void pseudo_loop::compute_energies(cand_pos_t i, cand_pos_t l)
 
 			compute_PRmloop10(i,j,k,l);
 
-			// compute_PMiloop(i,j,k,l);
-
 			compute_PMmloop00(i,j,k,l);
 
 			compute_PMmloop01(i,j,k,l);
 
 			compute_PMmloop10(i,j,k,l);
-
-			// compute_POiloop(i,j,k,l);
 
 			compute_POmloop00(i,j,k,l);
 
@@ -150,6 +119,8 @@ void pseudo_loop::compute_energies(cand_pos_t i, cand_pos_t l)
 
 			compute_PfromM(i,j,k,l);
 
+			compute_PfromMprime(i,j,k,l);
+
 			compute_PfromO(i,j,k,l);
 
 			compute_PK(i,j,k,l);
@@ -167,7 +138,7 @@ void pseudo_loop::compute_WBP(int i, int l){
 	for(cand_pos_t d=i; d< l; ++d){
 		tmp = get_WB(i,d-1) + V->get_energy(d,l) + beta2P(l,d) + PPS_penalty;
 		b1 = std::min(b1,tmp);
-		tmp = get_WB(i,d-1) + get_P(d,l) + PSM_penalty + PPS_penalty;
+		tmp = get_WB(i,d-1) + P.get(d,l) + PSM_penalty + PPS_penalty;
 		b2 = std::min(b2,tmp);
 	}
 	b3 = WBP[ilm1]+cp_penalty;
@@ -185,7 +156,7 @@ void pseudo_loop::compute_WPP(cand_pos_t i, cand_pos_t l){
 	for(cand_pos_t d=i; d<l; ++d){
 		tmp = get_WP(i,d-1) + V->get_energy(d,l) + gamma2(l,d) + PPS_penalty;
 		b1 = std::min(b1,tmp);
-		tmp = get_WP(i,d-1) + get_P(d,l) + PSP_penalty + PPS_penalty;
+		tmp = get_WP(i,d-1) + P.get(d,l) + PSP_penalty + PPS_penalty;
 		b2 = std::min(b2,tmp);
 	}
 	b3 = WPP[ilm1]+PUP_penalty;
@@ -201,7 +172,7 @@ void pseudo_loop::compute_P(cand_pos_t i, cand_pos_t l){
 	for(cand_pos_t j=i; j<l; ++j){
 		for (cand_pos_t d=j+1; d<l; ++d){
 			for (cand_pos_t k=d+1; k<l; ++k){
-				b1 = get_PK(i,j,d+1,k) + get_PK(j+1,d,k+1,l);
+				b1 = PK.get(i,j,d+1,k) + PK.get(j+1,d,k+1,l);
 				min_energy = std::min(min_energy,b1);
 			}
 		}
@@ -214,26 +185,23 @@ void pseudo_loop::compute_P(cand_pos_t i, cand_pos_t l){
 void pseudo_loop::compute_PK(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF,b1=INF,b2=INF,b3=INF,b4=INF,b5=INF,b6=INF;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
 	for(cand_pos_t d=i+1; d< j; ++d){
-		energy_t tmp = get_PK(i,d,k,l) + get_WP(d+1,j);  //12G1
+		energy_t tmp = PK.get(i,d,k,l) + get_WP(d+1,j);  //12G1
 		b1=std::min(b1,tmp);
 	}
 
 	for(cand_pos_t d=k+1; d< l; ++d){
-		energy_t tmp = get_PK(i,j,d,l) + get_WP(k,d-1); //1G21
+		energy_t tmp = PK.get(i,j,d,l) + get_WP(k,d-1); //1G21
 		b2=std::min(b2,tmp);
 	}
 
-	b3 = get_PL(i,j,k,l) + gamma2(j,i)+PB_penalty;
-	b4 = get_PM(i,j,k,l) + gamma2(j,k)+PB_penalty;
-	b5 = get_PR(i,j,k,l) + gamma2(l,k)+PB_penalty;
-	b6 = get_PO(i,j,k,l) + gamma2(l,i)+PB_penalty;
+	b3 = PL.get(i,j,k,l) + gamma2(j,i)+PB_penalty;
+	b4 = PM.get(i,j,k,l) + gamma2(j,k)+PB_penalty;
+	b5 = PR.get(i,j,k,l) + gamma2(l,k)+PB_penalty;
+	b6 = PO.get(i,j,k,l) + gamma2(l,i)+PB_penalty;
 	min_energy = std::min({min_energy,b1,b2,b3,b4,b5,b6});
 	if (min_energy < INF/2){
-		PK[ij][kl]=min_energy;
+		PK.set(i,j,k,l,min_energy);
 	}
 
 }
@@ -241,7 +209,6 @@ void pseudo_loop::compute_PK(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 void pseudo_loop::compute_PL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF,b1=INF,b2=INF,b3=INF;
 
-	cand_pos_t kl = index[k]+l-k;
 	const int ptype_closing = pair[S_[i]][S_[j]];
 
 	if (ptype_closing>0){
@@ -253,20 +220,17 @@ void pseudo_loop::compute_PL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 		// Hosna, July 11, 2014
 		// To avoid addition of close base pairs we check for the following here
 		if (j>=(i+TURN+1)){
-			b3 = get_PfromL(i+1,j-1,k,l) + gamma2(j,i);
+			b3 = PfromL.get(i+1,j-1,k,l) + gamma2(j,i);
 		}
 	}
 	min_energy = std::min({min_energy,b1,b2,b3});
 	if (min_energy < INF/2){
-		PL[i][j][kl]=min_energy;
+		PL.set(i,j,k,l,min_energy);
 	}
 }
 
 void pseudo_loop::compute_PR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF,b1=INF,b2=INF,b3=INF;
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
 
 	const int ptype_closing = pair[S_[k]][S_[l]];
 
@@ -278,20 +242,17 @@ void pseudo_loop::compute_PR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 		// Hosna, July 11, 2014
 		// To avoid addition of close base pairs we check for the following here
 		if (l>=(k+TURN+1)){
-			b3 = get_PfromR(i,j,k+1,l-1) + gamma2(l,k);
+			b3 = PfromR.get(i,j,k+1,l-1) + gamma2(l,k);
 		}
 	}
 	min_energy = std::min({min_energy,b1,b2,b3});
 	if (min_energy < INF/2){
-		PR[ij][kl]=min_energy;
+		PR.set(i,j,k,l,min_energy);
 	}
 }
 
 void pseudo_loop::compute_PM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF,b1=INF,b2=INF,b3=INF,b4=INF;
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
 
 	const int ptype_closing = pair[S_[j]][S_[k]];
 	if (ptype_closing>0){
@@ -302,7 +263,7 @@ void pseudo_loop::compute_PM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 		// Hosna, July 11, 2014
 		// To avoid addition of close base pairs we check for the following here
 		if (k>=(j+TURN-1)){
-			b3 = get_PfromM(i,j-1,k+1,l) + gamma2(j,k);
+			b3 = PfromM.get(i,j-1,k+1,l) + gamma2(j,k);
 		}
 
 		if(i==j && k==l){
@@ -311,14 +272,12 @@ void pseudo_loop::compute_PM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	}
 	min_energy = std::min({min_energy,b1,b2,b3,b4});
 	if (min_energy < INF/2){
-		PM[ij][kl]=min_energy;
+		PM.set(i,j,k,l,min_energy);
 	}
 }
 
 void pseudo_loop::compute_PO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF,b1=INF,b2=INF,b3=INF;
-
-	cand_pos_t kl = index[k]+l-k;
 
 	const int ptype_closing = pair[S_[i]][S_[l]];
 
@@ -330,107 +289,102 @@ void pseudo_loop::compute_PO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 		// Hosna, July 11, 2014
 		// To avoid addition of close base pairs we check for the following here
 		if (l>=(i+TURN+1)){
-			b3 = get_PfromO(i+1,j,k,l-1) + gamma2(l,i);
+			b3 = PfromO.get(i+1,j,k,l-1) + gamma2(l,i);
 		}
 	}
 	min_energy = std::min({min_energy,b1,b2,b3});
 	if (min_energy < INF/2){
-		PO[i][j][kl]=min_energy;
+		PO.set(i,j,k,l,min_energy);
 	}
 }
 
 void pseudo_loop::compute_PfromL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF,b1=INF,b2=INF,b3=INF,b4=INF,b5=INF;
 
-	cand_pos_t kl = index[k]+l-k;
-
 	for(cand_pos_t d=i+1; d< j; ++d){
-		energy_t tmp = get_PfromL(d,j,k,l)+get_WP(i,d-1);
+		energy_t tmp = PfromL.get(d,j,k,l)+get_WP(i,d-1);
 		b1 = std::min(b1,tmp);
-		tmp = get_PfromL(i,d,k,l)+get_WP(d+1,j);
+		tmp = PfromL.get(i,d,k,l)+get_WP(d+1,j);
 		b2 = std::min(b2,tmp);
 	}
 
-	b3 = get_PR(i,j,k,l) + gamma2(l,k) + PB_penalty; //;
+	b3 = PR.get(i,j,k,l) + gamma2(l,k) + PB_penalty; //;
 
-	b4 = get_PM(i,j,k,l) + gamma2(j,k)+ PB_penalty;//;
+	b4 = PM.get(i,j,k,l) + gamma2(j,k)+ PB_penalty;//;
 
-	b5 = get_PO(i,j,k,l) + gamma2(l,i)+ PB_penalty;//;
+	b5 = PO.get(i,j,k,l) + gamma2(l,i)+ PB_penalty;//;
 
 	min_energy = std::min({min_energy,b1,b2,b3,b4,b5});
 	if (min_energy < INF/2){
-		PfromL[i][j][kl]=min_energy;
+		PfromL.set(i,j,k,l,min_energy);
 	}
 }
 
 void pseudo_loop::compute_PfromR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF,b1=INF,b2=INF,b3=INF,b4=INF;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
 	for(cand_pos_t d=k+1; d< l; ++d){
-		energy_t tmp = get_PfromR(i,j,d,l)+get_WP(k,d-1);
+		energy_t tmp = PfromR.get(i,j,d,l)+get_WP(k,d-1);
 		b1 = std::min(b1,tmp);
-		tmp = get_PfromR(i,j,k,d)+get_WP(d+1,l);
+		tmp = PfromR.get(i,j,k,d)+get_WP(d+1,l);
 		b2 = std::min(b2,tmp);
 	}
 
-	b3 = get_PM(i,j,k,l) + gamma2(j,k)+ PB_penalty;//;
+	b3 = PM.get(i,j,k,l) + gamma2(j,k)+ PB_penalty;//;
 
-	b4 = get_PO(i,j,k,l) + gamma2(l,i)+ PB_penalty;//;
+	b4 = PO.get(i,j,k,l) + gamma2(l,i)+ PB_penalty;//;
 
 	min_energy = std::min({min_energy,b1,b2,b3,b4});
 	if (min_energy < INF/2){
-		PfromR[ij][kl]=min_energy;
+		PfromR.set(i,j,k,l,min_energy);
 	}
 }
 
 void pseudo_loop::compute_PfromM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,b1=INF,b2=INF,b3=INF,b4=INF; //b5=INF;
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
+	energy_t min_energy = INF;
 
 	for(cand_pos_t d=i+1; d<j; ++d){
-		energy_t tmp = get_PfromM(i,d,k,l)+get_WP(d+1,j);
-		b1 = std::min(b1,tmp);
-	}
-	for(cand_pos_t d=k+1; d<l; ++d){
-		energy_t tmp=get_PfromM(i,j,d,l)+get_WP(k,d-1);
-		b2 = std::min(b2,tmp);
+		energy_t tmp = PfromMprime.get(i,d,k,l)+get_WP(d+1,j);
+		min_energy = std::min(min_energy,tmp);
 	}
 
-	b3 = get_PL(i,j,k,l) + gamma2(j,i)+ PB_penalty;//;
-
-	b4 = get_PR(i,j,k,l) + gamma2(l,k)+PB_penalty;
-
-	min_energy = std::min({min_energy,b1,b2,b3,b4});
 	if (min_energy < INF/2){
-		PfromM[ij][kl]=min_energy;
+		PfromM.set(i,j,k,l,min_energy);
+	}
+}
+
+void pseudo_loop::compute_PfromMprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	energy_t min_energy = INF;
+
+	for(cand_pos_t d=k+1; d<l; ++d){
+		energy_t tmp=get_PfromMdoubleprime(i,j,d,l)+get_WP(k,d-1);
+		min_energy = std::min(min_energy,tmp);
+	}
+	
+	if (min_energy < INF/2){
+		PfromM.set(i,j,k,l,min_energy);
 	}
 }
 
 void pseudo_loop::compute_PfromO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF,b1=INF,b2=INF,b3=INF,b4=INF;
 
-	cand_pos_t kl = index[k]+l-k;
-
 	for(cand_pos_t d=i+1; d< j; ++d){
-		energy_t tmp=get_PfromO(d,j,k,l)+get_WP(i,d-1);
+		energy_t tmp=PfromO.get(d,j,k,l)+get_WP(i,d-1);
 		b1 = std::min(b1,tmp);
 	}
 	for(cand_pos_t d=k+1; d<l; ++d){
-		energy_t tmp=get_PfromO(i,j,k,d)+get_WP(d+1,l);
+		energy_t tmp=PfromO.get(i,j,k,d)+get_WP(d+1,l);
 		b2 = std::min(b2,tmp);
 	}
 
-	b3 = get_PL(i,j,k,l) + gamma2(j,i) + PB_penalty;
+	b3 = PL.get(i,j,k,l) + gamma2(j,i) + PB_penalty;
 
-	b4 = get_PR(i,j,k,l) + gamma2(l,k)+PB_penalty;
+	b4 = PR.get(i,j,k,l) + gamma2(l,k)+PB_penalty;
 
 	min_energy = std::min({min_energy,b1,b2,b3,b4});
 	if (min_energy < INF/2){
-		PfromO[i][j][kl]=min_energy;
+		PfromO.set(i,j,k,l,min_energy);
 	}
 
 }
@@ -438,36 +392,32 @@ void pseudo_loop::compute_PfromO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 void pseudo_loop::compute_PLmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF,tmp=INF;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	min_energy = get_PL(i,j,k,l)+beta2P(j,i);
+	min_energy = PL.get(i,j,k,l)+beta2P(j,i);
     for(cand_pos_t d = i; d<=j; ++d){
         if (d>i){
-            tmp=get_WB(i,d-1)+get_PLmloop00(d,j,k,l);
+            tmp=get_WB(i,d-1)+PLmloop00.get(d,j,k,l);
             min_energy = std::min(min_energy,tmp);
         }
         if(d<j){
-            tmp=get_PLmloop00(i,d,k,l)+get_WB(d+1,j);
+            tmp=PLmloop00.get(i,d,k,l)+get_WB(d+1,j);
             min_energy = std::min(min_energy,tmp);
         }
 
     }
 	if (min_energy < INF/2){
-		PLmloop00[ij][kl]=min_energy;
+		PLmloop00.set(i,j,k,l,min_energy);
 	}
 }
 
 void pseudo_loop::compute_PLmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF,tmp=INF;
 
-	cand_pos_t kl = index[k]+l-k;
 	for(cand_pos_t d = i; d < j; ++d){
-        tmp = get_PLmloop00(i,d,k,l) + get_WBP(d+1,j);
+        tmp = PLmloop00.get(i,d,k,l) + WBP.get(d+1,j);
         min_energy = std::min(min_energy,tmp);
     }
 	if (min_energy < INF/2){
-		PLmloop01[i][j][kl] = min_energy;
+		PLmloop01.set(i,j,k,l,min_energy);
 	}
 
 }
@@ -475,39 +425,36 @@ void pseudo_loop::compute_PLmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, ca
 void pseudo_loop::compute_PLmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF,tmp=INF;
 
-	cand_pos_t kl = index[k]+l-k;
 	for(cand_pos_t d = i+1; d <= j; ++d){
-        tmp = get_WBP(i,d-1) + get_PLmloop00(d,j,k,l);
+        tmp = WBP.get(i,d-1) + PLmloop00.get(d,j,k,l);
         min_energy = std::min(min_energy,tmp);
         if(d<j){
-            tmp = get_PLmloop10(i,d,k,l) + get_WB(d+1,j);
+            tmp = PLmloop10.get(i,d,k,l) + get_WB(d+1,j);
             min_energy = std::min(min_energy,tmp);
         }
     }
 	if (min_energy < INF/2){
-		PLmloop10[i][j][kl] = min_energy;
+		PLmloop10.set(i,j,k,l,min_energy);
 	}
 
 }
 
 void pseudo_loop::compute_PRmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF,tmp=INF;
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
 
-	min_energy = get_PR(i,j,k,l)+beta2P(l,k);
+	min_energy = PR.get(i,j,k,l)+beta2P(l,k);
 	for(cand_pos_t d=k; d<=l; ++d){
         if(d>k){
-            tmp=get_WB(k,d-1)+get_PRmloop00(i,j,d,l);
+            tmp=get_WB(k,d-1)+PRmloop00.get(i,j,d,l);
             min_energy = std::min(min_energy,tmp);
         }
         if (d<l){
-            tmp = get_PRmloop00(i,j,k,d)+get_WB(d+1,l);
+            tmp = PRmloop00.get(i,j,k,d)+get_WB(d+1,l);
             min_energy = std::min(min_energy,tmp);
         }
     }
 	if (min_energy < INF/2){
-		PRmloop00[ij][kl]=min_energy;
+		PRmloop00.set(i,j,k,l,min_energy);
 	}
 
 }
@@ -516,16 +463,13 @@ void pseudo_loop::compute_PRmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, ca
 void pseudo_loop::compute_PRmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF,tmp=INF;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	min_energy = get_PRmloop01(i,j,k,l-1)+cp_penalty;
+	min_energy = PRmloop01.get(i,j,k,l-1)+cp_penalty;
     for(cand_pos_t d = k; d < l; d++){
-        tmp = get_PRmloop00(i,j,k,d) + get_WBP(d+1,l);
+        tmp = PRmloop00.get(i,j,k,d) + WBP.get(d+1,l);
         min_energy = std::min(min_energy,tmp);
     }
 	if (min_energy < INF/2){
-		PRmloop01[ij][kl] = min_energy;
+		PRmloop01.set(i,j,k,l,min_energy);
 	}
 
 }
@@ -533,16 +477,13 @@ void pseudo_loop::compute_PRmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, ca
 void pseudo_loop::compute_PRmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF,tmp=INF;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	min_energy = get_PRmloop10(i,j,k+1,l)+ cp_penalty;
+	min_energy = PRmloop10.get(i,j,k+1,l)+ cp_penalty;
     for(cand_pos_t d = k+1; d <= l; ++d){
-        tmp = get_WBP(k,d-1) + get_PRmloop00(i,j,d,l);
+        tmp = WBP.get(k,d-1) + PRmloop00.get(i,j,d,l);
         min_energy = std::min(min_energy,tmp);
     }
 	if (min_energy < INF/2){
-		PRmloop10[ij][kl] = min_energy;
+		PRmloop10.set(i,j,k,l,min_energy);
 	}
 
 }
@@ -550,21 +491,18 @@ void pseudo_loop::compute_PRmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, ca
 void pseudo_loop::compute_PMmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF,tmp=INF;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	min_energy = get_PM(i,j,k,l)+beta2P(j,k);
+	min_energy = PM.get(i,j,k,l)+beta2P(j,k);
     for(cand_pos_t d=i; d<j; ++d){
-        tmp=get_PMmloop00(i,d,k,l)+get_WB(d+1,j);
+        tmp=PMmloop00.get(i,d,k,l)+get_WB(d+1,j);
         min_energy = std::min(min_energy,tmp);
     }
     for(cand_pos_t d=k+1; d<=l; ++d){
-        tmp=get_PMmloop00(i,j,d,l)+get_WB(k,d-1);
+        tmp=PMmloop00.get(i,j,d,l)+get_WB(k,d-1);
         min_energy = std::min(min_energy,tmp);
     }
 
 	if (min_energy < INF/2){
-		PMmloop00[ij][kl]=min_energy;
+		PMmloop00.set(i,j,k,l,min_energy);
 	}
 }
 
@@ -572,58 +510,50 @@ void pseudo_loop::compute_PMmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, ca
 void pseudo_loop::compute_PMmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF,tmp=INF;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-	min_energy = get_PMmloop01(i,j,k+1,l)+cp_penalty;
+	min_energy = PMmloop01.get(i,j,k+1,l)+cp_penalty;
 	for(cand_pos_t d = k; d < l; ++d){
-        tmp = get_POmloop00(i,j,k,d) + get_WBP(d+1,l);
+        tmp = POmloop00.get(i,j,k,d) + WBP.get(d+1,l);
         min_energy = std::min(min_energy,tmp);
     }
 
 	if (min_energy < INF/2){
-		PMmloop01[ij][kl] = min_energy;
+		PMmloop01.set(i,j,k,l,min_energy);
 	}
 }
 
 void pseudo_loop::compute_PMmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF,tmp=INF;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	min_energy = get_PMmloop10(i,j-1,k,l)+cp_penalty;
+	min_energy = PMmloop10.get(i,j-1,k,l)+cp_penalty;
 	for(cand_pos_t d=i+1; d<=j;++d){
-        tmp=get_WBP(i,d-1)+get_POmloop00(d,j,k,l);
+        tmp=WBP.get(i,d-1)+POmloop00.get(d,j,k,l);
         min_energy = std::min(min_energy,tmp);
     }
     for(cand_pos_t d = k+1; d < l; ++d){
-        tmp = get_POmloop10(i,j,k,d) + get_WB(d+1,l);
+        tmp = POmloop10.get(i,j,k,d) + get_WB(d+1,l);
         min_energy = std::min(min_energy,tmp);
     }
 
 	if (min_energy < INF/2){
-		PMmloop10[ij][kl] = min_energy;
+		PMmloop10.set(i,j,k,l,min_energy);
 	}
 }
 
 void pseudo_loop::compute_POmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF,tmp=INF;
 
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	min_energy = get_PO(i,j,k,l)+beta2P(l,i);
+	min_energy = PO.get(i,j,k,l)+beta2P(l,i);
     for(cand_pos_t d=i+1; d<=j; ++d){
-        tmp = get_WB(i,d-1)+get_POmloop00(d,j,k,l);
+        tmp = get_WB(i,d-1)+POmloop00.get(d,j,k,l);
         min_energy = std::min(min_energy,tmp);
     }
     for(cand_pos_t d=k; d<l; ++d){
-        tmp = get_POmloop00(i,j,k,d)+get_WB(d+1,l);
+        tmp = POmloop00.get(i,j,k,d)+get_WB(d+1,l);
         min_energy = std::min(min_energy,tmp);
     }
 
 	if (min_energy < INF/2){
-		POmloop00[ij][kl]=min_energy;
+		POmloop00.set(i,j,k,l,min_energy);
 	}
 
 }
@@ -632,14 +562,13 @@ void pseudo_loop::compute_POmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, ca
 void pseudo_loop::compute_POmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF;
 
-	cand_pos_t kl = index[k]+l-k;
 	for(cand_pos_t d = k; d < l; ++d){
-        energy_t tmp = get_POmloop00(i,j,k,d) + get_WBP(d+1,l);
+        energy_t tmp = POmloop00.get(i,j,k,d) + WBP.get(d+1,l);
         min_energy = std::min(min_energy,tmp);
     }
 
 	if (min_energy < INF/2){
-		POmloop01[i][j][kl] = min_energy;
+		POmloop01.set(i,j,k,l,min_energy);
 	}
 
 }
@@ -647,18 +576,17 @@ void pseudo_loop::compute_POmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, ca
 void pseudo_loop::compute_POmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF,tmp=INF;
 
-	cand_pos_t kl = index[k]+l-k;
 	for(cand_pos_t d=i+1; d<=j;++d){
-        tmp=get_WBP(i,d-1)+get_POmloop00(d,j,k,l);
+        tmp=WBP.get(i,d-1)+POmloop00.get(d,j,k,l);
         min_energy = std::min(min_energy,tmp);
     }
     for(cand_pos_t d = k+1; d < l; ++d){
-        tmp = get_POmloop10(i,j,k,d) + get_WB(d+1,l);
+        tmp = POmloop10.get(i,j,k,d) + get_WB(d+1,l);
         min_energy = std::min(min_energy,tmp);
     }
 
 	if (min_energy < INF/2){
-		POmloop10[i][j][kl] = min_energy;
+		POmloop10.set(i,j,k,l,min_energy);
 	}
 }
 
@@ -668,15 +596,7 @@ energy_t pseudo_loop::get_WB(cand_pos_t i, cand_pos_t j){
 		return INF;
 	}
 	if (i>j) return 0;
-	return (std::min(cp_penalty*(j-i+1),get_WBP(i,j)));
-}
-
-energy_t pseudo_loop::get_WBP(cand_pos_t i, cand_pos_t j){
-	if (i > j || i<=0 || j<=0 || i>n || j>n){
-		return INF;
-	}
-	cand_pos_t ij = index[i]+j-i;
-	return WBP[ij];
+	return (std::min(cp_penalty*(j-i+1),WBP.get(i,j)));
 }
 
 energy_t pseudo_loop::get_WP(cand_pos_t i, cand_pos_t j){
@@ -684,124 +604,10 @@ energy_t pseudo_loop::get_WP(cand_pos_t i, cand_pos_t j){
 		return INF;
 	}
 	if (i>j) return 0; // needed as this will happen 
-	return (std::min(PUP_penalty*(j-i+1),get_WPP(i,j)));
+	return (std::min(PUP_penalty*(j-i+1),WPP.get(i,j)));
 }
 
-energy_t pseudo_loop::get_WPP(cand_pos_t i, cand_pos_t j){
-	if (i > j  || i<=0 || j<=0 || i>n || j>n){
-		return INF;
-	}
-	cand_pos_t ij = index[i]+j-i;
-	return WPP[ij];
-}
-
-energy_t pseudo_loop::get_P(cand_pos_t i, cand_pos_t j){
-	if (i >= j  || i<=0 || j<=0 || i>n || j>n){
-		return INF;
-	}
-	cand_pos_t ij = index[i]+j-i;
-	return P[ij];
-}
-
-energy_t pseudo_loop::get_PK(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return INF;
-	}
-	assert(!(i<=0 || l> n));
-	
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PK[ij][kl];
-}
-
-energy_t pseudo_loop::get_PL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return INF;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t kl = index[k]+l-k;
-
-	return PL[i][j][kl];
-}
-
-energy_t pseudo_loop::get_PR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return INF;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PR[ij][kl];
-}
-
-energy_t pseudo_loop::get_PM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return INF;
-	}
-	assert(!(i<=0 || l> n));
-
-	int ptype_closing = pair[S_[j]][S_[k]];
-	if (ptype_closing == 0){
-		return INF;
-	}
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-	if (i ==j && k ==l){
-		return gamma2(i,l);
-	}
-
-	return PM[ij][kl];
-}
-
-energy_t pseudo_loop::get_PO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return INF;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t kl = index[k]+l-k;
-
-	return PO[i][j][kl];
-}
-
-energy_t pseudo_loop::get_PfromL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return INF;
-	}
-	assert(!(i<=0 || l> n));
-
-	if (i==j && k==l){
-		const int ptype_closing = pair[S_[i]][S_[l]];
-		if(ptype_closing == 0) return INF;
-		else return gamma2(j,k) + gamma2(k,j);
-	}
-	cand_pos_t kl = index[k]+l-k;
-
-	return PfromL[i][j][kl];
-}
-
-energy_t pseudo_loop::get_PfromR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return INF;
-	}
-	assert(!(i<=0 || l> n));
-
-	if (i==j && k==l){
-		const int ptype_closing = pair[S_[i]][S_[l]];
-		if(ptype_closing == 0) return INF;
-		else return gamma2(j,k) + gamma2(k,j);
-	}
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PfromR[ij][kl];
-}
-
-energy_t pseudo_loop::get_PfromM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+energy_t pseudo_loop::get_PfromMdoubleprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
 	}
@@ -812,26 +618,12 @@ energy_t pseudo_loop::get_PfromM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_
 		if(ptype_closing == 0) return INF;
 		else return 0;
 	}
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
 
-	return PfromM[ij][kl];
-}
+	energy_t b1 = PL.get(i,j,k,l) + gamma2(j,i)+ PB_penalty;
 
-energy_t pseudo_loop::get_PfromO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return INF;
-	}
-	assert(!(i<=0 || l> n));
+	energy_t b2 = PR.get(i,j,k,l) + gamma2(l,k)+PB_penalty;
 
-	if (i==j && k==l){
-		const int ptype_closing = pair[S_[i]][S_[l]];
-		if(ptype_closing == 0) return INF;
-		else return 0;
-	}
-	cand_pos_t kl = index[k]+l-k;
-
-	return PfromO[i][j][kl];
+	return std::min(b1,b2);
 }
 
 // I will decide at a later time if this should be grabbing from a matrix or calculated every time it is called
@@ -845,11 +637,11 @@ energy_t pseudo_loop::get_PLiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	if(ptype_closing == 0) return INF;
 
 	energy_t tmp=INF;
-	energy_t min_energy = get_PL(i+1,j-1,k,l) + get_e_stP(i,j);
+	energy_t min_energy = PL.get(i+1,j-1,k,l) + get_e_stP(i,j);
 
 	for(cand_pos_t d= i+1; d<std::min(j,i+MAXLOOP); ++d){
 		for(cand_pos_t dp = j-1; dp > std::max(d+TURN,j-MAXLOOP); --dp){
-			tmp = get_e_intP(i,d,dp,j) + get_PL(d,dp,k,l);
+			tmp = get_e_intP(i,d,dp,j) + PL.get(d,dp,k,l);
 			min_energy = std::min(min_energy,tmp);
 		}
 	}
@@ -862,44 +654,10 @@ energy_t pseudo_loop::get_PLmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	}
 	assert(!(i<=0 || l> n));
 
-	energy_t b1 = get_PLmloop10(i+1,j-1,k,l)+ ap_penalty + beta2P(j,i);
-    energy_t b2 = get_PLmloop01(i+1,j-1,k,l)+ ap_penalty + beta2P(j,i);
+	energy_t b1 = PLmloop10.get(i+1,j-1,k,l)+ ap_penalty + beta2P(j,i);
+    energy_t b2 = PLmloop01.get(i+1,j-1,k,l)+ ap_penalty + beta2P(j,i);
 
 	return std::min(b1,b2);
-}
-
-energy_t pseudo_loop::get_PLmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return INF;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PLmloop00[ij][kl];
-}
-
-energy_t pseudo_loop::get_PLmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return INF;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t kl = index[k]+l-k;
-
-	return PLmloop01[i][j][kl];
-}
-
-energy_t pseudo_loop::get_PLmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return INF;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t kl = index[k]+l-k;
-
-	return PLmloop10[i][j][kl];
 }
 
 energy_t pseudo_loop::get_PRiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -912,11 +670,11 @@ energy_t pseudo_loop::get_PRiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	if(ptype_closing == 0) return INF;
 
 	energy_t tmp = INF;
-	energy_t min_energy = get_PR(i,j,k+1,l-1) + get_e_stP(k,l);
+	energy_t min_energy = PR.get(i,j,k+1,l-1) + get_e_stP(k,l);
 
 	for(cand_pos_t d= k+1; d<std::min(l,k+MAXLOOP); ++d){
 		for(cand_pos_t dp=l-1; dp > std::max(d+TURN,l-MAXLOOP); --dp){
-			tmp = get_e_intP(k,d,dp,l) + get_PR(i,j,d,dp);
+			tmp = get_e_intP(k,d,dp,l) + PR.get(i,j,d,dp);
 			min_energy = std::min(min_energy,tmp);
 		}
 	}
@@ -929,46 +687,10 @@ energy_t pseudo_loop::get_PRmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	}
 	assert(!(i<=0 || l> n));
 
-	energy_t b1 = get_PRmloop10(i,j,k+1,l-1) + ap_penalty + beta2P(l,k);
-    energy_t b2 = get_PRmloop01(i,j,k+1,l-1) + ap_penalty + beta2P(l,k);
+	energy_t b1 = PRmloop10.get(i,j,k+1,l-1) + ap_penalty + beta2P(l,k);
+    energy_t b2 = PRmloop01.get(i,j,k+1,l-1) + ap_penalty + beta2P(l,k);
 
 	return std::min(b1,b2);
-}
-
-energy_t pseudo_loop::get_PRmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return INF;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PRmloop00[ij][kl];
-}
-
-energy_t pseudo_loop::get_PRmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return INF;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PRmloop01[ij][kl];
-}
-
-energy_t pseudo_loop::get_PRmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return INF;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PRmloop10[ij][kl];
 }
 
 energy_t pseudo_loop::get_PMiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -982,11 +704,11 @@ energy_t pseudo_loop::get_PMiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 
 	energy_t tmp=INF;
 
-	energy_t min_energy = get_PM(i,j-1,k+1,l) + get_e_stP(j-1,k+1);
+	energy_t min_energy = PM.get(i,j-1,k+1,l) + get_e_stP(j-1,k+1);
 
 	for(cand_pos_t d= j-1; d>std::max(i,j-MAXLOOP); --d){
 		for (cand_pos_t dp=k+1; dp <std::min(l,k+MAXLOOP); ++dp) {
-			tmp = get_e_intP(d,j,k,dp) + get_PM(i,d,dp,l);
+			tmp = get_e_intP(d,j,k,dp) + PM.get(i,d,dp,l);
 			min_energy = std::min(min_energy,tmp);
 		}
 	}
@@ -999,46 +721,10 @@ energy_t pseudo_loop::get_PMmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	}
 	assert(!(i<=0 || l> n));
 
-	energy_t b1 = get_PMmloop10(i,j-1,k+1,l)+ap_penalty+beta2P(j,k);
-    energy_t b2 = get_PMmloop01(i,j-1,k+1,l)+ap_penalty+beta2P(j,k);
+	energy_t b1 = PMmloop10.get(i,j-1,k+1,l)+ap_penalty+beta2P(j,k);
+    energy_t b2 = PMmloop01.get(i,j-1,k+1,l)+ap_penalty+beta2P(j,k);
 
 	return std::min(b1,b2);
-}
-
-energy_t pseudo_loop::get_PMmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return INF;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PMmloop00[ij][kl];
-}
-
-energy_t pseudo_loop::get_PMmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return INF;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PMmloop01[ij][kl];
-}
-
-energy_t pseudo_loop::get_PMmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return INF;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return PMmloop10[ij][kl];
 }
 
 energy_t pseudo_loop::get_POiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -1051,11 +737,11 @@ energy_t pseudo_loop::get_POiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	if(ptype_closing == 0) return INF;
 
 	energy_t tmp = INF;
-	energy_t min_energy = get_PO(i+1,j,k,l-1) + get_e_stP(i,l);
+	energy_t min_energy = PO.get(i+1,j,k,l-1) + get_e_stP(i,l);
 
 	for(cand_pos_t d= i+1; d<std::min(j,i+MAXLOOP); ++d){
 		for (cand_pos_t dp=l-1; dp >std::max(l-MAXLOOP,k); --dp) {
-			tmp = get_e_intP(i,d,dp,l) + get_PO(d,j,dp,k);
+			tmp = get_e_intP(i,d,dp,l) + PO.get(d,j,dp,k);
 			min_energy = std::min(min_energy,tmp);
 		}
 	}
@@ -1068,44 +754,10 @@ energy_t pseudo_loop::get_POmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 	}
 	assert(!(i<=0 || l> n));
 
-	energy_t b1 = get_POmloop10(i+1,j,k,l-1) + ap_penalty + beta2P(l,i);
-    energy_t b2 = get_POmloop01(i+1,j,k,l-1) + ap_penalty + beta2P(l,i);
+	energy_t b1 = POmloop10.get(i+1,j,k,l-1) + ap_penalty + beta2P(l,i);
+    energy_t b2 = POmloop01.get(i+1,j,k,l-1) + ap_penalty + beta2P(l,i);
 
 	return std::min(b1,b2);
-}
-
-energy_t pseudo_loop::get_POmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return INF;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t ij = index[i]+j-i;
-	cand_pos_t kl = index[k]+l-k;
-
-	return POmloop00[ij][kl];
-}
-
-energy_t pseudo_loop::get_POmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return INF;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t kl = index[k]+l-k;
-
-	return POmloop01[i][j][kl];
-}
-
-energy_t pseudo_loop::get_POmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return INF;
-	}
-	assert(!(i<=0 || l> n));
-
-	cand_pos_t kl = index[k]+l-k;
-
-	return POmloop10[i][j][kl];
 }
 
 energy_t pseudo_loop::compute_int(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -1177,7 +829,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			for(cand_pos_t j=i; j< l; j++){
 				for (cand_pos_t d=j+1; d<l; d++){
 					for (cand_pos_t k=d+1; k<l; k++){
-						b1 = get_PK(i,j,d+1,k) + get_PK(j+1,d,k+1,l);
+						b1 = PK.get(i,j,d+1,k) + PK.get(j+1,d,k+1,l);
 						if(b1 < min_energy){
 							min_energy = b1;
 							best_d = d;
@@ -1215,7 +867,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 
 			// branch 1
 			for(cand_pos_t  d=i+1; d< j; ++d){
-				temp = get_PK(i,d,k,l) + get_WP(d+1,j);
+				temp = PK.get(i,d,k,l) + get_WP(d+1,j);
 				if (temp < min_energy){
 					min_energy=temp;
 					best_row = 1;
@@ -1225,7 +877,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 
 			// branch 2
 			for(cand_pos_t d=k+1; d< l; ++d){
-				temp = get_PK(i,j,d,l) + get_WP(k,d-1);
+				temp = PK.get(i,j,d,l) + get_WP(k,d-1);
 				if (temp < min_energy){
 					min_energy=temp;
 					best_row = 2;
@@ -1234,7 +886,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			}
 
 			// branch 3
-			temp = get_PL(i,j,k,l) + gamma2(j,i)+PB_penalty;
+			temp = PL.get(i,j,k,l) + gamma2(j,i)+PB_penalty;
 			if(temp < min_energy){
 				min_energy = temp;
 				best_row = 3;
@@ -1242,7 +894,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			}
 
 			//branch 4
-			temp = get_PM(i,j,k,l) + gamma2(j,k)+PB_penalty;
+			temp = PM.get(i,j,k,l) + gamma2(j,k)+PB_penalty;
 			if(temp < min_energy){
 				min_energy = temp;
 				best_row = 4;
@@ -1250,7 +902,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			}
 
 			// branch 5
-			temp = get_PR(i,j,k,l) + gamma2(l,k)+PB_penalty;
+			temp = PR.get(i,j,k,l) + gamma2(l,k)+PB_penalty;
 			if(temp < min_energy){
 				min_energy = temp;
 				best_row = 5;
@@ -1258,7 +910,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			}
 
 			// branch 6
-			temp = get_PO(i,j,k,l) + gamma2(l,i)+PB_penalty;
+			temp = PO.get(i,j,k,l) + gamma2(l,i)+PB_penalty;
 			if(temp < min_energy){
 				min_energy = temp;
 				best_row = 6;
@@ -1333,7 +985,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 
 				//branch 3
 				if (j>=(i+TURN+1)){
-					temp = get_PfromL(i+1,j-1,k,l) + gamma2(j,i);
+					temp = PfromL.get(i+1,j-1,k,l) + gamma2(j,i);
 					if(temp < min_energy){
 						min_energy = temp;
 						best_row= 3;
@@ -1398,7 +1050,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 
 				//branch 3
 				if (l>=(k+TURN+1)){
-					temp = get_PfromR(i,j,k+1,l-1) + gamma2(l,k);
+					temp = PfromR.get(i,j,k+1,l-1) + gamma2(l,k);
 					if(temp < min_energy){
 						min_energy = temp;
 						best_row= 3;
@@ -1470,7 +1122,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				}
 				//branch 3
 				if (k>=(j+TURN-1)){
-					temp = get_PfromM(i,j-1,k+1,l) + gamma2(j,k);
+					temp = PfromM.get(i,j-1,k+1,l) + gamma2(j,k);
 					if(temp < min_energy){
 						min_energy = temp;
 						best_row= 3;
@@ -1531,7 +1183,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				}
 				//branch 3
 				if (l>=(i+TURN+1)){
-					temp = get_PfromO(i+1,j,k,l-1) + gamma2(l,i);
+					temp = PfromO.get(i+1,j,k,l-1) + gamma2(l,i);
 					if(temp < min_energy){
 						min_energy = temp;
 						best_row= 3;
@@ -1584,7 +1236,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 
 			for(cand_pos_t d=i+1; d< j; d++){
 				//branch 1
-				temp=get_PfromL(d,j,k,l)+get_WP(i,d-1);
+				temp=PfromL.get(d,j,k,l)+get_WP(i,d-1);
 				if(temp < min_energy){
 					min_energy=temp;
 					best_row=1;
@@ -1592,7 +1244,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 
 				}
 				//branch 2
-				temp=get_PfromL(i,d,k,l)+get_WP(d+1,j);
+				temp=PfromL.get(i,d,k,l)+get_WP(d+1,j);
 				if(temp < min_energy){
 					min_energy=temp;
 					best_row=2;
@@ -1600,7 +1252,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				}
 			}
 			// branch 3
-			temp = get_PR(i,j,k,l) + gamma2(l,k)+PB_penalty;
+			temp = PR.get(i,j,k,l) + gamma2(l,k)+PB_penalty;
 			if(temp < min_energy){
 				min_energy = temp;
 				best_row=3;
@@ -1608,7 +1260,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			}
 
 			//branch 4
-			temp = get_PM(i,j,k,l) + gamma2(j,k)+PB_penalty;
+			temp = PM.get(i,j,k,l) + gamma2(j,k)+PB_penalty;
 			if(temp < min_energy){
 				min_energy = temp;
 				best_row=4;
@@ -1616,7 +1268,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			}
 
 			// branch 5
-			temp = get_PO(i,j,k,l) + gamma2(l,i)+PB_penalty;
+			temp = PO.get(i,j,k,l) + gamma2(l,i)+PB_penalty;
 			if(temp < min_energy){
 				min_energy = temp;
 				best_row=5;
@@ -1677,7 +1329,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 
 			for(cand_pos_t d=k+1; d< l; d++){
 				//branch 1
-				temp=get_PfromR(i,j,d,l)+get_WP(k,d-1);
+				temp=PfromR.get(i,j,d,l)+get_WP(k,d-1);
 				if(temp < min_energy){
 					min_energy = temp;
 					best_row=1;
@@ -1685,7 +1337,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 
 				}
 				//branch 2
-				temp=get_PfromR(i,j,k,d)+get_WP(d+1,l);
+				temp=PfromR.get(i,j,k,d)+get_WP(d+1,l);
 				if(temp < min_energy){
 					min_energy=temp;
 					best_row=2;
@@ -1694,7 +1346,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			}
 
 			//branch 3
-			temp = get_PM(i,j,k,l) + gamma2(j,k)+PB_penalty;
+			temp = PM.get(i,j,k,l) + gamma2(j,k)+PB_penalty;
 			if(temp < min_energy){
 				min_energy = temp;
 				best_row=3;
@@ -1702,7 +1354,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			}
 
 			// branch 4
-			temp = get_PO(i,j,k,l) + gamma2(l,i)+PB_penalty;
+			temp = PO.get(i,j,k,l) + gamma2(l,i)+PB_penalty;
 			if(temp < min_energy){
 				min_energy = temp;
 				best_row=4;
@@ -1756,60 +1408,112 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			}
 
 			energy_t min_energy = INF,temp=INF;
-			cand_pos_t best_row = -1,best_d=-1;
+			cand_pos_t best_d=-1;
 
 			for(cand_pos_t d=i+1; d< j; d++){
 				//branch 1
-				temp=get_PfromM(i,d,k,l)+get_WP(d+1,j);
+				temp=PfromMprime.get(i,d,k,l)+get_WP(d+1,j);
 				if(temp < min_energy){
 					min_energy=temp;
-					best_row=1;
 					best_d = d;
-
 				}
 			}
+
+			if (best_d > -1){
+				insert_node(i,l,best_d,k,P_PfromMprime);
+				insert_node(best_d+1,j,P_WP);
+			}
+
+
+		}
+			break;
+
+			case P_PfromMprime:
+		{
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_PfromM with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "This should not have happened!, P_PfromMprime" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr << "This should not have happened!, P_PfromMprime" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i==j && k==l){
+				return;
+			}
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_d=-1;
+
 			for(cand_pos_t d=k+1; d< l; d++){
 				//branch 2
-				temp=get_PfromM(i,j,d,l)+get_WP(k,d-1);
+				temp=get_PfromMdoubleprime(i,j,d,l)+get_WP(k,d-1);
 				if(temp < min_energy){
 					min_energy=temp;
-					best_row=2;
 					best_d = d;
 				}
 			}
-			// branch 3
-			temp = get_PL(i,j,k,l) + gamma2(j,i)+PB_penalty;
-			if(temp < min_energy){
-				min_energy = temp;
-				best_row=3;
-				best_d = -1;
+
+			if (best_d > -1){
+				insert_node(i,l,j,best_d,P_PfromMdoubleprime);
+				insert_node(k,best_d-1,P_WP);
 			}
 
-			//branch 4
-			temp = get_PR(i,j,k,l) + gamma2(l,k)+PB_penalty;
+		}
+			break;
+
+			case P_PfromMdoubleprime:
+		{
+			cand_pos_t i = cur_interval->i;
+			cand_pos_t l = cur_interval->j;
+			cand_pos_t j = cur_interval->k;
+			cand_pos_t k = cur_interval->l;
+			if(debug) printf("At P_PfromMdoubleprime with i=%d,l=%d,j=%d,k=%d\n",i,l,j,k);
+
+			if (!(i <= j && j < k-1 && k <= l)){
+				std::cerr << "This should not have happened!, P_PfromMdoubleprime" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i<=0 ||j<=0 || k<=0 || l<=0 || i>n || j>n || k> n || l> n){
+				std::cerr << "This should not have happened!, P_PfromMdoubleprime" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+
+			if (i==j && k==l){
+				return;
+			}
+
+			energy_t min_energy = INF,temp=INF;
+			cand_pos_t best_row = -1;
+
+			// branch 1
+			temp = PL.get(i,j,k,l) + gamma2(j,i)+PB_penalty;
 			if(temp < min_energy){
 				min_energy = temp;
-				best_row=4;
-				best_d = -1;
+				best_row=1;
+			}
+
+			//branch 2
+			temp = PR.get(i,j,k,l) + gamma2(l,k)+PB_penalty;
+			if(temp < min_energy){
+				min_energy = temp;
+				best_row=2;
 			}
 
 			switch (best_row){
 				case 1:
-					if (best_d > -1){
-						insert_node(i,l,best_d,k,P_PfromM);
-						insert_node(best_d+1,j,P_WP);
-					}
-					break;
-				case 2:
-					if (best_d > -1){
-						insert_node(i,l,j,best_d,P_PfromM);
-						insert_node(k,best_d-1,P_WP);
-					}
-					break;
-				case 3:
 					insert_node(i,l,j,k,P_PL);
 					break;
-				case 4:
+				case 2:
 					insert_node(i,l,j,k,P_PR);
 					break;
 			}
@@ -1845,7 +1549,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 
 			for(cand_pos_t d=i+1; d< j; d++){
 				//branch 1
-				temp=get_PfromO(d,j,k,l)+get_WP(i,d-1);
+				temp=PfromO.get(d,j,k,l)+get_WP(i,d-1);
 				if(temp < min_energy){
 					min_energy=temp;
 					best_row=1;
@@ -1855,7 +1559,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			}
 			for(cand_pos_t d=k+1; d< l; d++){
 				//branch 2
-				temp=get_PfromO(i,j,k,d)+get_WP(d+1,l);
+				temp=PfromO.get(i,j,k,d)+get_WP(d+1,l);
 				if(temp < min_energy){
 					min_energy=temp;
 					best_row=2;
@@ -1863,7 +1567,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				}
 			}
 			// branch 3
-			temp = get_PL(i,j,k,l) + gamma2(j,i)+PB_penalty;
+			temp = PL.get(i,j,k,l) + gamma2(j,i)+PB_penalty;
 			if(temp < min_energy){
 				min_energy = temp;
 				best_row=3;
@@ -1871,7 +1575,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			}
 
 			//branch 4
-			temp = get_PR(i,j,k,l) + gamma2(l,k)+PB_penalty;
+			temp = PR.get(i,j,k,l) + gamma2(l,k)+PB_penalty;
 			if(temp < min_energy){
 				min_energy = temp;
 				best_row=4;
@@ -1920,7 +1624,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			energy_t min_energy = INF,temp=INF;
 			cand_pos_t best_row = -1;
 			//branch 1
-			temp = get_WBP(i,l);
+			temp = WBP.get(i,l);
 			if (temp < min_energy){
 				min_energy = temp;
 				best_row=1;
@@ -1971,14 +1675,14 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				}
 
 				//branch 2
-				temp = get_WB(i,d-1) + get_P(d,l) + PSM_penalty + PPS_penalty;
+				temp = get_WB(i,d-1) + P.get(d,l) + PSM_penalty + PPS_penalty;
 				if (temp < min_energy){
 					min_energy = temp;
 					best_row = 2;
 					best_d = d;
 				}
 			}
-			temp = get_WBP(i,l-1) + cp_penalty;
+			temp = WBP.get(i,l-1) + cp_penalty;
 			if(temp< min_energy){
 				min_energy = temp;
 				best_row = 3;
@@ -2018,7 +1722,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			energy_t min_energy = INF,temp=INF;
 			cand_pos_t best_row = -1;
 			//branch 1
-			temp = get_WPP(i,l);
+			temp = WPP.get(i,l);
 			if (temp < min_energy){
 				min_energy = temp;
 				best_row=1;
@@ -2069,14 +1773,14 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				}
 
 				//branch 2
-				temp = get_WP(i,d-1) + get_P(d,l) + PSP_penalty + PPS_penalty;
+				temp = get_WP(i,d-1) + P.get(d,l) + PSP_penalty + PPS_penalty;
 				if (temp < min_energy){
 					min_energy = temp;
 					best_row = 2;
 					best_d = d;
 				}
 			}
-			temp = get_WPP(i,l-1) + PUP_penalty;
+			temp = WPP.get(i,l-1) + PUP_penalty;
 			if(temp<min_energy){
 				min_energy = temp;
 				best_row = 3;
@@ -2124,7 +1828,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			cand_pos_t best_row = -1,best_d=-1,best_dp=-1;
 			if (pair[S_[i]][S_[j]] > 0){
 				//branch 1
-				temp = get_PL(i+1,j-1,k,l) + get_e_stP(i,j);
+				temp = PL.get(i+1,j-1,k,l) + get_e_stP(i,j);
 				if (temp < min_energy){
 					min_energy = temp;
 					best_row=1;
@@ -2132,7 +1836,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				//branch 2
 				for(cand_pos_t d= i+1; d<std::min(j,i+MAXLOOP); ++d){
 					for(cand_pos_t dp = j-1; dp > std::max(d+TURN,j-MAXLOOP); --dp){
-						temp = get_e_intP(i,d,dp,j) + get_PL(d,dp,k,l);
+						temp = get_e_intP(i,d,dp,j) + PL.get(d,dp,k,l);
 						if(temp < min_energy){
 							min_energy = temp;
 							best_d = d;
@@ -2178,8 +1882,8 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			f[i].type = P_PLmloop;
 			f[j].type = P_PLmloop;
 
-			energy_t branch1 = get_PLmloop10(i+1,j-1,k,l)+ ap_penalty + beta2P(j,i);
-            energy_t branch2 = get_PLmloop01(i+1,j-1,k,l)+ ap_penalty + beta2P(j,i);
+			energy_t branch1 = PLmloop10.get(i+1,j-1,k,l)+ ap_penalty + beta2P(j,i);
+            energy_t branch2 = PLmloop01.get(i+1,j-1,k,l)+ ap_penalty + beta2P(j,i);
 
             cand_pos_t best_row = -1;
             if (branch1 < branch2) { best_row = 1;} else {best_row = 2;}
@@ -2214,11 +1918,11 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			}
 
 
-			energy_t min_energy = get_PL(i,j,k,l)+beta2P(j,i),temp=INF;
+			energy_t min_energy = PL.get(i,j,k,l)+beta2P(j,i),temp=INF;
 			cand_pos_t best_row = 1, best_d=-1;
             for(cand_pos_t d = i; d<=j; ++d){
                 if (d>i){
-                    temp=get_WB(i,d-1)+get_PLmloop00(d,j,k,l);
+                    temp=get_WB(i,d-1)+PLmloop00.get(d,j,k,l);
                     if (temp < min_energy){
                         min_energy = temp;
                         best_row = 2;
@@ -2227,7 +1931,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 
                 }
                 if(d<j){
-                    temp=get_PLmloop00(i,d,k,l)+get_WB(d+1,j);
+                    temp=PLmloop00.get(i,d,k,l)+get_WB(d+1,j);
                     if (temp < min_energy){
                         min_energy = temp;
                         best_row = 3;
@@ -2272,7 +1976,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			energy_t min_energy = INF,temp=INF;
 			cand_pos_t best_d=-1;
 			for(cand_pos_t d = i; d < j; ++d){
-                temp = get_PLmloop00(i,d,k,l) + get_WBP(d+1,j);
+                temp = PLmloop00.get(i,d,k,l) + WBP.get(d+1,j);
                 if (temp < min_energy){
                     min_energy = temp;
                     best_d = d;
@@ -2304,14 +2008,14 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			energy_t min_energy = INF,temp=INF;
 			cand_pos_t best_d=-1,best_row=-1;
 			for(cand_pos_t d = i+1; d <= j; ++d){
-                temp = get_WBP(i,d-1) + get_PLmloop00(d,j,k,l);
+                temp = WBP.get(i,d-1) + PLmloop00.get(d,j,k,l);
                 if (temp < min_energy){
                     min_energy = temp;
                     best_row = 1;
                     best_d = d;
                 }
                 if(d<j){
-                    temp = get_PLmloop10(i,d,k,l) + get_WB(d+1,j);
+                    temp = PLmloop10.get(i,d,k,l) + get_WB(d+1,j);
                     if (temp < min_energy){
                         min_energy = temp;
                         best_row = 2;
@@ -2359,7 +2063,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			cand_pos_t best_row=-1,best_d=-1,best_dp=-1;
 			if (pair[S_[k]][S_[l]]>0){
 				//branch 1
-				temp = get_PR(i,j,k+1,l-1) + get_e_stP(k,l);
+				temp = PR.get(i,j,k+1,l-1) + get_e_stP(k,l);
 				if(temp < min_energy){
 					min_energy = temp;
 					best_row = 1;
@@ -2367,7 +2071,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				//branch 2
 				for(cand_pos_t d= k+1; d<std::min(l,k+MAXLOOP); ++d){
 					for(cand_pos_t dp=l-1; dp > std::max(d+TURN,l-MAXLOOP); --dp){
-						temp = get_e_intP(k,d,dp,l) + get_PR(i,j,d,dp);
+						temp = get_e_intP(k,d,dp,l) + PR.get(i,j,d,dp);
 						if(temp < min_energy){
 							min_energy = temp;
 							best_d = d;
@@ -2415,8 +2119,8 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 
 			cand_pos_t best_row=-1;
 
-			energy_t branch1 = get_PRmloop10(i,j,k+1,l-1) + ap_penalty + beta2P(l,k);
-            energy_t branch2 = get_PRmloop01(i,j,k+1,l-1) + ap_penalty + beta2P(l,k);
+			energy_t branch1 = PRmloop10.get(i,j,k+1,l-1) + ap_penalty + beta2P(l,k);
+            energy_t branch2 = PRmloop01.get(i,j,k+1,l-1) + ap_penalty + beta2P(l,k);
 
             if (branch1 < branch2) {best_row = 1; } else {best_row = 2;}
 
@@ -2451,11 +2155,11 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 
 			energy_t min_energy = INF,temp=INF;
 			cand_pos_t best_d=-1;
-            min_energy = get_PR(i,j,k,l)+beta2P(l,k);
+            min_energy = PR.get(i,j,k,l)+beta2P(l,k);
 			cand_pos_t best_row=1;
 			for(cand_pos_t d=k; d<=l; ++d){
 				if(d>k){
-					temp=get_WB(k,d-1)+get_PRmloop00(i,j,d,l);
+					temp=get_WB(k,d-1)+PRmloop00.get(i,j,d,l);
 					if (temp < min_energy){
 						min_energy = temp;
 						best_row = 2;
@@ -2463,7 +2167,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
                 	}
 				}
 				if (d<l){
-					temp = get_PRmloop00(i,j,k,d)+get_WB(d+1,l);
+					temp = PRmloop00.get(i,j,k,d)+get_WB(d+1,l);
 					if (temp < min_energy){
 						min_energy = temp;
 						best_row = 3;
@@ -2508,11 +2212,11 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 
 			energy_t min_energy = INF,temp=INF;
 			cand_pos_t best_d=-1;
-            min_energy = get_PRmloop01(i,j,k,l-1) + cp_penalty;
+            min_energy = PRmloop01.get(i,j,k,l-1) + cp_penalty;
             cand_pos_t best_row = 1;
 
             for(cand_pos_t d = k; d < l; ++d){
-                temp = get_PRmloop00(i,j,k,d) + get_WBP(d+1,l);
+                temp = PRmloop00.get(i,j,k,d) + WBP.get(d+1,l);
                 if (temp < min_energy){
                     min_energy = temp;
                     best_row = 2;
@@ -2552,11 +2256,11 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 
 			energy_t min_energy = INF,temp=INF; 
 			cand_pos_t best_d=-1;
-			min_energy = get_PRmloop10(i,j,k+1,l)+ cp_penalty;
+			min_energy = PRmloop10.get(i,j,k+1,l)+ cp_penalty;
             cand_pos_t best_row = 1;
 
             for(cand_pos_t d = k+1; d <= l; ++d){
-                temp = get_WBP(k,d-1) + get_PRmloop00(i,j,d,l);
+                temp = WBP.get(k,d-1) + PRmloop00.get(i,j,d,l);
                 if (temp < min_energy){
                     min_energy = temp;
                     best_row = 2;
@@ -2604,7 +2308,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 
 			if (pair[S_[j]][S_[k]]>0){
 					// branch 1
-				temp = get_PM(i,j-1,k+1,l) + get_e_stP(j-1,k+1);
+				temp = PM.get(i,j-1,k+1,l) + get_e_stP(j-1,k+1);
 				if (temp < min_energy){
 					min_energy = temp;
 					best_row=1;
@@ -2612,7 +2316,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 
 				for(cand_pos_t d= j-1; d>std::max(i,j-MAXLOOP); --d){
 					for (cand_pos_t dp=k+1; dp <std::min(l,k+MAXLOOP); ++dp) {
-						temp = get_e_intP(d,j,k,dp) + get_PM(i,d,dp,l);
+						temp = get_e_intP(d,j,k,dp) + PM.get(i,d,dp,l);
 						if(temp < min_energy){
 							min_energy = temp;
 							best_d = d;
@@ -2657,8 +2361,8 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			f[j].type = P_PMmloop;
 			f[k].type = P_PMmloop;
 
-			energy_t branch1 = get_PMmloop10(i,j-1,k+1,l)+ap_penalty+beta2P(j,k);
-            energy_t branch2 = get_PMmloop01(i,j-1,k+1,l)+ap_penalty+beta2P(j,k);
+			energy_t branch1 = PMmloop10.get(i,j-1,k+1,l)+ap_penalty+beta2P(j,k);
+            energy_t branch2 = PMmloop01.get(i,j-1,k+1,l)+ap_penalty+beta2P(j,k);
 
             cand_pos_t best_row = -1;
             if (branch1 < branch2) { best_row = 1;}  else { best_row = 2;}
@@ -2697,11 +2401,11 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			f[k].type = P_PMmloop;
 
 			energy_t temp=INF;
-			energy_t min_energy = get_PM(i,j,k,l)+beta2P(j,k);
+			energy_t min_energy = PM.get(i,j,k,l)+beta2P(j,k);
 			cand_pos_t best_row = 1, best_d = -1;
 
             for(cand_pos_t d=i; d<j; ++d){
-                temp=get_WB(d+1,j)+get_PMmloop00(i,d,k,l);
+                temp=get_WB(d+1,j)+PMmloop00.get(i,d,k,l);
                 if (temp < min_energy){
                     min_energy = temp;
                     best_row = 2;
@@ -2709,7 +2413,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
                 }
             }
             for(cand_pos_t d=k+1; d<=l; d++){
-                temp=get_PMmloop00(i,j,d,l)+get_WB(k,d-1);
+                temp=PMmloop00.get(i,j,d,l)+get_WB(k,d-1);
                 if (temp < min_energy){
                     min_energy = temp;
                     best_row = 3;
@@ -2754,11 +2458,11 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			}
 
 			energy_t temp=INF;
-			energy_t min_energy = get_PMmloop01(i,j,k+1,l)+cp_penalty;
+			energy_t min_energy = PMmloop01.get(i,j,k+1,l)+cp_penalty;
 			cand_pos_t best_row = 1, best_d = -1;
 
             for(cand_pos_t d = k+1; d <= l; ++d){
-                temp = get_PMmloop00(i,j,d,l) + get_WBP(k,d-1);
+                temp = PMmloop00.get(i,j,d,l) + WBP.get(k,d-1);
                 if (temp < min_energy){
                     min_energy = temp;
                     best_row = 2;
@@ -2796,11 +2500,11 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			}
 
 			energy_t temp=INF;
-			energy_t min_energy = get_PMmloop10(i,j-1,k,l)+cp_penalty;
+			energy_t min_energy = PMmloop10.get(i,j-1,k,l)+cp_penalty;
 			cand_pos_t best_row = 1, best_d = -1;
 
             for(cand_pos_t d = i+1; d < j; ++d){
-                temp = get_WBP(d,j) + get_PMmloop00(i,d-1,k,l);
+                temp = WBP.get(d,j) + PMmloop00.get(i,d-1,k,l);
                 if (temp < min_energy){
                     min_energy = temp;
                     best_row = 2;
@@ -2848,14 +2552,14 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			cand_pos_t best_d=-1,best_dp=-1,best_row=-1;
 			if (pair[S_[i]][S_[l]]>0){
 				//branch 1
-				energy_t temp = get_PO(i+1,j,k,l-1) + get_e_stP(i,l);
+				energy_t temp = PO.get(i+1,j,k,l-1) + get_e_stP(i,l);
 				if(temp < min_energy){
 					min_energy = temp;
 					best_row=1;
 				}
 				for(cand_pos_t d= i+1; d<std::min(j,i+MAXLOOP); ++d){
 					for (cand_pos_t dp=l-1; dp >std::max(l-MAXLOOP,k); --dp) {
-						energy_t branch2 = get_e_intP(i,d,dp,l) + get_PO(d,j,dp,k);
+						energy_t branch2 = get_e_intP(i,d,dp,l) + PO.get(d,j,dp,k);
 						if(branch2 < min_energy){
 							min_energy = branch2;
 							best_row = 2;
@@ -2901,8 +2605,8 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			f[i].type = P_POmloop;
 			f[l].type = P_POmloop;
 
-            energy_t branch1 = get_POmloop10(i+1,j,k,l-1) + ap_penalty + beta2P(l,i);
-            energy_t branch2 = get_POmloop01(i+1,j,k,l-1) + ap_penalty + beta2P(l,i);
+            energy_t branch1 = POmloop10.get(i+1,j,k,l-1) + ap_penalty + beta2P(l,i);
+            energy_t branch2 = POmloop01.get(i+1,j,k,l-1) + ap_penalty + beta2P(l,i);
 
             cand_pos_t best_row = -1;
             if (branch1 < branch2) { best_row = 1;} else { best_row = 2;}
@@ -2936,11 +2640,11 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				exit(EXIT_FAILURE);
 			}
 
-			energy_t min_energy = get_PO(i,j,k,l)+beta2P(l,i),temp=INF;
+			energy_t min_energy = PO.get(i,j,k,l)+beta2P(l,i),temp=INF;
 			cand_pos_t best_row=1,best_d=-1;
 
 			for(cand_pos_t d=i+1; d<=j; ++d){
-				temp=get_WB(i,d-1)+get_POmloop00(d,j,k,l);
+				temp=get_WB(i,d-1)+POmloop00.get(d,j,k,l);
 				if (temp < min_energy){
 					min_energy = temp;
 					best_row = 2;
@@ -2948,7 +2652,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 				}
 			}
 			for(cand_pos_t d=k; d<l; ++d){
-				temp=get_POmloop00(i,j,k,d)+get_WB(d+1,l);
+				temp=POmloop00.get(i,j,k,d)+get_WB(d+1,l);
 				if (temp < min_energy){
 					min_energy = temp;
 					best_row = 3;
@@ -2993,7 +2697,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			energy_t min_energy = INF,temp=INF;
 			cand_pos_t best_d=-1;
             for(cand_pos_t d = k; d < l; d++){
-                temp = get_POmloop00(i,j,k,d) + get_WBP(d+1,l);
+                temp = POmloop00.get(i,j,k,d) + WBP.get(d+1,l);
                 if (temp < min_energy){
                     min_energy = temp;
 					best_d = d;
@@ -3024,7 +2728,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 			energy_t min_energy = INF,temp=INF;
 			cand_pos_t best_d=-1,best_row=-1;
 			for(cand_pos_t d=i+1; d<=j;++d){
-                temp=get_WBP(i,d-1)+get_POmloop00(d,j,k,l);
+                temp=WBP.get(i,d-1)+POmloop00.get(d,j,k,l);
                 if (temp < min_energy){
                     min_energy = temp;
                     best_row = 1;
@@ -3033,7 +2737,7 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 
             }
             for(cand_pos_t d = k+1; d < l; ++d){
-                temp = get_POmloop10(i,j,k,d) + get_WB(d+1,l);
+                temp = POmloop10.get(i,j,k,d) + get_WB(d+1,l);
                 if (temp < min_energy){
                     min_energy = temp;
                     best_row = 2;

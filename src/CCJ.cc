@@ -90,11 +90,11 @@ int main (int argc, char *argv[])
 	double energy;
 	pf_t pf_energy;
     std::string structure = ccj(seq,energy,dangle_ccj);
-	std::string pf_structure = ccj_pf(seq,pf_energy,structure,energy,dangle_ccj,num_samples,PSplot);
+	// std::string pf_structure = ccj_pf(seq,pf_energy,structure,energy,dangle_ccj,num_samples,PSplot); // I am seeing this give nan sometimes with GGGGGGAAGGGGGGGGAACCCCCCACCCCCCCC currently
 
     std::cout << seq << std::endl;
     std::cout << structure << " (" << energy << ")" << std::endl;
-	std::cout << pf_structure << " (" << pf_energy << ")" << std::endl;
+	// std::cout << pf_structure << " (" << pf_energy << ")" << std::endl;
 
     cmdline_parser_free(&args_info);
 

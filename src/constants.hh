@@ -40,6 +40,8 @@
 #define P_PfromL		'f'
 #define P_PfromR		'g'
 #define P_PfromM		'h'
+#define P_PfromMprime '['
+#define P_PfromMdoubleprime ']'
 #define P_PfromO		'i'
 #define P_PLiloop		'j'
 #define P_PLiloop5	'b'

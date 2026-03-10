@@ -45,7 +45,7 @@ class W_final{
         pseudo_loop *P;
 
         s_energy_matrix *V;     // the V object
-        std::vector<energy_t> W;
+        std::vector<energy_t> W; // size n+1 so left as non-Trianglematrix
         // PARAMTYPE *W;                 // the W exterior loop array
         cand_pos_t n;     // sequence length (number of nucleotides)
         seq_interval *stack_interval;  // used for backtracking

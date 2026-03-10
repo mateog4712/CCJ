@@ -4,6 +4,7 @@
 
 //! type of energy
 typedef int_least32_t energy_t;
+typedef int_least16_t energy_16t;
 //! type of position
 typedef int_least32_t cand_pos_t;
 typedef uint_least32_t cand_pos_tu;

@@ -22,17 +22,14 @@ s_energy_matrix::s_energy_matrix (std::string seq, cand_pos_t length, short *S, 
     seq_= seq;
     
 
-    // an vector with indexes, such that we don't work with a 2D array, but with a 1D array of length (n*(n+1))/2
-	index.resize(n+1);
+    // a vector with indexes, such that we don't work with a 2D array, but with a 1D array of length (n*(n+1))/2
+	TriangleMatrix::new_index(index,n+1);
+	
     cand_pos_t total_length = ((n+1) *(n+2))/2;
-    index[1] = 0;
-    for (cand_pos_t i=2; i <= n; i++){
-        index[i] = index[i-1]+(n+1)-i+1;
-	}
 
-	WM.resize(total_length,INF);
-	WMv.resize(total_length,INF);
-	WMp.resize(total_length,INF);
+	WM.init(n+1,index);
+	WMv.init(n+1,index);
+	WMp.init(n+1,index);
     // this array holds V(i,j), and what (i,j) encloses: hairpin loop, stack pair, internal loop or multi-loop
 	nodes.resize(total_length);
 }
@@ -219,7 +216,7 @@ void s_energy_matrix::compute_WMv_WMp(cand_pos_t i, cand_pos_t j, energy_t WMB){
 	WMp[ij] = std::min(WMp[ij],tmp);
 }
 
-void s_energy_matrix::compute_energy_WM (cand_pos_t i, cand_pos_t j, std::vector<energy_t> &WMB)
+void s_energy_matrix::compute_energy_WM (cand_pos_t i, cand_pos_t j, TriangleMatrix &WMB)
 // compute de MFE of a partial multi-loop closed at (i,j), the restricted case
 {
     if(j-i+1<4) return;

@@ -1,6 +1,7 @@
 #ifndef PART_FUNC
 #define PART_FUNC
 #include "base_types.hh"
+#include "matrices.hh"
 #include <cstring>
 #include <string>
 #include <unordered_map>
@@ -115,7 +116,7 @@ class W_final_pf {
 	pf_t get_POmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	pf_t get_POmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 
-	std::vector<pf_t> P; // the main loop for pseudoloops and bands
+	TriangleMatrix_PF P; // the main loop for pseudoloops and bands
 
   private:
     std::string seq;
@@ -128,32 +129,32 @@ class W_final_pf {
     short *S1_;
 
     // PK Free
-    std::vector<pf_t> V;
-    std::vector<pf_t> VM;
-    std::vector<pf_t> WMv;
-    std::vector<pf_t> WMp;
-    std::vector<pf_t> WM;
-    std::vector<pf_t> W;
+    TriangleMatrix_PF V;
+    TriangleMatrix_PF VM;
+    TriangleMatrix_PF WMv;
+    TriangleMatrix_PF WMp;
+    TriangleMatrix_PF WM;
+    TriangleMatrix_PF W;
     // PK
-    std::vector<pf_t> WPP;								// similar to WP but has at least one base pair
-	std::vector<pf_t> WBP;								// similar to WB but has at least one base pair
+    TriangleMatrix_PF WPP;								// similar to WP but has at least one base pair
+	TriangleMatrix_PF WBP;								// similar to WB but has at least one base pair
 	
 	std::vector<std::vector<pf_t> > PK;					// MFE of a TGB structure over gapped region [i,j] U [k,l]
-	std::vector<std::vector< std::vector<pf_t> > > PL;	// MFE of a TGB structure s.t. i.j is paired
+	std::vector<std::vector<pf_t> > PL;	// MFE of a TGB structure s.t. i.j is paired
 	std::vector<std::vector<pf_t> > PR;					// MFE of a TGB structure s.t. k.l is paired
 	std::vector<std::vector<pf_t> > PM;					// MFE of a TGB structure s.t. j.k is paired
-	std::vector<std::vector< std::vector<pf_t> > > PO;	// MFE of a TGB structure s.t. i.l is paired
+	std::vector<std::vector<pf_t> > PO;	// MFE of a TGB structure s.t. i.l is paired
 	
 	// transition recurrences
-	std::vector<std::vector< std::vector<pf_t> > > PfromL;
+	std::vector<std::vector<pf_t> > PfromL;
 	std::vector<std::vector<pf_t> > PfromR;
 	std::vector<std::vector<pf_t> > PfromM;
-	std::vector<std::vector< std::vector<pf_t> > > PfromO;
+	std::vector<std::vector<pf_t> > PfromO;
 	
 	// internal loops and multi loops that span a band
 	std::vector<std::vector<pf_t> > PLmloop00;
-	std::vector<std::vector< std::vector<pf_t> > > PLmloop01;
-	std::vector<std::vector< std::vector<pf_t> > > PLmloop10;
+	std::vector<std::vector<pf_t> > PLmloop01;
+	std::vector<std::vector<pf_t> > PLmloop10;
 	
 	std::vector<std::vector<pf_t> > PRmloop00;
 	std::vector<std::vector<pf_t> > PRmloop01;
@@ -164,8 +165,8 @@ class W_final_pf {
 	std::vector<std::vector<pf_t> > PMmloop10;
 	
 	std::vector<std::vector<pf_t> > POmloop00;
-	std::vector<std::vector< std::vector<pf_t> > > POmloop01;
-	std::vector<std::vector< std::vector<pf_t> > > POmloop10;
+	std::vector<std::vector<pf_t> > POmloop01;
+	std::vector<std::vector<pf_t> > POmloop10;
 
     // Extra
     std::vector<pf_t> scale;

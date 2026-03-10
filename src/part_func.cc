@@ -47,57 +47,37 @@ W_final_pf::W_final_pf(std::string &seq, std::string &MFE_structure, double MFE_
     expcp_pen.resize(n + 1);
     expPUP_pen.resize(n + 1);
     cand_pos_t total_length = ((n + 1) * (n + 2)) / 2;
-    index[1] = 0;
-    for (cand_pos_t i = 2; i <= n; i++)
-        index[i] = index[i - 1] + (n + 1) - i + 1;
+	TriangleMatrix_PF::new_index(index,n+1);
     // Allocate space
-    V.resize(total_length, 0);
-    VM.resize(total_length, 0);
-    WM.resize(total_length, 0);
-    WMv.resize(total_length, 0);
-    WMp.resize(total_length, 0);
+    V.init(n,index);
+    VM.init(n,index);
+    WM.init(n,index);
+    WMv.init(n,index);
+    WMp.init(n,index);
 
     // PK
-    WBP.resize(total_length,0);
-	WPP.resize(total_length,0);
-	P.resize(total_length,0);
+    WBP.init(n,index);
+	WPP.init(n,index);
+	P.init(n,index);
 
     std::vector<pf_t> row;
-	row.resize(total_length,0);
-
-    // Mateo - Mirroring ModifiedCCJ, changing PL from n^2xn^2 to nxnxn^2
-	PL.resize(n+1);
-	PO.resize(n+1);
-	PfromL.resize(n+1);
-	PfromO.resize(n+1);
-	PLmloop01.resize(n+1);
-	PLmloop10.resize(n+1);
-	POmloop01.resize(n+1);
-	POmloop10.resize(n+1);
-	for(cand_pos_t i = 0; i <= n; ++i) {
-		for(cand_pos_t j = 0; j <= n; ++j) {
-			PL[i].push_back(row);
-			PO[i].push_back(row);
-			PfromL[i].push_back(row);
-			PfromO[i].push_back(row);
-
-			PLmloop01[i].push_back(row);
-			PLmloop10[i].push_back(row);
-			
-			POmloop01[i].push_back(row);
-			POmloop10[i].push_back(row);
-		}
-	}
+	row.resize(total_length,0.0);
 
 	for(cand_pos_t i = 0; i < total_length; ++i) {
 		PK.push_back(row);
+		PL.push_back(row);
 		PR.push_back(row);
 		PM.push_back(row);
+		PO.push_back(row);
 
+		PfromL.push_back(row);
 		PfromR.push_back(row);
 		PfromM.push_back(row);
+		PfromO.push_back(row);
 
 		PLmloop00.push_back(row);
+		PLmloop01.push_back(row);
+		PLmloop10.push_back(row);
 
 		PRmloop00.push_back(row);
 		PRmloop01.push_back(row);
@@ -108,11 +88,13 @@ W_final_pf::W_final_pf(std::string &seq, std::string &MFE_structure, double MFE_
 		PMmloop10.push_back(row);
 
 		POmloop00.push_back(row);
+		POmloop01.push_back(row);
+		POmloop10.push_back(row);
 	}
 
     rescale_pk_globals();
     exp_params_rescale(MFE_energy);
-    W.resize(n + 1, scale[1]);
+    W.init(n,index,scale[1]);
 }
 
 W_final_pf::~W_final_pf() {}
@@ -445,6 +427,7 @@ void W_final_pf::compute_PK(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t
 void W_final_pf::compute_PL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
 
+	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 	const int ptype_closing = pair[S_[i]][S_[j]];
 
@@ -458,7 +441,7 @@ void W_final_pf::compute_PL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t
 			contributions += get_PfromL(i+1,j-1,k,l)*gamma2(j,i);
 		}
 	}
-	PL[i][j][kl]=contributions;
+	PL[ij][kl]=contributions;
 }
 
 void W_final_pf::compute_PR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -507,6 +490,7 @@ void W_final_pf::compute_PM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t
 void W_final_pf::compute_PO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
 
+	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
 	const int ptype_closing = pair[S_[i]][S_[l]];
@@ -522,12 +506,13 @@ void W_final_pf::compute_PO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t
 			contributions += get_PfromO(i+1,j,k,l-1)*gamma2(l,i);
 		}
 	}
-	PO[i][j][kl]=contributions;
+	PO[ij][kl]=contributions;
 }
 
 void W_final_pf::compute_PfromL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
 
+	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
 	for(cand_pos_t d=i+1; d< j; ++d){
@@ -541,7 +526,7 @@ void W_final_pf::compute_PfromL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_p
 
 	contributions += get_PO(i,j,k,l)*gamma2(l,i)*expPB_penalty;
 
-	PfromL[i][j][kl]=contributions;
+	PfromL[ij][kl]=contributions;
 }
 
 void W_final_pf::compute_PfromR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -584,6 +569,7 @@ void W_final_pf::compute_PfromM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_p
 void W_final_pf::compute_PfromO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
 
+	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
 	for(cand_pos_t d=i+1; d< j; ++d){
@@ -597,7 +583,7 @@ void W_final_pf::compute_PfromO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_p
 
 	contributions += get_PR(i,j,k,l)*gamma2(l,k)*expPB_penalty;
 
-    PfromO[i][j][kl]=contributions;
+    PfromO[ij][kl]=contributions;
 }
 
 void W_final_pf::compute_PLmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -621,18 +607,20 @@ void W_final_pf::compute_PLmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 
 void W_final_pf::compute_PLmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
-
+	
+	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 	for(cand_pos_t d = i; d < j; ++d){
         contributions += get_PLmloop00(i,d,k,l)*get_WBP(d+1,j);
     }
-	PLmloop01[i][j][kl] = contributions;
+	PLmloop01[ij][kl] = contributions;
 
 }
 
 void W_final_pf::compute_PLmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
 
+	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 	for(cand_pos_t d = i+1; d <= j; ++d){
         contributions += get_WBP(i,d-1)*get_PLmloop00(d,j,k,l);
@@ -640,7 +628,7 @@ void W_final_pf::compute_PLmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
             contributions += get_PLmloop10(i,d,k,l)*get_WB(d+1,j);
         }
     }
-	PLmloop10[i][j][kl] = contributions;
+	PLmloop10[ij][kl] = contributions;
 }
 
 void W_final_pf::compute_PRmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -752,16 +740,18 @@ void W_final_pf::compute_POmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
 void W_final_pf::compute_POmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
 
+	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 	for(cand_pos_t d = k; d < l; ++d){
         contributions += get_POmloop00(i,j,k,d)*get_WBP(d+1,l);
     }
-	POmloop01[i][j][kl] = contributions;
+	POmloop01[ij][kl] = contributions;
 }
 
 void W_final_pf::compute_POmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	pf_t contributions = 0;
 
+	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 	for(cand_pos_t d=i+1; d<=j;++d){
         contributions += get_WBP(i,d-1)*get_POmloop00(d,j,k,l);
@@ -770,7 +760,7 @@ void W_final_pf::compute_POmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, can
         contributions += get_POmloop10(i,j,k,d) + get_WB(d+1,l);
     }
 
-	POmloop10[i][j][kl] = contributions;
+	POmloop10[ij][kl] = contributions;
 }
 
 pf_t W_final_pf::get_WB(cand_pos_t i, cand_pos_t j){
@@ -831,9 +821,10 @@ pf_t W_final_pf::get_PL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	}
 	assert(!(i<=0 || l> n));
 
+	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
-	return PL[i][j][kl];
+	return PL[ij][kl];
 }
 
 pf_t W_final_pf::get_PR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -873,9 +864,10 @@ pf_t W_final_pf::get_PO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	}
 	assert(!(i<=0 || l> n));
 
+	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
-	return PO[i][j][kl];
+	return PO[ij][kl];
 }
 
 pf_t W_final_pf::get_PfromL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -889,9 +881,10 @@ pf_t W_final_pf::get_PfromL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t
 		if(ptype_closing == 0) return 0;
 		else return gamma2(j,k)*gamma2(k,j);
 	}
+	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
-	return PfromL[i][j][kl];
+	return PfromL[ij][kl];
 }
 
 pf_t W_final_pf::get_PfromR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -939,9 +932,10 @@ pf_t W_final_pf::get_PfromO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t
 		if(ptype_closing == 0) return 0;
 		else return 1;
 	}
+	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
-	return PfromO[i][j][kl];
+	return PfromO[ij][kl];
 }
 
 pf_t W_final_pf::get_PLiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -996,9 +990,10 @@ pf_t W_final_pf::get_PLmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_po
 	}
 	assert(!(i<=0 || l> n));
 
+	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
-	return PLmloop01[i][j][kl];
+	return PLmloop01[ij][kl];
 }
 
 pf_t W_final_pf::get_PLmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -1007,9 +1002,10 @@ pf_t W_final_pf::get_PLmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_po
 	}
 	assert(!(i<=0 || l> n));
 
+	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
-	return PLmloop10[i][j][kl];
+	return PLmloop10[ij][kl];
 }
 
 pf_t W_final_pf::get_PRiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -1204,9 +1200,10 @@ pf_t W_final_pf::get_POmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_po
 	}
 	assert(!(i<=0 || l> n));
 
+	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
-	return POmloop01[i][j][kl];
+	return POmloop01[ij][kl];
 }
 
 pf_t W_final_pf::get_POmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
@@ -1215,9 +1212,10 @@ pf_t W_final_pf::get_POmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_po
 	}
 	assert(!(i<=0 || l> n));
 
+	cand_pos_t ij = index[i]+j-i;
 	cand_pos_t kl = index[k]+l-k;
 
-	return POmloop10[i][j][kl];
+	return POmloop10[ij][kl];
 }
 
 pf_t W_final_pf::compute_int(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l) {
