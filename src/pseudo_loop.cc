@@ -27,6 +27,7 @@ void pseudo_loop::allocate_space()
 
 	TriangleMatrix::new_index(index,n+1);
 	Matrix4D::construct_index(index3D,n);
+	init_can_pair();
 
     WBP.init(n+1,index);
 	WPP.init(n+1,index);
@@ -641,6 +642,7 @@ energy_t pseudo_loop::get_PLiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 
 	for(cand_pos_t d= i+1; d<std::min(j,i+MAXLOOP); ++d){
 		for(cand_pos_t dp = j-1; dp > std::max(d+TURN,j-MAXLOOP); --dp){
+			if (!can_pair(d,dp)) continue;
 			tmp = get_e_intP(i,d,dp,j) + PL.get(d,dp,k,l);
 			min_energy = std::min(min_energy,tmp);
 		}
@@ -674,6 +676,7 @@ energy_t pseudo_loop::get_PRiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 
 	for(cand_pos_t d= k+1; d<std::min(l,k+MAXLOOP); ++d){
 		for(cand_pos_t dp=l-1; dp > std::max(d+TURN,l-MAXLOOP); --dp){
+			if (!can_pair(d,dp)) continue;
 			tmp = get_e_intP(k,d,dp,l) + PR.get(i,j,d,dp);
 			min_energy = std::min(min_energy,tmp);
 		}
@@ -708,6 +711,7 @@ energy_t pseudo_loop::get_PMiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 
 	for(cand_pos_t d= j-1; d>std::max(i,j-MAXLOOP); --d){
 		for (cand_pos_t dp=k+1; dp <std::min(l,k+MAXLOOP); ++dp) {
+			if (!can_pair(d,dp)) continue;
 			tmp = get_e_intP(d,j,k,dp) + PM.get(i,d,dp,l);
 			min_energy = std::min(min_energy,tmp);
 		}
@@ -741,6 +745,7 @@ energy_t pseudo_loop::get_POiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 
 	for(cand_pos_t d= i+1; d<std::min(j,i+MAXLOOP); ++d){
 		for (cand_pos_t dp=l-1; dp >std::max(l-MAXLOOP,k); --dp) {
+			if (!can_pair(d,dp)) continue;
 			tmp = get_e_intP(i,d,dp,l) + PO.get(d,j,dp,k);
 			min_energy = std::min(min_energy,tmp);
 		}

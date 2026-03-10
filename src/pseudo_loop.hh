@@ -113,6 +113,28 @@ private:
 	Matrix4D POmloop01;
 	Matrix4D POmloop10;
 
+	std::vector<char> can_pair_;
+    void init_can_pair() {
+        can_pair_.resize((n+1)*(n+1));
+        for (cand_pos_t i=1; i<=n; i++) {
+            for (cand_pos_t j=i; j<=i+TURN && j<=n; j++) {
+                cand_pos_t ij = i*(n+1)+j;
+                can_pair_[ij] = false;
+            }
+            for (cand_pos_t j=i+TURN+1; j<=n; j++) {
+                cand_pos_t ij = i*(n+1)+j;
+                can_pair_[ij] = (pair[S_[i]][S_[j]]>0);
+            }
+        }
+    }
+
+	//! @brief check whether two positions can pair
+    //! checks for canonical base pairing *and* distance (TURN)
+    int can_pair(cand_pos_t i, cand_pos_t j) const {
+        assert(i<=j);
+        return can_pair_[i*(n+1)+j];
+    }
+
 	void compute_WBP(cand_pos_t i, cand_pos_t l);
 	void compute_WPP(cand_pos_t i, cand_pos_t l);
 		
