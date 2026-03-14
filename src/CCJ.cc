@@ -85,10 +85,10 @@ int main (int argc, char *argv[])
 	else if (seq.find('T') != std::string::npos){
 		vrna_params_load_DNA_Mathews2004();
 	}
-	int num_samples = 1000; 
-	bool PSplot = true;
+	// int num_samples = 1000; 
+	// bool PSplot = true;
 	double energy;
-	pf_t pf_energy;
+	// pf_t pf_energy;
     std::string structure = ccj(seq,energy,dangle_ccj);
 	// std::string pf_structure = ccj_pf(seq,pf_energy,structure,energy,dangle_ccj,num_samples,PSplot); // I am seeing this give nan sometimes with GGGGGGAAGGGGGGGGAACCCCCCACCCCCCCC currently
 

@@ -140,6 +140,8 @@ private:
 		
 	void compute_P(cand_pos_t i, cand_pos_t l);
 	void compute_PK(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PX(Index4D &x, MType type);
+	energy_t compute_PX_helper(Index4D &x, MType type);
 	void compute_PL(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PR(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PM(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
@@ -168,6 +170,10 @@ private:
 	void compute_POmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_POmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 
+	energy_t calc_PXiloop(const Index4D &x, MType type);
+	energy_t calc_PXmloop(const Index4D &x, MType type);
+	energy_t calc_PfromX(const Index4D &x, MType type);
+
     // function to allocate space for the arrays
     void allocate_space();
 
@@ -175,9 +181,14 @@ private:
 	energy_t get_e_intP(cand_pos_t i,cand_pos_t ip, cand_pos_t jp, cand_pos_t j);
 	energy_t compute_int(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l);
 
-	energy_t beta2(cand_pos_t i, cand_pos_t l);
-	energy_t beta2P(cand_pos_t i, cand_pos_t l);
-	energy_t gamma2(cand_pos_t i, cand_pos_t l);
+	inline energy_t beta2(cand_pos_t i, cand_pos_t l);
+	inline energy_t beta2P(cand_pos_t i, cand_pos_t l);
+	// penalty for closing pair i.l or l.i of a pseudoloop
+	constexpr energy_t gamma2(cand_pos_t i, cand_pos_t l){
+		return 0;
+	}
+	inline bool impossible_case(Index4D &x) const;
+	inline Matrix4D& PX_by_mtype(MType type);
 
   	// Hosna: Feb 19th 2007
   	// used for backtracking

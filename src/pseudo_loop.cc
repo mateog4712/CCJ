@@ -199,8 +199,35 @@ void pseudo_loop::compute_PK(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 	if (min_energy < INF/2){
 		PK.set(i,j,k,l,min_energy);
 	}
-
 }
+
+// void pseudo_loop::compute_PX(Index4D &x, MType type){
+//     Matrix4D &PX = PX_by_mtype(type);
+
+//     int min_energy =
+//         compute_PX_helper(x, type);
+
+//     PX.setI(x, min_energy);
+// }
+
+// energy_t pseudo_loop::compute_PX_helper(Index4D &x, MType type) {
+
+//     int min_energy = INF;
+
+//     if (impossible_case(x)) {return INF;}
+
+//     min_energy = calc_PXiloop(x, type);
+
+//     min_energy = std::min(min_energy,calc_PXmloop(x,type) + bp_penalty);
+
+//     if ( x.difference(type) > TURN ) {
+//         Index4D xp(x);
+//         xp.shrink(type);
+//         min_energy = std::min(min_energy,calc_PfromX(xp,type) + penalty(x, gamma2, type));
+//     }
+
+//     return min_energy;
+// }
 
 void pseudo_loop::compute_PL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF,b1=INF,b2=INF,b3=INF;
@@ -293,6 +320,36 @@ void pseudo_loop::compute_PO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_
 		PO.set(i,j,k,l,min_energy);
 	}
 }
+
+// energy_t pseudo_loop::calc_PXiloop(const Index4D &x, MType type){
+//     static std::array<std::function<int(pseudo_loop &, int, int, int, int)>, 4>
+//         fs{&pseudo_loop::calc_PLiloop, &pseudo_loop::calc_PMiloop,
+//            &pseudo_loop::calc_PRiloop, &pseudo_loop::calc_POiloop};
+
+//     return fs[static_cast<int>(type)](*this,x.i(), x.j(), x.k(), x.l());
+// }
+
+// energy_t pseudo_loop::calc_PXmloop(const Index4D &x, MType type){
+//     switch(type) {
+//     case MType::L: return calc_PLmloop(x.i(), x.j(), x.k(), x.l());
+//     case MType::M: return calc_PMmloop(x.i(), x.j(), x.k(), x.l());
+//     case MType::R: return calc_PRmloop(x.i(), x.j(), x.k(), x.l());
+//     case MType::O: return calc_POmloop(x.i(), x.j(), x.k(), x.l());
+//     }
+//     assert(false);
+//     return INF;
+// }
+
+// energy_t pseudo_loop::calc_PfromX(const Index4D &x, MType type){
+//     switch(type) {
+//     case MType::L: return calc_PfromL(x.i(), x.j(), x.k(), x.l());
+//     case MType::M: return calc_PfromM(x.i(), x.j(), x.k(), x.l());
+//     case MType::R: return calc_PfromR(x.i(), x.j(), x.k(), x.l());
+//     case MType::O: return calc_PfromO(x.i(), x.j(), x.k(), x.l());
+//     }
+//     assert(false);
+//     return INF;
+// }
 
 void pseudo_loop::compute_PfromL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	energy_t min_energy = INF,b1=INF,b2=INF,b3=INF,b4=INF,b5=INF;
@@ -630,17 +687,16 @@ energy_t pseudo_loop::get_PLiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 
 	if(!can_pair(i,j)) return INF;
 
-	energy_t tmp=INF;
 	energy_t min_energy = INF;
 	if (i+TURN+2<j) { 
 		min_energy = PL.get(i+1,j-1,k,l) + get_e_stP(i,j);
 	}
-
-	for(cand_pos_t d= i+1; d<std::min(j,i+MAXLOOP); ++d){
-		for(cand_pos_t dp = j-1; dp > std::max(d+TURN,j-MAXLOOP); --dp){
+	cand_pos_t max_d = std::min(j,i+MAXLOOP);
+	for(cand_pos_t d= i+1; d<max_d; ++d){
+		cand_pos_t min_dp = std::max(d+TURN,j-MAXLOOP);
+		for(cand_pos_t dp = j-1; dp > min_dp; --dp){
 			if (!can_pair(d,dp)) continue;
-			tmp = get_e_intP(i,d,dp,j) + PL.get(d,dp,k,l);
-			min_energy = std::min(min_energy,tmp);
+			min_energy = std::min(min_energy,get_e_intP(i,d,dp,j) + PL.get(d,dp,k,l));
 		}
 	}
 	return min_energy;
@@ -666,17 +722,16 @@ energy_t pseudo_loop::get_PRiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 
 	if(!can_pair(k,l)) return INF;
 
-	energy_t tmp = INF;
 	energy_t min_energy = INF;
 	if (k+TURN+2<l) { 
 		min_energy = PR.get(i,j,k+1,l-1) + get_e_stP(k,l);
 	}
-
-	for(cand_pos_t d= k+1; d<std::min(l,k+MAXLOOP); ++d){
-		for(cand_pos_t dp=l-1; dp > std::max(d+TURN,l-MAXLOOP); --dp){
+	cand_pos_t max_d = std::min(l,k+MAXLOOP);
+	for(cand_pos_t d= k+1; d<max_d; ++d){
+		cand_pos_t min_dp = std::max(d+TURN,l-MAXLOOP);
+		for(cand_pos_t dp=l-1; dp > min_dp; --dp){
 			if (!can_pair(d,dp)) continue;
-			tmp = get_e_intP(k,d,dp,l) + PR.get(i,j,d,dp);
-			min_energy = std::min(min_energy,tmp);
+			min_energy = std::min(min_energy,get_e_intP(k,d,dp,l) + PR.get(i,j,d,dp));
 		}
 	}
 	return min_energy;
@@ -702,18 +757,16 @@ energy_t pseudo_loop::get_PMiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 
 	if(!can_pair(j,k)) return INF;
 
-	energy_t tmp=INF;
-
 	energy_t min_energy = INF;
 	if ( i<j && k<l ) {
 		min_energy = PM.get(i,j-1,k+1,l) + get_e_stP(j-1,k+1);
 	}
-
-	for(cand_pos_t d= j-1; d>std::max(i,j-MAXLOOP); --d){
-		for (cand_pos_t dp=k+1; dp <std::min(l,k+MAXLOOP); ++dp) {
+	cand_pos_t max_d = std::max(i,j-MAXLOOP);
+	for(cand_pos_t d= j-1; d>max_d; --d){
+		cand_pos_t min_dp = std::min(l,k+MAXLOOP);
+		for (cand_pos_t dp=k+1; dp <min_dp; ++dp) {
 			if (!can_pair(d,dp)) continue;
-			tmp = get_e_intP(d,j,k,dp) + PM.get(i,d,dp,l);
-			min_energy = std::min(min_energy,tmp);
+			min_energy = std::min(min_energy,get_e_intP(d,j,k,dp) + PM.get(i,d,dp,l));
 		}
 	}
 	return min_energy;
@@ -739,17 +792,16 @@ energy_t pseudo_loop::get_POiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand
 
 	if(!can_pair(i,l)) return INF;
 
-	energy_t tmp = INF;
 	energy_t min_energy = INF;
-	if ( i<j && k<l ) { 
+	if (i<j && k<l ) { 
 		min_energy = PO.get(i+1,j,k,l-1) + get_e_stP(i,l);
 	}
-
-	for(cand_pos_t d= i+1; d<std::min(j,i+MAXLOOP); ++d){
-		for (cand_pos_t dp=l-1; dp >std::max(l-MAXLOOP,k); --dp) {
+	cand_pos_t max_d = std::min(j,i+MAXLOOP);
+	for(cand_pos_t d= i+1; d<max_d; ++d){
+		cand_pos_t min_dp = std::max(l-MAXLOOP,k);
+		for (cand_pos_t dp=l-1; dp >min_dp; --dp) {
 			if (!can_pair(d,dp)) continue;
-			tmp = get_e_intP(i,d,dp,l) + PO.get(d,j,dp,k);
-			min_energy = std::min(min_energy,tmp);
+			min_energy = std::min(min_energy,get_e_intP(i,d,dp,l) + PO.get(d,j,dp,k));
 		}
 	}
 	return min_energy;
@@ -788,30 +840,22 @@ energy_t pseudo_loop::get_e_intP(cand_pos_t i, cand_pos_t ip, cand_pos_t jp, can
 }
 
 // penalty for closing pair i.l or l.i of an ordinary multiloop
-energy_t pseudo_loop::beta2(cand_pos_t i, cand_pos_t l){
-	// Hosna, April 2, 2014
-	// I don't think this is the complete value, but since HFold's WM and CCJ's Vmloop recurrences are the same I am not changing this value here, unless I find out it is needed
-	// the correct value should be: Non-GC-penalty(i,l)+b_penalty
+inline energy_t pseudo_loop::beta2(cand_pos_t i, cand_pos_t l){
 	return b_penalty;
 }
 
 // penalty for closing pair i.l or l.i of a multiloop that spans a band
-energy_t pseudo_loop::beta2P(cand_pos_t i, cand_pos_t l){
-	// Hosna, April 2, 2014
-	// I don't think this is the complete value, but since HFold's WM and CCJ's Vmloop recurrences are the same I am not changing this value here, unless I find out it is needed
-	// the correct value should be: Non-GC-penalty(i,l) *0.74 + bp_penalty
+inline energy_t pseudo_loop::beta2P(cand_pos_t i, cand_pos_t l){
 	return bp_penalty;
 }
 
-// penalty for closing pair i.l or l.i of a pseudoloop
-energy_t pseudo_loop::gamma2(cand_pos_t i, cand_pos_t l){
-	// Hosna, April 2, 2014
-	// I changed this value to be 0 as I can't find its correct value
-	// the correct value for this penalty should be similar to what we have in case of an internal loop or a multiloop, but the value is missing here
-	return 0;
-	// Hosna July 17, 2014
-	// To avoid addition of single base pair bands I am giving a very small non-zero value to gamma2
-	// return 1;
+inline bool pseudo_loop::impossible_case(Index4D &x) const {
+    return !x.is_valid(n);
+}
+
+inline Matrix4D& pseudo_loop::PX_by_mtype(MType type) {
+    static std::array<Matrix4D*,4> matrices{&PL, &PM, &PR, &PO};
+    return *matrices[static_cast<int>(type)];
 }
 
 void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
@@ -1841,8 +1885,10 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 					best_row=1;
 				}
 				//branch 2
-				for(cand_pos_t d= i+1; d<std::min(j,i+MAXLOOP); ++d){
-					for(cand_pos_t dp = j-1; dp > std::max(d+TURN,j-MAXLOOP); --dp){
+				cand_pos_t max_d = std::min(j,i+MAXLOOP);
+				for(cand_pos_t d= i+1; d<max_d; ++d){
+					cand_pos_t min_dp = std::max(d+TURN,j-MAXLOOP);
+					for(cand_pos_t dp = j-1; dp > min_dp; --dp){
 						temp = get_e_intP(i,d,dp,j) + PL.get(d,dp,k,l);
 						if(temp < min_energy){
 							min_energy = temp;
@@ -2076,8 +2122,10 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 					best_row = 1;
 				}
 				//branch 2
-				for(cand_pos_t d= k+1; d<std::min(l,k+MAXLOOP); ++d){
-					for(cand_pos_t dp=l-1; dp > std::max(d+TURN,l-MAXLOOP); --dp){
+				cand_pos_t max_d = std::min(l,k+MAXLOOP);
+				for(cand_pos_t d= k+1; d<max_d; ++d){
+					cand_pos_t min_dp = std::max(d+TURN,l-MAXLOOP);
+					for(cand_pos_t dp=l-1; dp > min_dp; --dp){
 						temp = get_e_intP(k,d,dp,l) + PR.get(i,j,d,dp);
 						if(temp < min_energy){
 							min_energy = temp;
@@ -2321,8 +2369,10 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 					best_row=1;
 				}
 
-				for(cand_pos_t d= j-1; d>std::max(i,j-MAXLOOP); --d){
-					for (cand_pos_t dp=k+1; dp <std::min(l,k+MAXLOOP); ++dp) {
+				cand_pos_t max_d = std::max(i,j-MAXLOOP);
+				for(cand_pos_t d= j-1; d>max_d; --d){
+					cand_pos_t min_dp = std::min(l,k+MAXLOOP);
+					for (cand_pos_t dp=k+1; dp <min_dp; ++dp) {
 						temp = get_e_intP(d,j,k,dp) + PM.get(i,d,dp,l);
 						if(temp < min_energy){
 							min_energy = temp;
@@ -2564,8 +2614,10 @@ void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){
 					min_energy = temp;
 					best_row=1;
 				}
-				for(cand_pos_t d= i+1; d<std::min(j,i+MAXLOOP); ++d){
-					for (cand_pos_t dp=l-1; dp >std::max(l-MAXLOOP,k); --dp) {
+				cand_pos_t max_d = std::min(j,i+MAXLOOP);
+				for(cand_pos_t d= i+1; d<max_d; ++d){
+					cand_pos_t min_dp = std::max(l-MAXLOOP,k);
+					for (cand_pos_t dp=l-1; dp >min_dp; --dp) {
 						energy_t branch2 = get_e_intP(i,d,dp,l) + PO.get(d,j,dp,k);
 						if(branch2 < min_energy){
 							min_energy = branch2;

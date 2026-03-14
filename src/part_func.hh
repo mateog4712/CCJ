@@ -191,9 +191,12 @@ class W_final_pf {
 
     pf_t get_e_intP(cand_pos_t i, cand_pos_t ip, cand_pos_t jp, cand_pos_t j);
 
-	pf_t beta2(cand_pos_t i, cand_pos_t l);
-	pf_t beta2P(cand_pos_t i, cand_pos_t l);
-	pf_t gamma2(cand_pos_t i, cand_pos_t l);
+	inline pf_t beta2(cand_pos_t i, cand_pos_t l);
+	inline pf_t beta2P(cand_pos_t i, cand_pos_t l);
+	// penalty for closing pair i.l or l.i of a pseudoloop
+	constexpr pf_t gamma2(cand_pos_t i, cand_pos_t l){
+		return 1.0;
+	}
 };
 
 

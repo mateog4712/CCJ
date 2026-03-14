@@ -152,11 +152,12 @@ public:
     //! construct empty
     Matrix4D() {}
 
-    void init(cand_pos_t n, index_offset_t &index3D) {
+    void
+    init(cand_pos_t n, index_offset_t &index3D) {
         n_=n;
         nn_ = n*n;
-        index3D_ = &index3D;
-        int slice_size_ = (*index3D_)[(n-1)*nn_ + (n-1)*n + n-1] + 1;
+        index3D_ = index3D;
+        int slice_size_ = index3D_[(n-1)*nn_ + (n-1)*n + n-1] + 1;
         assert( slice_size_ == n*(n+1)*(n+2)*(n+3)/24);
         m_.clear();
         m_.resize(slice_size_,INTERN_INF);
@@ -208,12 +209,12 @@ public:
     static void construct_index(index_offset_t &index, cand_pos_t n){
         // Construct for i<=j<=k<=l (even if j<k-1)
         index.resize(n*n*n);
-        cand_pos_t nn = n*n;
+        cand_pos_t stride1 = n*n;
         size_t idx = 0;
         for (cand_pos_t i = 0; i < n; ++i) {
             for (cand_pos_t j = i; j < n; ++j) {
                 for (cand_pos_t k = j; k < n; ++k) {
-                    index[i*nn+j*n+k] = idx;
+                    index[i*stride1+j*n+k] = idx;
                     idx += (n - k);  // remaining values from k to n
                 }
             }
@@ -222,12 +223,12 @@ public:
 
     private:
     cand_pos_t n_;
-    cand_pos_t nn_;
     std::vector<energy_16t> m_; // I had m as a 16 bit int. This seemed to result in some kind of of overflow or underflow, most likely because I allowed pushing INF(32 bit int/10) despite being 16 bit
-    index_offset_t *index3D_;
+    index_offset_t index3D_;
+    cand_pos_t nn_;
 
     size_t index(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l) const {
-        return (*index3D_)[(i-1)*nn_+(j-1)*n_+k-1] + (l-k);
+        return index3D_[(i-1)*nn_+(j-1)*n_+k-1] + (l-k);
     }
 };
 
@@ -237,11 +238,12 @@ public:
     //! construct empty
     Matrix4DPF() {}
 
-    void init(cand_pos_t n, index_offset_t &index3D) {
+    void
+    init(cand_pos_t n, index_offset_t &index3D) {
         n_=n;
         nn_ = n*n;
-        index3D_ = &index3D;
-        int slice_size_ = (*index3D_)[(n-1)*nn_ + (n-1)*n + n-1] + 1;
+        index3D_ = index3D;
+        int slice_size_ = index3D_[(n-1)*nn_ + (n-1)*n + n-1] + 1;
         assert( slice_size_ == n*(n+1)*(n+2)*(n+3)/24);
         m_.clear();
         m_.resize(slice_size_,0.0);
@@ -285,10 +287,10 @@ public:
     cand_pos_t n_;
     cand_pos_t nn_;
     std::vector<pf_t> m_; // I had m as a 16 bit int. This seemed to result in some kind of of overflow or underflow, most likely because I allowed pushing INF(32 bit int/10) despite being 16 bit
-    index_offset_t *index3D_;
+    index_offset_t index3D_;
 
     size_t index(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l) const {
-        return (*index3D_)[(i-1)*nn_+(j-1)*n_+k-1] + (l-k);
+        return index3D_[(i-1)*nn_+(j-1)*n_+k-1] + (l-k);
     }
 };
 

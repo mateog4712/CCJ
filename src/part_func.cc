@@ -892,16 +892,11 @@ pf_t W_final_pf::get_e_intP(cand_pos_t i, cand_pos_t ip, cand_pos_t jp, cand_pos
 
 
 // penalty for closing pair i.l or l.i of an ordinary multiloop
-pf_t W_final_pf::beta2(cand_pos_t i, cand_pos_t l){
+inline pf_t W_final_pf::beta2(cand_pos_t i, cand_pos_t l){
 	return expb_penalty;
 }
 
 // penalty for closing pair i.l or l.i of a multiloop that spans a band
-pf_t W_final_pf::beta2P(cand_pos_t i, cand_pos_t l){
+inline pf_t W_final_pf::beta2P(cand_pos_t i, cand_pos_t l){
 	return expbp_penalty;
-}
-
-// penalty for closing pair i.l or l.i of a pseudoloop
-pf_t W_final_pf::gamma2(cand_pos_t i, cand_pos_t l){
-	return 1.0;
 }
