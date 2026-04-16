@@ -15,9 +15,9 @@ class TriangleMatrix {
 public:
     TriangleMatrix() {}
 
-    void init(int n, std::vector<cand_pos_t> &index, int return_val=INF){
+    void init(cand_pos_t n, std::vector<cand_pos_t> &index, energy_t return_val=INF){
         n_ = n;
-        index_ = index;
+        index_ = &index;
         return_val_ = return_val;
 
         size_t tl=total_length(n);
@@ -25,48 +25,48 @@ public:
         m_.resize(tl,INF+1);
     }
 
-    int ij(int i, int j) const {
-        return index_[i]+j-i;
+    cand_pos_t ij(cand_pos_t i, cand_pos_t j) const {
+        return (*index_)[i]+j-i;
     }
 
     //! unchecked get
-    int get_uc(int i, int j) const {
+    energy_t get_uc(cand_pos_t i, cand_pos_t j) const {
         assert (i<=j);
         return m_[ij(i,j)];
     }
 
-    int get (int i, int j) const {
+    energy_t get (cand_pos_t i, cand_pos_t j) const {
         if (i>j) return return_val_;
         return get_uc(i,j);
     }
 
 
-    int& operator [] (int ij) {
+    energy_t& operator [] (cand_pos_t ij) {
         return m_[ij];
     }
 
-    int& set (int i, int j) {
+    energy_t& set (cand_pos_t i, cand_pos_t j) {
         return m_[ij(i,j)];
     }
 
     void print() {
-        for (int i=0; i<n_; i++) {
+        for (cand_pos_t i=0; i<n_; i++) {
             std::cout << i << ": ";
-            for (int j=i; j<n_; j++) {
+            for (cand_pos_t j=i; j<n_; j++) {
                 std::cout << get(i,j) << " ";
             }
             std::cout << std::endl;
         }
     }
 
-    static int total_length(int n) {
+    static cand_pos_t total_length(cand_pos_t n) {
         return (n *(n+1))/2;
     }
 
-    static void new_index(std::vector<cand_pos_t> &index, int n) {
+    static void new_index(std::vector<cand_pos_t> &index, cand_pos_t n) {
         index.resize(n);
         index[1] = 0;
-        for (int i=2; i < n; i++) {
+        for (cand_pos_t i=2; i < n; i++) {
             index[i] = index[i-1]+n-i+1;
         }
     }
@@ -74,7 +74,7 @@ public:
 private:
     cand_pos_t n_;
     energy_t return_val_;
-    std::vector<cand_pos_t> index_;
+    std::vector<cand_pos_t> *index_;
     std::vector<energy_t> m_;
 };
 
@@ -82,9 +82,9 @@ class TriangleMatrix_PF {
 public:
     TriangleMatrix_PF() {}
 
-    void init(int n, std::vector<cand_pos_t> &index, pf_t return_val=0.0){
+    void init(cand_pos_t n, std::vector<cand_pos_t> &index, pf_t return_val=0.0){
         n_ = n;
-        index_ = index;
+        index_ = &index;
         return_val_ = return_val;
 
         size_t tl=total_length(n);
@@ -92,48 +92,48 @@ public:
         m_.resize(tl,0);
     }
 
-    int ij(int i, int j) const {
-        return index_[i]+j-i;
+    cand_pos_t ij(cand_pos_t i, cand_pos_t j) const {
+        return (*index_)[i]+j-i;
     }
 
     //! unchecked get
-    pf_t get_uc(int i, int j) const {
+    pf_t get_uc(cand_pos_t i, cand_pos_t j) const {
         assert (i<=j);
         return m_[ij(i,j)];
     }
 
-    pf_t get (int i, int j) const {
+    pf_t get (cand_pos_t i, cand_pos_t j) const {
         if (i>j) return return_val_;
         return get_uc(i,j);
     }
 
 
-    pf_t& operator [] (int ij) {
+    pf_t& operator [] (cand_pos_t ij) {
         return m_[ij];
     }
 
-    pf_t& set (int i, int j) {
+    pf_t& set (cand_pos_t i, cand_pos_t j) {
         return m_[ij(i,j)];
     }
 
     void print() {
-        for (int i=0; i<n_; i++) {
+        for (cand_pos_t i=0; i<n_; i++) {
             std::cout << i << ": ";
-            for (int j=i; j<n_; j++) {
+            for (cand_pos_t j=i; j<n_; j++) {
                 std::cout << get(i,j) << " ";
             }
             std::cout << std::endl;
         }
     }
 
-    static int total_length(int n) {
+    static cand_pos_t total_length(int n) {
         return (n *(n+1))/2;
     }
 
-    static void new_index(std::vector<cand_pos_t> &index, int n) {
+    static void new_index(std::vector<cand_pos_t> &index, cand_pos_t n) {
         index.resize(n);
         index[1] = 0;
-        for (int i=2; i < n; i++) {
+        for (cand_pos_t i=2; i < n; i++) {
             index[i] = index[i-1]+n-i+1;
         }
     }
@@ -141,7 +141,7 @@ public:
 private:
     cand_pos_t n_;
     pf_t return_val_;
-    std::vector<cand_pos_t> index_;
+    std::vector<cand_pos_t> *index_;
     std::vector<pf_t> m_;
 };
 
@@ -163,7 +163,7 @@ public:
 
     }
 
-    int get_uc(int i, int j, int k, int l) const {
+    int get_uc(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l) const {
         assert(!(i<=0 || l> n_));
 
         int val = m_[index(i,j,k,l)];
@@ -174,7 +174,7 @@ public:
         return get_uc(x.i(),x.j(),x.k(),x.l());
     }
 
-    int get(int i, int j, int k, int l) const {
+    int get(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l) const {
         if (!(i <= j && j < k-1 && k <= l)){
             return INF;
         }
@@ -194,7 +194,7 @@ public:
         set(x.i(),x.j(),x.k(),x.l(), e);
     }
 
-    void setI(int i, int j, int k, int l, int e) {
+    void setI(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, int e) {
         if (e >= INTERN_INF) e=INTERN_INF;
         assert( e >= std::numeric_limits<energy_t>::min() );
 
@@ -248,14 +248,14 @@ public:
 
     }
 
-    int get_uc(int i, int j, int k, int l) const {
+    int get_uc(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l) const {
         assert(!(i<=0 || l> n_));
 
         int val = m_[index(i,j,k,l)];
         return val;
     }
 
-    int get(int i, int j, int k, int l) const {
+    int get(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l) const {
         if (!(i <= j && j < k-1 && k <= l)){
             return 0.0;
         }

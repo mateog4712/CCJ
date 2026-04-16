@@ -80,8 +80,8 @@ private:
 	Matrix4D PR;		// MFE of a TGB structure s.t. k.l is paired
 	Matrix4D PM;		// MFE of a TGB structure s.t. j.k is paired
 	Matrix4D PO;		// MFE of a TGB structure s.t. i.l is paired
-	// std::vector<std::vector<energy_t> > POs;	// MFE of a TGB structure s.t. i.l is paired single
-	// std::vector<std::vector<energy_t> > POm;	// MFE of a TGB structure s.t. i.l is paired multiple
+	// Matrix4D POs;	// MFE of a TGB structure s.t. i.l is paired single
+	// Matrix4D POm;	// MFE of a TGB structure s.t. i.l is paired multiple
 	
 	// transition recurrences
 	Matrix4D PfromL;
