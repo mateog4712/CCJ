@@ -2,7 +2,7 @@
 // a simple driver for CCJ
 #include "cmdline.hh"
 #include "W_final.hh"
-#include "part_func.hh"
+// #include "part_func.hh"
 #include "h_globals.hh"
 //
 #include <iostream>
@@ -48,12 +48,12 @@ std::string ccj(std::string seq,double &energy, int dangle){
     return structure;
 }
 
-std::string ccj_pf(std::string seq,pf_t &energy,std::string mfe_structure,double mfe_energy, int dangle, int num_samples,bool PSplot){
-	W_final_pf min_fold(seq,mfe_structure,mfe_energy,dangle,num_samples,PSplot);
-	energy = min_fold.ccj_pf();
-    std::string structure = min_fold.structure;
-    return structure;
-}
+// std::string ccj_pf(std::string seq,pf_t &energy,std::string mfe_structure,double mfe_energy, int dangle, int num_samples,bool PSplot){
+// 	W_final_pf min_fold(seq,mfe_structure,mfe_energy,dangle,num_samples,PSplot);
+// 	energy = min_fold.ccj_pf();
+//     std::string structure = min_fold.structure;
+//     return structure;
+// }
 
 int main (int argc, char *argv[])
 {

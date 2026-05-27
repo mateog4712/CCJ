@@ -1,7 +1,7 @@
 #include "part_func.hh"
 // #include "dot_plot.hh"
 #include "h_externs.hh"
-#include "pf_globals.hh"
+#include "pf_externs.hh"
 
 #include <algorithm>
 #include <iostream>
@@ -165,7 +165,7 @@ pf_t W_final_pf::ccj_pf(){
 		contributions += W[j-1]*scale[1];
 		for (cand_pos_t k=1; k<=j-TURN-1; ++k){
 			pf_t acc = (k>1) ? W[k-1]: 1;
-			contributions += acc*get_energy(k, j)*exp_Extloop(k, j);
+			contributions += acc*V.get(k, j)*exp_Extloop(k, j);
 			contributions += acc*P.get(k,j)*expPS_penalty;
 		}
 		W[j] = contributions;
@@ -226,7 +226,7 @@ pf_t W_final_pf::compute_internal(cand_pos_t i, cand_pos_t j) {
     for (cand_pos_t k = i + 1; k <= max_k; ++k) {
         cand_pos_t min_l = std::max(k + TURN + 1 + MAXLOOP + 2, k + j - i) - MAXLOOP - 2;
         for (cand_pos_t l = j - 1; l >= min_l; --l) {
-            pf_t v_iloop_kl = get_energy(k, l)
+            pf_t v_iloop_kl = V.get(k, l)
                                 * exp_E_IntLoop(k - i - 1, j - l - 1, ptype_closing, rtype[pair[S_[k]][S_[l]]], S1_[i + 1], S1_[j - 1],
                                                 S1_[k - 1], S1_[l + 1], exp_params_);
             cand_pos_t u1 = k - i - 1;
@@ -246,7 +246,7 @@ void W_final_pf::compute_WMv_WMp(cand_pos_t i, cand_pos_t j) {
     pf_t WMv_contributions = 0;
     pf_t WMp_contributions = 0;
 
-    WMv_contributions += (get_energy(i, j) * exp_MLstem(i, j));
+    WMv_contributions += (V.get(i,j) * exp_MLstem(i, j));
     WMp_contributions += (P.get(i,j) * expPSM_penalty * expb_penalty);
     WMv_contributions += (WMv.get(i,j-1) * expMLbase[1]);
     WMp_contributions += (WMp.get(i,j-1) * expMLbase[1]);
@@ -262,7 +262,7 @@ void W_final_pf::compute_energy_WM(cand_pos_t i, cand_pos_t j) {
     cand_pos_t ijminus1 = index[(i)] + (j)-1 - (i);
 
     for (cand_pos_t k = i; k < j - TURN; ++k) {
-        pf_t qbt1 = get_energy(k, j) * exp_MLstem(k, j);
+        pf_t qbt1 = V.get(k,j) * exp_MLstem(k, j);
         pf_t qbt2 = P.get(k,j) * expPSM_penalty * expb_penalty;
         contributions += (static_cast<pf_t>(expMLbase[k - i]) * qbt1);
         contributions += (static_cast<pf_t>(expMLbase[k - i]) * qbt2);
@@ -362,7 +362,7 @@ void W_final_pf::compute_WBP(cand_pos_t i, cand_pos_t l){
 	pf_t contributions = 0;
 
 	for(cand_pos_t d=i; d< l; ++d){
-		contributions += get_energy(d,l)*beta2P(l,d)*expPPS_penalty;
+		contributions += V.get(d,l)*beta2P(l,d)*expPPS_penalty;
 		contributions += P.get(d,l)*expPSM_penalty*expPPS_penalty;
 	}
 	contributions+=WBP.get(i,l-1)*expcp_pen[1];
@@ -373,7 +373,7 @@ void W_final_pf::compute_WPP(cand_pos_t i, cand_pos_t l){
 	pf_t contributions = 0;
 
 	for(cand_pos_t d=i; d<l; ++d){
-		contributions += get_WP(i,d-1)*get_energy(d,l)*gamma2(l,d)*expPPS_penalty;
+		contributions += get_WP(i,d-1)*V.get(d,l)*gamma2(l,d)*expPPS_penalty;
 		contributions += get_WP(i,d-1)*P.get(d,l)*expPSP_penalty*expPPS_penalty;
 	}
 	contributions+=WBP.get(i,l-1)*expPUP_pen[1];

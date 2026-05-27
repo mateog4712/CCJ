@@ -43,15 +43,9 @@ class W_final_pf {
     vrna_exp_param_t *exp_params_;
 
     pf_t get_WB(cand_pos_t i, cand_pos_t j);
-	pf_t get_WBP(cand_pos_t i, cand_pos_t j);
 	
 	// nested substr in a pseudoloop
 	pf_t get_WP(cand_pos_t i, cand_pos_t j);
-	pf_t get_WPP(cand_pos_t i, cand_pos_t j);
-	
-	pf_t get_energy(cand_pos_t i, cand_pos_t j) {
-        return V.get(i,j);
-    }
 	
 	pf_t get_PLiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	pf_t get_PLmloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
@@ -165,30 +159,20 @@ class W_final_pf {
     void exp_params_rescale(double mfe);
 
     void compute_energy(cand_pos_t i, cand_pos_t j);
-
     void compute_WMv_WMp(cand_pos_t i, cand_pos_t j);
-
     void compute_energy_WM(cand_pos_t i, cand_pos_t j);
-
 	pf_t compute_energy_VM(cand_pos_t i, cand_pos_t j);
 
     void compute_pk_energies(cand_pos_t i, cand_pos_t l);
 
 
     pf_t exp_Extloop(cand_pos_t i, cand_pos_t j);
-
     pf_t exp_MLstem(cand_pos_t i, cand_pos_t j);
-
     pf_t exp_Mbloop(cand_pos_t i, cand_pos_t j);
-
     pf_t HairpinE(cand_pos_t i, cand_pos_t j);
-
     pf_t compute_internal(cand_pos_t i, cand_pos_t j);
-
     pf_t compute_int(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l);
-
     pf_t get_e_stP(cand_pos_t i, cand_pos_t j);
-
     pf_t get_e_intP(cand_pos_t i, cand_pos_t ip, cand_pos_t jp, cand_pos_t j);
 
 	inline pf_t beta2(cand_pos_t i, cand_pos_t l);
@@ -197,6 +181,16 @@ class W_final_pf {
 	constexpr pf_t gamma2(cand_pos_t i, cand_pos_t l){
 		return 1.0;
 	}
+
+
+	// Stochastic Backtracking/ Sampling
+	void Sample_W(cand_pos_t start, cand_pos_t end, std::string &structure, std::unordered_map<std::pair<cand_pos_t, cand_pos_t>, cand_pos_t, SzudzikHash> &samples);
+	void Sample_V(cand_pos_t i, cand_pos_t j, std::string &structure, std::unordered_map<std::pair<cand_pos_t, cand_pos_t>, cand_pos_t, SzudzikHash> &samples);
+	void Sample_VM(cand_pos_t i, cand_pos_t j, std::string &structure, std::unordered_map<std::pair<cand_pos_t, cand_pos_t>, cand_pos_t, SzudzikHash> &samples);
+	void Sample_WM(cand_pos_t i, cand_pos_t j, std::string &structure, std::unordered_map<std::pair<cand_pos_t, cand_pos_t>, cand_pos_t, SzudzikHash> &samples);
+	void Sample_WMv(cand_pos_t i, cand_pos_t j, std::string &structure, std::unordered_map<std::pair<cand_pos_t, cand_pos_t>, cand_pos_t, SzudzikHash> &samples);
+	void Sample_WMp(cand_pos_t i, cand_pos_t j, std::string &structure, std::unordered_map<std::pair<cand_pos_t, cand_pos_t>, cand_pos_t, SzudzikHash> &samples);
+	void Sample_P(cand_pos_t i, cand_pos_t j, std::string &structure, std::unordered_map<std::pair<cand_pos_t, cand_pos_t>, cand_pos_t, SzudzikHash> &samples);
 };
 
 
