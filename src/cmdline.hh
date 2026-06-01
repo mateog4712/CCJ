@@ -48,7 +48,7 @@ struct args_info
   char * paramFile_arg;	/**< @brief Read energy parameters from paramfile, instead of using the default parameter set..  */
   char * paramFile_orig;	/**< @brief Read energy parameters from paramfile, instead of using the default parameter set. original value given at command line.  */
   const char *paramFile_help; /**< @brief Read energy parameters from paramfile, instead of using the default parameter set. help description.  */
-  int noConv_flag;	/**< @brief Do not convert DNA into RNA. This will use the Matthews 2004 parameters for DNA (default=on).  */
+  int noConv_flag;	/**< @brief Do not convert DNA into RNA. This will use the Matthews 2004 parameters for DNA (default=off).  */
   const char *noConv_help; /**< @brief Do not convert DNA into RNA. This will use the Matthews 2004 parameters for DNA help description.  */
   
   unsigned int help_given ;	/**< @brief Whether help was given.  */

@@ -39,7 +39,7 @@ const char *args_info_help[] = {
   "  -i, --input-file=STRING  Give a path to an input file containing the sequence\n                             (and input structure if known)",
   "  -d, --dangles=INT        Specify the dangle model to be used (base is 2)\n                             (default=`2')",
   "  -P, --paramFile=STRING   Read energy parameters from paramfile, instead of\n                             using the default parameter set.",
-  "      --noConv             Do not convert DNA into RNA. This will use the\n                             Matthews 2004 parameters for DNA  (default=on)",
+  "      --noConv             Do not convert DNA into RNA. This will use the\n                             Matthews 2004 parameters for DNA  (default=off)",
   "\nThe input sequence is read from standard input, unless it is\ngiven on the command line.\n",
     0
 };
@@ -84,7 +84,7 @@ void clear_args (struct args_info *args_info)
   args_info->dangles_orig = NULL;
   args_info->paramFile_arg = NULL;
   args_info->paramFile_orig = NULL;
-  args_info->noConv_flag = 1;
+  args_info->noConv_flag = 0;
   
 }
 
