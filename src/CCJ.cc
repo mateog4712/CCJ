@@ -71,25 +71,35 @@ int main (int argc, char *argv[])
 		if(!args_info.input_file_given) std::getline(std::cin,seq);
 	}
 
-    int dangle_ccj = args_info.dangles_given ? dangle_model : 2;
-
     std::transform(seq.begin(), seq.end(), seq.begin(), ::toupper);
-	if(!args_info.noConv_given) seqtoRNA(seq);
+	if(!args_info.noConv_flag) seqtoRNA(seq);
 
     validateSequence(seq);
 
-    std::string file= args_info.paramFile_given ? parameter_file : "params/rna_DirksPierce09.par";
-	if(exists(file)){
-		vrna_params_load(file.c_str(), VRNA_PARAMETER_FORMAT_DEFAULT);
-	}
-	else if (seq.find('T') != std::string::npos){
-		vrna_params_load_DNA_Mathews2004();
-	}
+    if(args_info.paramFile_given){
+        std::string file = args_info.paramFile_arg;
+        if (exists(file)) vrna_params_load(file.c_str(), VRNA_PARAMETER_FORMAT_DEFAULT);
+        else{
+            std::cerr << "Not a valid parameter file!" << std::endl;
+            exit(EXIT_FAILURE);
+        }
+    } else {
+        if (seq.find('T') != std::string::npos) {
+            vrna_params_load_DNA_Mathews2004();
+        } else{
+            std::string file = "params/rna_DirksPierce09.par";
+            if (exists(file)) vrna_params_load(file.c_str(), VRNA_PARAMETER_FORMAT_DEFAULT);
+            else{
+                std::cerr << "Not a valid parameter file!" << std::endl;
+                exit(EXIT_FAILURE);
+            }
+        }
+    }
 	// int num_samples = 1000; 
 	// bool PSplot = true;
 	double energy;
 	// pf_t pf_energy;
-    std::string structure = ccj(seq,energy,dangle_ccj);
+    std::string structure = ccj(seq,energy,args_info.dangles_arg);
 	// std::string pf_structure = ccj_pf(seq,pf_energy,structure,energy,dangle_ccj,num_samples,PSplot); // I am seeing this give nan sometimes with GGGGGGAAGGGGGGGGAACCCCCCACCCCCCCC currently
 
     std::cout << seq << std::endl;
