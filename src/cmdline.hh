@@ -50,6 +50,8 @@ struct args_info
   const char *paramFile_help; /**< @brief Read energy parameters from paramfile, instead of using the default parameter set. help description.  */
   int noConv_flag;	/**< @brief Do not convert DNA into RNA. This will use the Matthews 2004 parameters for DNA (default=off).  */
   const char *noConv_help; /**< @brief Do not convert DNA into RNA. This will use the Matthews 2004 parameters for DNA help description.  */
+  int noGU_flag;	/**< @brief Turn off G-U and U-G (and G-T and T-G) base pairing (default=off).  */
+  const char *noGU_help; /**< @brief Turn off G-U and U-G (and G-T and T-G) base pairing help description.  */
   
   unsigned int help_given ;	/**< @brief Whether help was given.  */
   unsigned int version_given ;	/**< @brief Whether version was given.  */
@@ -57,6 +59,7 @@ struct args_info
   unsigned int dangles_given ;	/**< @brief Whether dangles was given.  */
   unsigned int paramFile_given ;	/**< @brief Whether paramFile was given.  */
   unsigned int noConv_given ;	/**< @brief Whether noConv was given.  */
+  unsigned int noGU_given ;	/**< @brief Whether noGU was given.  */
 
   char **inputs ; /**< @brief unnamed options (options without names) */
   unsigned inputs_num ; /**< @brief unnamed options number */

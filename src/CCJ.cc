@@ -74,6 +74,7 @@ int main (int argc, char *argv[])
     std::transform(seq.begin(), seq.end(), seq.begin(), ::toupper);
 	if(!args_info.noConv_flag) seqtoRNA(seq);
 
+    noGU = args_info.noGU_given;
     validateSequence(seq);
 
     if(args_info.paramFile_given){
@@ -85,6 +86,7 @@ int main (int argc, char *argv[])
         }
     } else {
         if (seq.find('T') != std::string::npos) {
+            noGU = 1;
             vrna_params_load_DNA_Mathews2004();
         } else{
             std::string file = "params/rna_DirksPierce09.par";

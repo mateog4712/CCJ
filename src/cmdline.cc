@@ -40,6 +40,7 @@ const char *args_info_help[] = {
   "  -d, --dangles=INT        Specify the dangle model to be used (base is 2)\n                             (default=`2')",
   "  -P, --paramFile=STRING   Read energy parameters from paramfile, instead of\n                             using the default parameter set.",
   "      --noConv             Do not convert DNA into RNA. This will use the\n                             Matthews 2004 parameters for DNA  (default=off)",
+  "      --noGU               Turn off G-U and U-G (and G-T and T-G) base pairing\n                             (default=off)",
   "\nThe input sequence is read from standard input, unless it is\ngiven on the command line.\n",
     0
 };
@@ -72,6 +73,7 @@ void clear_given (struct args_info *args_info)
   args_info->dangles_given = 0 ;
   args_info->paramFile_given = 0 ;
   args_info->noConv_given = 0 ;
+  args_info->noGU_given = 0 ;
 }
 
 static
@@ -85,6 +87,7 @@ void clear_args (struct args_info *args_info)
   args_info->paramFile_arg = NULL;
   args_info->paramFile_orig = NULL;
   args_info->noConv_flag = 0;
+  args_info->noGU_flag = 0;
   
 }
 
@@ -99,6 +102,7 @@ void init_args_info(struct args_info *args_info)
   args_info->dangles_help = args_info_help[3] ;
   args_info->paramFile_help = args_info_help[4] ;
   args_info->noConv_help = args_info_help[5] ;
+  args_info->noGU_help = args_info_help[6] ;
   
 }
 
@@ -243,6 +247,8 @@ cmdline_parser_dump(FILE *outfile, struct args_info *args_info)
     write_into_file(outfile, "paramFile", args_info->paramFile_orig, 0);
   if (args_info->noConv_given)
     write_into_file(outfile, "noConv", 0, 0 );
+  if (args_info->noGU_given)
+    write_into_file(outfile, "noGU", 0, 0 );
   
 
   i = EXIT_SUCCESS;
@@ -509,6 +515,7 @@ cmdline_parser_internal (
         { "dangles",	1, NULL, 'd' },
         { "paramFile",	1, NULL, 'P' },
         { "noConv",	0, NULL, 0 },
+        { "noGU",	0, NULL, 0 },
         { 0,  0, 0, 0 }
       };
 
@@ -574,6 +581,18 @@ cmdline_parser_internal (
             if (update_arg((void *)&(args_info->noConv_flag), 0, &(args_info->noConv_given),
                 &(local_args_info.noConv_given), optarg, 0, 0, ARG_FLAG,
                 check_ambiguity, override, 1, 0, "noConv", '-',
+                additional_error))
+              goto failure;
+          
+          }
+          /* Turn off G-U and U-G (and G-T and T-G) base pairing.  */
+          else if (strcmp (long_options[option_index].name, "noGU") == 0)
+          {
+          
+          
+            if (update_arg((void *)&(args_info->noGU_flag), 0, &(args_info->noGU_given),
+                &(local_args_info.noGU_given), optarg, 0, 0, ARG_FLAG,
+                check_ambiguity, override, 1, 0, "noGU", '-',
                 additional_error))
               goto failure;
           
