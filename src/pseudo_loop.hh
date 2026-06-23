@@ -34,23 +34,18 @@ public:
 	
 	energy_t get_energy(cand_pos_t i, cand_pos_t j){return P.get(i,j);}
 
+	inline energy_t get_PO(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l){return std::min(POm.get(i,j,k,l),POs.get(i,j,k,l));};
+
 	energy_t get_PfromLdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	energy_t get_PfromRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	energy_t get_PfromMdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	energy_t get_PfromOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	
-	
-	energy_t get_PLiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	energy_t get_PLmloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	
-	energy_t get_PRiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	energy_t get_PRmloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	
-	energy_t get_PMiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	energy_t get_PMmloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	
-	energy_t get_POiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	energy_t get_POmloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	energy_t get_PfromLreOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	energy_t get_PfromMreOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	energy_t get_PfromLreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	energy_t get_PfromMreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	energy_t get_PfromLMreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	energy_t get_PfromLMorOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 
 	TriangleMatrix P;					// the main loop for pseudoloops and bands
 private:
@@ -75,43 +70,104 @@ private:
 	TriangleMatrix WPP;	// similar to WP but has at least one base pair
 	TriangleMatrix WBP;	// similar to WB but has at least one base pair
 	
-	Matrix4D PK;		// MFE of a TGB structure over gapped region [i,j] U [k,l]
 	Matrix4D PL;		// MFE of a TGB structure s.t. i.j is paired
-	Matrix4D PR;		// MFE of a TGB structure s.t. k.l is paired
-	Matrix4D PM;		// MFE of a TGB structure s.t. j.k is paired
-	Matrix4D PO;		// MFE of a TGB structure s.t. i.l is paired
-	// Matrix4D POs;	// MFE of a TGB structure s.t. i.l is paired single
-	// Matrix4D POm;	// MFE of a TGB structure s.t. i.l is paired multiple
-	
-	// transition recurrences
-	Matrix4D PfromL;
-	Matrix4D PfromLprime;
-	Matrix4D PfromR;
-	Matrix4D PfromRprime;
-	Matrix4D PfromM;
-	Matrix4D PfromMprime;
-	Matrix4D PfromO;
-	Matrix4D PfromOprime;
-	
-	// internal loops and multi loops that span a band
 	Matrix4D PLmloop00;
 	Matrix4D PLmloop01;
 	Matrix4D PLmloop10;
-	
-	
+	Matrix4D PfromL;
+	Matrix4D PfromLprime;
+
+	Matrix4D PR;		// MFE of a TGB structure s.t. k.l is paired
 	Matrix4D PRmloop00;
 	Matrix4D PRmloop01;
 	Matrix4D PRmloop10;
-	
-	
+	Matrix4D PfromR;
+	Matrix4D PfromRprime;
+
+	Matrix4D PM;		// MFE of a TGB structure s.t. j.k is paired
+	Matrix4D PfromM;
+	Matrix4D PfromMprime;
 	Matrix4D PMmloop00;
 	Matrix4D PMmloop01;
 	Matrix4D PMmloop10;
+
+	Matrix4D POm;	// MFE of a TGB structure s.t. i.l is paired multiple
+	Matrix4D POmmloop00;
+	Matrix4D POmmloop01;
+	Matrix4D POmmloop10;
+	Matrix4D PfromO;
+	Matrix4D PfromOprime;
 	
-	
-	Matrix4D POmloop00;
-	Matrix4D POmloop01;
-	Matrix4D POmloop10;
+	Matrix4D POs;	// MFE of a TGB structure s.t. i.l is paired single
+	Matrix4D POsmloop00;
+	Matrix4D POsmloop01;
+	Matrix4D POsmloop10;
+
+	Matrix4D PLreO;
+	Matrix4D PLreOmloop00;
+	Matrix4D PLreOmloop01;
+	Matrix4D PLreOmloop10;
+	Matrix4D PfromLreO;
+	Matrix4D PfromLreOprime;
+
+	Matrix4D PLreR;
+	Matrix4D PLreRmloop00;
+	Matrix4D PLreRmloop01;
+	Matrix4D PLreRmloop10;
+	Matrix4D PfromLreR;
+	Matrix4D PfromLreRprime;
+
+	Matrix4D PMreO;
+	Matrix4D PMreOmloop00;
+	Matrix4D PMreOmloop01;
+	Matrix4D PMreOmloop10;
+	Matrix4D PfromMreO;
+	Matrix4D PfromMreOprime;
+
+	Matrix4D PMreR;
+	Matrix4D PMreRmloop00;
+	Matrix4D PMreRmloop01;
+	Matrix4D PMreRmloop10;
+	Matrix4D PfromMreR;
+	Matrix4D PfromMreRprime;
+
+	Matrix4D PLMreR;
+	Matrix4D PLMreRmloop00;
+	Matrix4D PLMreRmloop01;
+	Matrix4D PLMreRmloop10;
+	Matrix4D PfromLMreR;
+	Matrix4D PfromLMreRprime;
+
+	Matrix4D PLMorO;
+	Matrix4D PLMorOmloop00;
+	Matrix4D PLMorOmloop01;
+	Matrix4D PLMorOmloop10;
+	Matrix4D PfromLMorO;
+	Matrix4D PfromLMorOprime;
+
+	Matrix4D PK1Om;		// MFE of a TGB structure over gapped region [i,j] U [k,l]
+	Matrix4D PK2Om;
+
+	Matrix4D PK1Os;
+	Matrix4D PK2Os;
+
+	Matrix4D PK1LreO;
+	Matrix4D PK2LreO;
+
+	Matrix4D PK1MreO;
+	Matrix4D PK2MreO;
+
+	Matrix4D PK1LreR;
+	Matrix4D PK2LreR;
+
+	Matrix4D PK1MreR;
+	Matrix4D PK2MreR;
+
+	Matrix4D PK1R;
+	Matrix4D PK2R;
+
+	Matrix4D PK1LMreR;
+	Matrix4D PK1LMorO;
 
 	std::vector<char> can_pair_;
     void init_can_pair() {
@@ -139,40 +195,98 @@ private:
 	void compute_WPP(cand_pos_t i, cand_pos_t l);
 		
 	void compute_P(cand_pos_t i, cand_pos_t l);
-	void compute_PK(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PX(Index4D &x, MType type);
-	energy_t compute_PX_helper(Index4D &x, MType type);
+	void compute_PK1X(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, MType type);
+	void compute_PK2X(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, MType type);
+	void compute_PX(const Index4D &x, MType type);
+	
 	void compute_PL(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PR(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PM(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PO(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	
-	
 	void compute_PfromL(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-    void compute_PfromR(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PfromM(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PfromMprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PfromO(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	
+	void compute_PfromLprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PLmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PLmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PLmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	
+	void compute_PR(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PfromR(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PfromRprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PRmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PRmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PRmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	
+
+
+	void compute_PM(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PfromM(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PfromMprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PMmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PMmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PMmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	
-	void compute_POmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_POmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_POmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 
-	energy_t calc_PXiloop(const Index4D &x, MType type);
-	energy_t calc_PXmloop(const Index4D &x, MType type);
-	energy_t calc_PfromX(const Index4D &x, MType type);
+	void compute_POm(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PfromO(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PfromOprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_POmmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_POmmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_POmmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+
+	void compute_POs(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_POsmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_POsmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_POsmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+
+	void compute_PLreO(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PfromLreO(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PfromLreOprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PLreOmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PLreOmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PLreOmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+
+	void compute_PMreO(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PfromMreO(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PfromMreOprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PMreOmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PMreOmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PMreOmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+
+	void compute_PLreR(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PfromLreR(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PfromLreRprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PLreRmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PLreRmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PLreRmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+
+	void compute_PMreR(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PfromMreR(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PfromMreRprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PMreRmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PMreRmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PMreRmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+
+	void compute_PLMreR(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PfromLMreR(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PfromLMreRprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PLMreRmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PLMreRmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PLMreRmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+
+	void compute_PLMorO(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PfromLMorO(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PfromLMorOprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PLMorOmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PLMorOmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PLMorOmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+
+	energy_t calc_PLiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	energy_t calc_PRiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	energy_t calc_PMiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	energy_t calc_POmiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	energy_t calc_POsiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	energy_t calc_PLreOiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	energy_t calc_PLreRiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	energy_t calc_PMreOiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	energy_t calc_PMreRiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	energy_t calc_PLMreRiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	energy_t calc_PLMorOiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	// energy_t calc_PfromX(const Index4D &x, MType type);
 
     // function to allocate space for the arrays
     void allocate_space();
@@ -181,14 +295,21 @@ private:
 	energy_t get_e_intP(cand_pos_t i,cand_pos_t ip, cand_pos_t jp, cand_pos_t j);
 	energy_t compute_int(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l);
 
-	inline energy_t beta2(cand_pos_t i, cand_pos_t l);
-	inline energy_t beta2P(cand_pos_t i, cand_pos_t l);
+	// inline energy_t beta2(cand_pos_t i, cand_pos_t l);
+	// inline energy_t beta2P(cand_pos_t i, cand_pos_t l);
 	// penalty for closing pair i.l or l.i of a pseudoloop
-	constexpr energy_t gamma2(cand_pos_t i, cand_pos_t l){
+	static constexpr energy_t gamma2(cand_pos_t i, cand_pos_t l){
 		return 0;
 	}
-	inline bool impossible_case(Index4D &x) const;
+	inline bool impossible_case(const Index4D &x) const;
+	template<class Penalty> energy_t penalty(const Index4D &x, Penalty p, MType type);
+	energy_t calc_PXiloop(const Index4D &x, MType type);
+	energy_t calc_PXmloop(const Index4D &x, MType type);
 	inline Matrix4D& PX_by_mtype(MType type);
+	inline Matrix4D& PfromX_by_mtype(MType type);
+	inline Matrix4D& PXmloop00_by_mtype(MType type);
+	inline Matrix4D& PK1X_by_mtype(MType type);
+	inline Matrix4D& PK2X_by_mtype(MType type);
 
   	// Hosna: Feb 19th 2007
   	// used for backtracking

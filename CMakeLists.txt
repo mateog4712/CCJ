@@ -16,6 +16,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native") # conside -NDEBUG if I want to 
 SET(SOURCE
   src/W_final.cc 
   src/pseudo_loop.cc 
+  src/pseudo_loop_gen.cc
   src/CCJ.cc
   src/cmdline.cc
   src/s_energy_matrix.cc

@@ -71,7 +71,7 @@ double W_final::ccj(){
 		for (cand_pos_t k=1; k<=j-TURN-1; ++k){
 			energy_t acc = (k>1) ? W[k-1]: 0;
 			m2 = std::min(m2,acc + E_ext_Stem(V->get_energy(k,j),V->get_energy(k+1,j),V->get_energy(k,j-1),V->get_energy(k+1,j-1),S_,params_,k,j,n));
-			m3 = std::min(m3,acc + std::min({P->get_energy(k,j),P->get_energy(k+1,j),P->get_energy(k,j-1),P->get_energy(k+1,j-1)}) + PS_penalty);
+			m3 = std::min(m3,acc + P->get_energy(k,j) + PS_penalty);
 		}
 		W[j] = std::min({m1,m2,m3});
 	}
@@ -88,15 +88,15 @@ double W_final::ccj(){
     stack_interval->type = FREE;
     stack_interval->next = NULL;
 
-    seq_interval *cur_interval = stack_interval;
+    // seq_interval *cur_interval = stack_interval;
 
-    while ( cur_interval != NULL)
-    {
-        stack_interval = stack_interval->next;
-        backtrack(cur_interval);
-        delete cur_interval;    // this should make up for the new in the insert_node
-        cur_interval = stack_interval;
-    }
+    // while ( cur_interval != NULL)
+    // {
+    //     stack_interval = stack_interval->next;
+    //     backtrack(cur_interval);
+    //     delete cur_interval;    // this should make up for the new in the insert_node
+    //     cur_interval = stack_interval;
+    // }
 
 	fill_structure();
 

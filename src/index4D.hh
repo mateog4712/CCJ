@@ -5,16 +5,18 @@
 #include <array>
 #include <fstream>
 //! type of 4D matrix -- left, middle, right, outer
-// enum class MType {L, M, R, O, Os, LLMO, MLMO, LLMR, MLMR};
-enum class MType {L, M, R, O};
+enum class MType {L, M, R, Om, Os, LreO, LreR, MreO, MreR, LMreR, LMorO};
+// enum class PK1Type {Om, Os, LreO, LreR, MreO, MreR, R, LMreR, LMorO};
+// enum class PK2Type {Om, Os, LreO, LreR, MreO, MreR, R};
+// enum class MType {L, M, R, O};
 
 inline std::ostream & operator << (std::ostream &out, MType type) {
-    static std::array<std::string,4> symbol {"L","M","R","O"};
+    static std::array<std::string,11> symbol {"L","M","R","Om","Os","LreO","LreR","MreO","MreR","LMreR","LMorO"};
     return out << symbol[static_cast<int>(type)];
 }
 
-template <class T, T l, T m, T r, T o> const T& select_by_mtype(const MType &type) {
-    static T x[] = {l,m,r,o};
+template <class T, T l, T m, T r, T om, T os, T LreO, T LreR, T MreO, T MreR, T LMreR, T LMorO> const T& select_by_mtype(const MType &type) {
+    static T x[] = {l,m,r,om,os,LreO,LreR,MreO,MreR,LMreR,LMorO};
     return x[static_cast<int>(type)];
 }
 
@@ -36,22 +38,22 @@ class Index4D : public std::array<int,4> {
 
     //! @brief left end for type
     int lend(MType type) const {
-        return (*this)[select_by_mtype<int,0,1,2,0>(type)];
+        return (*this)[select_by_mtype<int,0,1,2,0,0,0,0,1,1,0,0>(type)];
     }
 
     //! @brief left end for type
     int rend(MType type) const {
-        return (*this)[select_by_mtype<int,1,2,3,3>(type)];
+        return (*this)[select_by_mtype<int,1,2,3,3,3,1,1,2,2,1,1>(type)];
     }
 
     //! @brief left end for type
     int &lend(MType type) {
-        return (*this)[select_by_mtype<int,0,1,2,0>(type)];
+        return (*this)[select_by_mtype<int,0,1,2,0,0,0,0,1,1,0,0>(type)];
     }
 
     //! @brief left end for type
     int &rend(MType type) {
-        return (*this)[select_by_mtype<int,1,2,3,3>(type)];
+        return (*this)[select_by_mtype<int,1,2,3,3,3,1,1,2,2,1,1>(type)];
     }
 
     //! @brief set left and right indices for type
@@ -76,7 +78,14 @@ class Index4D : public std::array<int,4> {
         case MType::L: i()+=d;j()-=dp;break;
         case MType::M: j()-=d;k()+=dp;break;
         case MType::R: k()+=d;l()-=dp;break;
-        case MType::O: i()+=d;l()-=dp;break;
+        case MType::Om: i()+=d;l()-=dp;break;
+        case MType::Os: i()+=d;l()-=dp;break;
+        case MType::LreO: i()+=d;j()-=dp;break;
+        case MType::LreR: i()+=d;j()-=dp;break;
+        case MType::MreO: j()-=d;k()+=dp;break;
+        case MType::MreR: j()-=d;k()+=dp;break;
+        case MType::LMreR: i()+=d;j()-=dp;break;
+        case MType::LMorO: i()+=d;j()-=dp;break;
         }
     }
 
