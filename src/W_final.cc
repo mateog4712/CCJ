@@ -10,7 +10,7 @@
 #include <iostream>
 #include <stack>
 #include <list>
-#define debug 1
+#define debug 0
 
 // Hosna June 20th, 2007
 // calls the constructor for s_min_folding
@@ -51,7 +51,7 @@ void W_final::space_allocation(){
 	structure = std::string (n+1,'.');
 
 	// Hosna: June 20th 2007
-    P = new pseudo_loop (seq_,V,S_,S1_,params_);
+    P = new pseudo_loop (seq_,V,this,S_,S1_,params_);
 
 }
 
@@ -60,7 +60,7 @@ double W_final::ccj(){
 	for (cand_pos_t i = n; i>=1; --i){	
 		for (cand_pos_t j =i; j<=n; ++j){
 			V->compute_energy (i,j);
-			// P->compute_energies(i,j);
+			P->compute_energies(i,j);
 			V->compute_WMv_WMp(i,j,P->get_energy(i,j));
 			V->compute_energy_WM(i,j,P->P);
 		}
@@ -78,12 +78,11 @@ double W_final::ccj(){
 
     double energy = W[n]/100.0;
 
-
+	P->set_fold(f);
 	// backtrack
 	backtrack();
 
 	fill_structure();
-
 	this->structure = structure.substr(1,n);
     return energy;
 }
@@ -152,7 +151,7 @@ void W_final::backtrack(){
 
 void W_final::Trace_W(cand_pos_t i, cand_pos_t j, energy_t e){
 	if (debug) printf("W at %d and %d with %d\n", i, j, e);
-	if (j==1) return;
+	if (j<=i) return;
 
 	energy_t acc = INF;
 

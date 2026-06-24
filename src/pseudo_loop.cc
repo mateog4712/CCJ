@@ -1,5 +1,6 @@
 #include "pseudo_loop.hh"
 #include "h_externs.hh"
+#include "W_final.hh"
 #include <stdio.h>
 #include <string>
 #include <stdlib.h>
@@ -10,16 +11,21 @@
 
 #define debug 0
 
-pseudo_loop::pseudo_loop(std::string seq, s_energy_matrix *V, short *S, short *S1, vrna_param_t *params)
+pseudo_loop::pseudo_loop(std::string seq, s_energy_matrix *V, W_final *W, short *S, short *S1, vrna_param_t *params)
 {
 	this->seq = seq;
 	this->V = V;
+	this->W = W;
 	S_ = S;
 	S1_ = S1;
 	params_ = params;
 	make_pair_matrix();
     allocate_space();
 }
+
+void pseudo_loop::set_fold(minimum_fold *f){
+		this->f = f;
+	}
 
 void pseudo_loop::allocate_space()
 {
@@ -230,25 +236,23 @@ void pseudo_loop::compute_energies(cand_pos_t i, cand_pos_t l)
 			compute_PfromXprime(x,MType::LMreR);
 			compute_PfromXprime(x,MType::LMorO);
 
-			compute_PK1X(i,j,k,l,MType::Om);
-			compute_PK1X(i,j,k,l,MType::Os);
-			compute_PK1X(i,j,k,l,MType::LreO);
-			compute_PK1X(i,j,k,l,MType::LreR);
-			compute_PK1X(i,j,k,l,MType::MreO);
-			compute_PK1X(i,j,k,l,MType::MreR);
-			compute_PK1X(i,j,k,l,MType::R);
-			compute_PK1X(i,j,k,l,MType::LMreR);
-			compute_PK1X(i,j,k,l,MType::LMorO);
+			compute_PK1X(x,MType::Om);
+			compute_PK1X(x,MType::Os);
+			compute_PK1X(x,MType::LreO);
+			compute_PK1X(x,MType::LreR);
+			compute_PK1X(x,MType::MreO);
+			compute_PK1X(x,MType::MreR);
+			compute_PK1X(x,MType::R);
+			compute_PK1X(x,MType::LMreR);
+			compute_PK1X(x,MType::LMorO);
 
-			compute_PK2X(i,j,k,l,MType::Om);
-			compute_PK2X(i,j,k,l,MType::Os);
-			compute_PK2X(i,j,k,l,MType::LreO);
-			compute_PK2X(i,j,k,l,MType::LreR);
-			compute_PK2X(i,j,k,l,MType::MreO);
-			compute_PK2X(i,j,k,l,MType::MreR);
-			compute_PK2X(i,j,k,l,MType::R);
-			if(i==1 && j==4 && k==14 && l==17) std::cout << POs.get(i,j,k,l) << std::endl;
-			if(i==5 && j==12 && k==18 && l==25) std::cout << POs.get(i,j,k,l) << std::endl;
+			compute_PK2X(x,MType::Om);
+			compute_PK2X(x,MType::Os);
+			compute_PK2X(x,MType::LreO);
+			compute_PK2X(x,MType::LreR);
+			compute_PK2X(x,MType::MreO);
+			compute_PK2X(x,MType::MreR);
+			compute_PK2X(x,MType::R);
 		}
 	}
 
@@ -345,8 +349,9 @@ template<class Penalty> energy_t pseudo_loop::penalty(const Index4D &x, Penalty 
 /**
  * This always chops from the interior with every single recurrence which means the code is the same and can be made generic
  */
-void pseudo_loop::compute_PK1X(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, MType type){
+void pseudo_loop::compute_PK1X(const Index4D &x, MType type){
 	energy_t min_energy = INF;
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 	Matrix4D &PX = PX_by_mtype(type);
 
 	for(cand_pos_t d = i+1;d<=j;++d){
@@ -358,10 +363,11 @@ void pseudo_loop::compute_PK1X(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos
 /**
  * Same as PK1
  */
-void pseudo_loop::compute_PK2X(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, MType type){
+void pseudo_loop::compute_PK2X(const Index4D &x, MType type){
 	energy_t min_energy = INF;
-
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 	Matrix4D &PK1X = PK1X_by_mtype(type);
+
 	for(cand_pos_t d = k;d<l;++d){
 		min_energy = std::min(min_energy,PK1X.get(i,j,d,l) + calc_WP(k,d-1));
 	}
@@ -533,6 +539,33 @@ void pseudo_loop::compute_PX(const Index4D &x, MType type){
 		PX.setI(x, min_energy);
 	}
 }
+///////////////// Traceback ////////////////////////////////
+
+void pseudo_loop::Trace_PXiloop(const Index4D &x, MType type, energy_t e){
+	if (debug) std::cout << "PXiloop at " << x.i() << " and " << x.j() << " and " << x.k() << " and " << x.l() << " with type: " << type << " and en: " << e << std::endl;
+	switch(type) {
+    case MType::L: return Trace_PLiloop(x,type,e);
+    case MType::M: return Trace_PMiloop(x,type,e);
+    case MType::R: return Trace_PRiloop(x,type,e);
+    case MType::Om: return Trace_POiloop(x,type,e);
+	case MType::Os: return Trace_POiloop(x,type,e);
+	case MType::LreO: return Trace_PLiloop(x,type,e);
+	case MType::LreR: return Trace_PLiloop(x,type,e);
+	case MType::MreO: return Trace_PMiloop(x,type,e);
+	case MType::MreR: return Trace_PMiloop(x,type,e);
+	case MType::LMreR: return Trace_PLiloop(x,type,e);
+	case MType::LMorO: return Trace_PLiloop(x,type,e);
+    }
+    __builtin_unreachable();
+}
+
+
+
+
+
+
+
+////////////////// Util Functions ///////////////////////////
 
 energy_t pseudo_loop::compute_int(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 
@@ -552,10 +585,6 @@ energy_t pseudo_loop::get_e_intP(cand_pos_t i, cand_pos_t ip, cand_pos_t jp, can
 	energy_t e_int = compute_int(i,j,ip,jp);
 	energy_t energy = lrint(e_intP_penalty * e_int);
 	return energy;
-}
-
-void pseudo_loop::Trace_P(cand_pos_t i, cand_pos_t j, energy_t e){
-
 }
 
 // I will turn this all into Trace functions as it will be the same since I am calling backtrack over and over.

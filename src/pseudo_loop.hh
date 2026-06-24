@@ -8,29 +8,26 @@
 #include "s_energy_matrix.hh"
 #include "matrices.hh"
 
-class VM_final;
-class V_final;
+class W_final;
 class pseudo_loop{
 
 public:
 	// constructor
-	pseudo_loop(std::string seq, s_energy_matrix *V, short *S, short *S1, vrna_param_t *params);
+	pseudo_loop(std::string seq, s_energy_matrix *V, W_final *W, short *S, short *S1, vrna_param_t *params);
 
 	// destructor
 	~pseudo_loop();
 
     void compute_energies(cand_pos_t i, cand_pos_t j);
 
-	// void backtrack(minimum_fold *f, seq_interval *cur_interval);
-    // void set_stack_interval(seq_interval *stack_interval);
-    // seq_interval *get_stack_interval(){return stack_interval;}
+	void set_fold(minimum_fold *f);
     std::string get_structure(){return structure;}
     minimum_fold *get_minimum_fold(){return f;}
 	
 	energy_t get_energy(cand_pos_t i, cand_pos_t j){return P.get(i,j);}
 
 	TriangleMatrix P;					// the main loop for pseudoloops and bands
-	void Trace_P(cand_pos_t i, cand_pos_t j, energy_t e);
+	void Trace_P(cand_pos_t i, cand_pos_t l, energy_t e);
 private:
 
 	cand_pos_t n;
@@ -38,8 +35,8 @@ private:
 	std::string seq;
 
     s_energy_matrix *V;		        // the V object
+	W_final *W;		        // the W object
 
-	seq_interval *stack_interval;
 	std::string structure;
 	minimum_fold *f;
 	vrna_param_t *params_;
@@ -178,8 +175,8 @@ private:
 	void compute_WPP(cand_pos_t i, cand_pos_t l);
 		
 	void compute_P(cand_pos_t i, cand_pos_t l);
-	void compute_PK1X(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, MType type);
-	void compute_PK2X(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, MType type);
+	void compute_PK1X(const Index4D &x, MType type);
+	void compute_PK2X(const Index4D &x, MType type);
 	void compute_PX(const Index4D &x, MType type);
 	void compute_PfromX(const Index4D &x, MType type);
 	void compute_PfromXprime(const Index4D &x, MType type);
@@ -217,8 +214,8 @@ private:
 	void compute_PfromOprime(const Index4D &x,MType type);
 
 	inline energy_t calc_PO(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l){return std::min(POm.get(i,j,k,l),POs.get(i,j,k,l));};
-	energy_t calc_WB(cand_pos_t i, cand_pos_t j);
-	energy_t calc_WP(cand_pos_t i, cand_pos_t j);
+	energy_t calc_WB(cand_pos_t i, cand_pos_t l);
+	energy_t calc_WP(cand_pos_t i, cand_pos_t l);
 	energy_t calc_PfromLdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	energy_t calc_PfromRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	energy_t calc_PfromMdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
@@ -229,6 +226,22 @@ private:
 	energy_t calc_PfromMreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	energy_t calc_PfromLMreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	energy_t calc_PfromLMorOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+
+
+	// Traceback //
+	void Trace_WB(cand_pos_t i, cand_pos_t l, energy_t e);
+	void Trace_WBP(cand_pos_t i, cand_pos_t l, energy_t e);
+	void Trace_WP(cand_pos_t i, cand_pos_t l, energy_t e);
+	void Trace_WPP(cand_pos_t i, cand_pos_t l, energy_t e);
+	void Trace_PX1(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l, MType type, energy_t e);
+	void Trace_PX2(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l, MType type, energy_t e);
+	void Trace_PX(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l, MType type, energy_t e);
+	void Trace_PXiloop(const Index4D &x, MType type, energy_t e);
+	void Trace_PLiloop(const Index4D &x, MType type, energy_t e);
+	void Trace_PMiloop(const Index4D &x, MType type, energy_t e);
+	void Trace_PRiloop(const Index4D &x, MType type, energy_t e);
+	void Trace_POiloop(const Index4D &x, MType type, energy_t e);
+
 
     // function to allocate space for the arrays
     void allocate_space();

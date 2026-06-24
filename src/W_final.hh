@@ -28,14 +28,12 @@ class W_final{
 
         vrna_param_t *params_;
         std::string structure;        // MFE structure
-        // PRE:  the init_data function has been called;
-        //       the space for structure has been allocate
-        // POST: fold sequence, return the MFE structure in structure, and return the MFE
 
-		// PRE:  the init_data function has been called;
-		//       the space for structure has been allocate
-		// POST: fold sequence, return the MFE structure in structure, and return the MFE
-
+        void Trace_W(cand_pos_t i, cand_pos_t j, energy_t e);
+        void Trace_V(cand_pos_t i, cand_pos_t j, energy_t e);
+        void Trace_WM(cand_pos_t i, cand_pos_t j, energy_t e);
+        void Trace_WMv(cand_pos_t i, cand_pos_t j, energy_t e);
+        void Trace_WMp(cand_pos_t i, cand_pos_t j, energy_t e);
 
 
     protected:
@@ -67,13 +65,6 @@ class W_final{
         energy_t E_ext_Stem(const energy_t& vij,const energy_t& vi1j,const energy_t& vij1,const energy_t& vi1j1,const short* S, paramT* params, const cand_pos_t i,const cand_pos_t j, cand_pos_t n);
 
         void fill_structure();
-
-        void Trace_W(cand_pos_t i, cand_pos_t j, energy_t e);
-        void Trace_V(cand_pos_t i, cand_pos_t j, energy_t e);
-        void Trace_WM(cand_pos_t i, cand_pos_t j, energy_t e);
-        void Trace_WMv(cand_pos_t i, cand_pos_t j, energy_t e);
-        void Trace_WMp(cand_pos_t i, cand_pos_t j, energy_t e);
-
 };
 
 #endif /*W_FINAL_H_*/
