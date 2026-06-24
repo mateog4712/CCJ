@@ -26,26 +26,8 @@ public:
     seq_interval *get_stack_interval(){return stack_interval;}
     std::string get_structure(){return structure;}
     minimum_fold *get_minimum_fold(){return f;}
-
-	energy_t get_WB(cand_pos_t i, cand_pos_t j);
-	
-	// nested substr in a pseudoloop
-	energy_t get_WP(cand_pos_t i, cand_pos_t j);
 	
 	energy_t get_energy(cand_pos_t i, cand_pos_t j){return P.get(i,j);}
-
-	inline energy_t get_PO(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l){return std::min(POm.get(i,j,k,l),POs.get(i,j,k,l));};
-
-	energy_t get_PfromLdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	energy_t get_PfromRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	energy_t get_PfromMdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	energy_t get_PfromOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	energy_t get_PfromLreOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	energy_t get_PfromMreOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	energy_t get_PfromLreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	energy_t get_PfromMreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	energy_t get_PfromLMreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	energy_t get_PfromLMorOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 
 	TriangleMatrix P;					// the main loop for pseudoloops and bands
 private:
@@ -200,6 +182,7 @@ private:
 	void compute_PX(const Index4D &x, MType type);
 	void compute_PfromX(const Index4D &x, MType type);
 	void compute_PfromXprime(const Index4D &x, MType type);
+	energy_t calc_PfromXdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, MType type);
 	void compute_PXmloop00(const Index4D &x, MType type);
 	void compute_PXmloop01(const Index4D &x, MType type);
 	void compute_PXmloop10(const Index4D &x, MType type);
@@ -222,102 +205,29 @@ private:
 	void compute_POmloop01(const Index4D &x, MType type);
 	void compute_POmloop10(const Index4D &x, MType type);
 
-	
-	// void compute_PL(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PfromL(const Index4D &x, MType type);
-	// void compute_PfromLprime(const Index4D &x,MType type);
-	// void compute_PfromL(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PfromLprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PLmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PLmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PLmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	
-	// void compute_PR(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PfromR(const Index4D &x,MType type);
-	// void compute_PfromRprime(const Index4D &x,MType type);
-	// void compute_PfromR(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PfromRprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PRmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PRmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PRmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-
-
-	// void compute_PM(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	void compute_PfromM(const Index4D &x,MType type);
-	// void compute_PfromMprime(const Index4D &x,MType type);
-	// void compute_PfromM(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PfromMprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PMmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PMmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PMmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-
-	// void compute_POm(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	void compute_PfromR(const Index4D &x,MType type);
 	void compute_PfromO(const Index4D &x,MType type);
-	// void compute_PfromOprime(const Index4D &x,MType type);
-	// void compute_PfromO(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PfromOprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_POmmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_POmmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_POmmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	
+	void compute_PfromLprime(const Index4D &x,MType type);
+	void compute_PfromMprime(const Index4D &x,MType type);
+	void compute_PfromRprime(const Index4D &x,MType type);
+	void compute_PfromOprime(const Index4D &x,MType type);
 
-	// void compute_POs(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_POsmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_POsmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_POsmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-
-	// void compute_PLreO(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	// void compute_PfromLreO(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PfromLreOprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PLreOmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PLreOmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PLreOmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-
-	// void compute_PMreO(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	// void compute_PfromMreO(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PfromMreOprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PMreOmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PMreOmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PMreOmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-
-	// void compute_PLreR(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	// void compute_PfromLreR(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PfromLreRprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PLreRmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PLreRmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PLreRmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-
-	// void compute_PMreR(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	// void compute_PfromMreR(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PfromMreRprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PMreRmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PMreRmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PMreRmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-
-	// void compute_PLMreR(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	// void compute_PfromLMreR(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PfromLMreRprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PLMreRmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PLMreRmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PLMreRmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-
-	// void compute_PLMorO(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	// void compute_PfromLMorO(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PfromLMorOprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PLMorOmloop00(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PLMorOmloop01(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	void compute_PLMorOmloop10(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-
-	// energy_t calc_PLiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	// energy_t calc_PRiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	// energy_t calc_PMiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	// energy_t calc_POmiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	// energy_t calc_POsiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	// energy_t calc_PLreOiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	// energy_t calc_PLreRiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	// energy_t calc_PMreOiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	// energy_t calc_PMreRiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	// energy_t calc_PLMreRiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	// energy_t calc_PLMorOiloop(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	inline energy_t calc_PO(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l){return std::min(POm.get(i,j,k,l),POs.get(i,j,k,l));};
+	energy_t calc_WB(cand_pos_t i, cand_pos_t j);
+	energy_t calc_WP(cand_pos_t i, cand_pos_t j);
+	energy_t calc_PfromLdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	energy_t calc_PfromRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	energy_t calc_PfromMdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	energy_t calc_PfromOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	energy_t calc_PfromLreOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	energy_t calc_PfromMreOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	energy_t calc_PfromLreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	energy_t calc_PfromMreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	energy_t calc_PfromLMreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	energy_t calc_PfromLMorOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 
     // function to allocate space for the arrays
     void allocate_space();
