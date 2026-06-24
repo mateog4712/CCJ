@@ -4,6 +4,8 @@ project(CCJ)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Directory for parameters
+set(PARAMS_DIR "${CMAKE_SOURCE_DIR}/params")  # or CMAKE_INSTALL_PREFIX based path
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
@@ -98,6 +100,11 @@ target_include_directories(RNA PRIVATE .)
 add_executable(CCJ ${SOURCE})
 
 target_link_libraries(CCJ PRIVATE RNA)
+
+# Pass it as a compile definition
+target_compile_definitions(CCJ PRIVATE 
+    PARAMS_DIR="${PARAMS_DIR}"
+)
 
 # Install HFold into the bin directory
 install(TARGETS CCJ RUNTIME DESTINATION bin)

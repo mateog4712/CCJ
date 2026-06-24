@@ -160,46 +160,41 @@ void pseudo_loop::compute_energies(cand_pos_t i, cand_pos_t l)
 		for(cand_pos_t k = l; k>=j+2; --k){
 			Index4D x(i,j,k,l);
 
-			compute_PLmloop00(i,j,k,l);
-			compute_PLmloop01(i,j,k,l);
-			compute_PLmloop10(i,j,k,l);
+			compute_PXmloop00(x,MType::L);
+			compute_PXmloop00(x,MType::M);
+			compute_PXmloop00(x,MType::R);
+			compute_PXmloop00(x,MType::Om);
+			compute_PXmloop00(x,MType::Os);
+			compute_PXmloop00(x,MType::LreO);
+			compute_PXmloop00(x,MType::LreR);
+			compute_PXmloop00(x,MType::MreO);
+			compute_PXmloop00(x,MType::MreR);
+			compute_PXmloop00(x,MType::LMreR);
+			compute_PXmloop00(x,MType::LMorO);
 
-			compute_PRmloop00(i,j,k,l);
-			compute_PRmloop01(i,j,k,l);
-			compute_PRmloop10(i,j,k,l);
+			compute_PXmloop01(x,MType::L);
+			compute_PXmloop01(x,MType::M);
+			compute_PXmloop01(x,MType::R);
+			compute_PXmloop01(x,MType::Om);
+			compute_PXmloop01(x,MType::Os);
+			compute_PXmloop01(x,MType::LreO);
+			compute_PXmloop01(x,MType::LreR);
+			compute_PXmloop01(x,MType::MreO);
+			compute_PXmloop01(x,MType::MreR);
+			compute_PXmloop01(x,MType::LMreR);
+			compute_PXmloop01(x,MType::LMorO);
 
-			compute_PMmloop00(i,j,k,l);
-			compute_PMmloop01(i,j,k,l);
-			compute_PMmloop10(i,j,k,l);
-
-			compute_POmmloop00(i,j,k,l);
-			compute_POmmloop01(i,j,k,l);
-			compute_POmmloop10(i,j,k,l);
-
-			compute_POsmloop00(i,j,k,l);
-			compute_POsmloop01(i,j,k,l);
-			compute_POsmloop10(i,j,k,l);
-
-			compute_PLreOmloop00(i,j,k,l);
-			compute_PLreOmloop01(i,j,k,l);
-			compute_PLreOmloop10(i,j,k,l);
-			compute_PLreRmloop00(i,j,k,l);
-			compute_PLreRmloop01(i,j,k,l);
-			compute_PLreRmloop10(i,j,k,l);
-
-			compute_PMreOmloop00(i,j,k,l);
-			compute_PMreOmloop01(i,j,k,l);
-			compute_PMreOmloop10(i,j,k,l);
-			compute_PMreRmloop00(i,j,k,l);
-			compute_PMreRmloop01(i,j,k,l);
-			compute_PMreRmloop10(i,j,k,l);
-
-			compute_PLMreRmloop00(i,j,k,l);
-			compute_PLMreRmloop01(i,j,k,l);
-			compute_PLMreRmloop10(i,j,k,l);
-			compute_PLMorOmloop00(i,j,k,l);
-			compute_PLMorOmloop01(i,j,k,l);
-			compute_PLMorOmloop10(i,j,k,l);
+			compute_PXmloop10(x,MType::L);
+			compute_PXmloop10(x,MType::M);
+			compute_PXmloop10(x,MType::R);
+			compute_PXmloop10(x,MType::Om);
+			compute_PXmloop10(x,MType::Os);
+			compute_PXmloop10(x,MType::LreO);
+			compute_PXmloop10(x,MType::LreR);
+			compute_PXmloop10(x,MType::MreO);
+			compute_PXmloop10(x,MType::MreR);
+			compute_PXmloop10(x,MType::LMreR);
+			compute_PXmloop10(x,MType::LMorO);
 
 			compute_PX(x,MType::L);
 			compute_PX(x,MType::M);
@@ -213,28 +208,26 @@ void pseudo_loop::compute_energies(cand_pos_t i, cand_pos_t l)
 			compute_PX(x,MType::LMreR);
 			compute_PX(x,MType::LMorO);
 
-			compute_PfromL(i,j,k,l);
+			compute_PfromX(x,MType::L);
+			compute_PfromX(x,MType::M);
+			compute_PfromX(x,MType::R);
+			compute_PfromX(x,MType::Om);
+			compute_PfromX(x,MType::LreO);
+			compute_PfromX(x,MType::LreR);
+			compute_PfromX(x,MType::MreO);
+			compute_PfromX(x,MType::MreR);
+			compute_PfromX(x,MType::LMreR);
+			compute_PfromX(x,MType::LMorO);
+
 			compute_PfromLprime(i,j,k,l);
-			compute_PfromR(i,j,k,l);
 			compute_PfromRprime(i,j,k,l);
-			compute_PfromM(i,j,k,l);
 			compute_PfromMprime(i,j,k,l);
-			compute_PfromO(i,j,k,l);
 			compute_PfromOprime(i,j,k,l);
-
-			compute_PfromLreO(i,j,k,l);
 			compute_PfromLreOprime(i,j,k,l);
-			compute_PfromMreO(i,j,k,l);
-			compute_PfromMreOprime(i,j,k,l);
-
-			compute_PfromLreR(i,j,k,l);
 			compute_PfromLreRprime(i,j,k,l);
-			compute_PfromMreR(i,j,k,l);
+			compute_PfromMreOprime(i,j,k,l);
 			compute_PfromMreRprime(i,j,k,l);
-
-			compute_PfromLMreR(i,j,k,l);
 			compute_PfromLMreRprime(i,j,k,l);
-			compute_PfromLMorO(i,j,k,l);
 			compute_PfromLMorOprime(i,j,k,l);
 
 			compute_PK1X(i,j,k,l,MType::Om);
@@ -333,6 +326,22 @@ void pseudo_loop::compute_P(cand_pos_t i, cand_pos_t l){
 	}
 }
 
+template<class Penalty> energy_t pseudo_loop::penalty(const Index4D &x, Penalty p, MType type) {
+    switch(type) {
+    case MType::L: return p(x.j(),x.i());
+    case MType::M: return p(x.j(),x.k());
+    case MType::R: return p(x.l(),x.k());
+    case MType::Om: return p(x.l(),x.i());
+	case MType::Os: return p(x.l(),x.i());
+	case MType::LreO: return p(x.j(),x.i());
+	case MType::LreR: return p(x.j(),x.i());
+	case MType::MreO: return p(x.j(),x.k());
+	case MType::MreR: return p(x.j(),x.k());
+	case MType::LMreR: return p(x.j(),x.i());
+	case MType::LMorO: return p(x.j(),x.i());
+    }
+    __builtin_unreachable();
+}
 /**
  * This always chops from the interior with every single recurrence which means the code is the same and can be made generic
  */
@@ -346,7 +355,6 @@ void pseudo_loop::compute_PK1X(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos
 	Matrix4D &PK1X = PK1X_by_mtype(type);
 	PK1X.set(i,j,k,l,min_energy);
 }
-
 /**
  * Same as PK1
  */
@@ -360,7 +368,6 @@ void pseudo_loop::compute_PK2X(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos
 	Matrix4D &PK2X = PK2X_by_mtype(type);
 	PK2X.set(i,j,k,l,min_energy);
 }
-
 /**
  * This was a case where the code was almost the same for all recurrences.
  * Each time, you would take the respective recurrence, shrink the related indices
@@ -376,6 +383,104 @@ energy_t pseudo_loop::calc_PXmloop(const Index4D &x, MType type){
 	return PXmloop00.get(xp.i(),xp.j(),xp.k(),xp.l())+ ap_penalty + bp_penalty;
 }
 
+energy_t pseudo_loop::calc_PXiloop(const Index4D &x, MType type){
+	switch(type) {
+    case MType::L: return calc_PLiloop(x,type);
+    case MType::M: return calc_PMiloop(x,type);
+    case MType::R: return calc_PRiloop(x,type);
+    case MType::Om: return calc_POiloop(x,type);
+	case MType::Os: return calc_POiloop(x,type);
+	case MType::LreO: return calc_PLiloop(x,type);
+	case MType::LreR: return calc_PLiloop(x,type);
+	case MType::MreO: return calc_PMiloop(x,type);
+	case MType::MreR: return calc_PMiloop(x,type);
+	case MType::LMreR: return calc_PLiloop(x,type);
+	case MType::LMorO: return calc_PLiloop(x,type);
+    }
+    __builtin_unreachable();
+}
+
+void pseudo_loop::compute_PfromX(const Index4D &x, MType type){
+    switch(type) {
+    case MType::L: return compute_PfromL(x,type);
+    case MType::M: return compute_PfromM(x,type);
+    case MType::R: return compute_PfromR(x,type);
+    case MType::Om: return compute_PfromO(x,type);
+	case MType::Os: return;
+	case MType::LreO: return compute_PfromL(x,type);
+	case MType::LreR: return compute_PfromL(x,type);
+	case MType::MreO: return compute_PfromM(x,type);
+	case MType::MreR: return compute_PfromM(x,type);
+	case MType::LMreR: return compute_PfromL(x,type);
+	case MType::LMorO: return compute_PfromL(x,type);
+    }
+    __builtin_unreachable();
+}
+
+// void pseudo_loop::compute_PfromXprime(const Index4D &x, MType type){
+//     switch(type) {
+//     case MType::L: return compute_PfromLprime(x,type);
+//     case MType::M: return compute_PfromMprime(x,type);
+//     case MType::R: return compute_PfromRprime(x,type);
+//     case MType::Om: return compute_PfromOprime(x,type);
+// 	case MType::LreO: return compute_PfromLprime(x,type);
+// 	case MType::LreR: return compute_PfromLprime(x,type);
+// 	case MType::MreO: return compute_PfromMprime(x,type);
+// 	case MType::MreR: return compute_PfromMprime(x,type);
+// 	case MType::LMreR: return compute_PfromLprime(x,type);
+// 	case MType::LMorO: return compute_PfromLprime(x,type);
+//     }
+//     __builtin_unreachable();
+// }
+
+void pseudo_loop::compute_PXmloop00(const Index4D &x, MType type){
+    switch(type) {
+    case MType::L: return compute_PLmloop00(x,type);
+    case MType::M: return compute_PMmloop00(x,type);
+    case MType::R: return compute_PRmloop00(x,type);
+    case MType::Om: return compute_POmloop00(x,type);
+	case MType::Os: return compute_POmloop00(x,type);
+	case MType::LreO: return compute_PLmloop00(x,type);
+	case MType::LreR: return compute_PLmloop00(x,type);
+	case MType::MreO: return compute_PMmloop00(x,type);
+	case MType::MreR: return compute_PMmloop00(x,type);
+	case MType::LMreR: return compute_PLmloop00(x,type);
+	case MType::LMorO: return compute_PLmloop00(x,type);
+    }
+    __builtin_unreachable();
+}
+void pseudo_loop::compute_PXmloop01(const Index4D &x, MType type){
+    switch(type) {
+    case MType::L: return compute_PLmloop01(x,type);
+    case MType::M: return compute_PMmloop01(x,type);
+    case MType::R: return compute_PRmloop01(x,type);
+    case MType::Om: return compute_POmloop01(x,type);
+	case MType::Os: return compute_POmloop01(x,type);
+	case MType::LreO: return compute_PLmloop01(x,type);
+	case MType::LreR: return compute_PLmloop01(x,type);
+	case MType::MreO: return compute_PMmloop01(x,type);
+	case MType::MreR: return compute_PMmloop01(x,type);
+	case MType::LMreR: return compute_PLmloop01(x,type);
+	case MType::LMorO: return compute_PLmloop01(x,type);
+    }
+    __builtin_unreachable();
+}
+void pseudo_loop::compute_PXmloop10(const Index4D &x, MType type){
+    switch(type) {
+    case MType::L: return compute_PLmloop10(x,type);
+    case MType::M: return compute_PMmloop10(x,type);
+    case MType::R: return compute_PRmloop10(x,type);
+    case MType::Om: return compute_POmloop10(x,type);
+	case MType::Os: return compute_POmloop10(x,type);
+	case MType::LreO: return compute_PLmloop10(x,type);
+	case MType::LreR: return compute_PLmloop10(x,type);
+	case MType::MreO: return compute_PMmloop10(x,type);
+	case MType::MreR: return compute_PMmloop10(x,type);
+	case MType::LMreR: return compute_PLmloop10(x,type);
+	case MType::LMorO: return compute_PLmloop10(x,type);
+    }
+    __builtin_unreachable();
+}
 /**
  * As this just calls the other functions, we can reduce it to just a PX.
  * ptype closing can be done because lend and rend give the correct indices
@@ -410,834 +515,6 @@ void pseudo_loop::compute_PX(const Index4D &x, MType type){
 		PX.setI(x, min_energy);
 	}
 }
-
-template<class Penalty> energy_t pseudo_loop::penalty(const Index4D &x, Penalty p, MType type) {
-    switch(type) {
-    case MType::L: return p(x.j(),x.i());
-    case MType::M: return p(x.j(),x.k());
-    case MType::R: return p(x.l(),x.k());
-    case MType::Om: return p(x.l(),x.i());
-	case MType::Os: return p(x.l(),x.i());
-	case MType::LreO: return p(x.j(),x.i());
-	case MType::LreR: return p(x.j(),x.i());
-	case MType::MreO: return p(x.j(),x.k());
-	case MType::MreR: return p(x.j(),x.k());
-	case MType::LMreR: return p(x.j(),x.i());
-	case MType::LMorO: return p(x.j(),x.i());
-    }
-    __builtin_unreachable();
-}
-
-energy_t pseudo_loop::calc_PXiloop(const Index4D &x, MType type){
-	switch(type) {
-    case MType::L: return calc_PLiloop(x.i(), x.j(), x.k(), x.l());
-    case MType::M: return calc_PMiloop(x.i(), x.j(), x.k(), x.l());
-    case MType::R: return calc_PRiloop(x.i(), x.j(), x.k(), x.l());
-    case MType::Om: return calc_POmiloop(x.i(), x.j(), x.k(), x.l());
-	case MType::Os: return calc_POsiloop(x.i(), x.j(), x.k(), x.l());
-	case MType::LreO: return calc_PLreOiloop(x.i(), x.j(), x.k(), x.l());
-	case MType::LreR: return calc_PLreRiloop(x.i(), x.j(), x.k(), x.l());
-	case MType::MreO: return calc_PMreOiloop(x.i(), x.j(), x.k(), x.l());
-	case MType::MreR: return calc_PMreRiloop(x.i(), x.j(), x.k(), x.l());
-	case MType::LMreR: return calc_PLMreRiloop(x.i(), x.j(), x.k(), x.l());
-	case MType::LMorO: return calc_PLMorOiloop(x.i(), x.j(), x.k(), x.l());
-    }
-    __builtin_unreachable();
-}
-
-energy_t pseudo_loop::compute_PfromX(const Index4D &x, MType type){
-    switch(type) {
-    case MType::L: return compute_PfromL(x,type);
-    case MType::M: return compute_PfromM(x,type);
-    case MType::R: return compute_PfromR(x,type);
-    case MType::Om: return compute_PfromO(x,type);
-	case MType::LreO: return compute_PfromL(x,type);
-	case MType::LreR: return compute_PfromL(x,type);
-	case MType::MreO: return compute_PfromM(x,type);
-	case MType::MreR: return compute_PfromM(x,type);
-	case MType::LMreR: return compute_PfromL(x,type);
-	case MType::LMorO: return compute_PfromL(x,type);
-    }
-    __builtin_unreachable();
-}
-
-energy_t pseudo_loop::compute_PfromXprime(const Index4D &x, MType type){
-    switch(type) {
-    case MType::L: return compute_PfromLprime(x,type);
-    case MType::M: return compute_PfromMprime(x,type);
-    case MType::R: return compute_PfromRprime(x,type);
-    case MType::Om: return compute_PfromOprime(x,type);
-	case MType::LreO: return compute_PfromLprime(x,type);
-	case MType::LreR: return compute_PfromLprime(x,type);
-	case MType::MreO: return compute_PfromMprime(x,type);
-	case MType::MreR: return compute_PfromMprime(x,type);
-	case MType::LMreR: return compute_PfromLprime(x,type);
-	case MType::LMorO: return compute_PfromLprime(x,type);
-    }
-    __builtin_unreachable();
-}
-
-void pseudo_loop::compute_PfromL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF;
-
-	for(cand_pos_t d=i+1; d<=j; ++d){
-		energy_t tmp = get_WP(i,d-1) + PfromLprime.get(d,j,k,l);
-		min_energy = std::min(min_energy,tmp);
-	}
-
-	if (min_energy < INF/2){
-		PfromL.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PfromLprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF;
-
-	for(cand_pos_t d=i; d<j; ++d){
-		energy_t tmp=get_PfromLdoubleprime(i,d,k,l)+get_WP(d+1,j);
-		min_energy = std::min(min_energy,tmp);
-	}
-	
-	if (min_energy < INF/2){
-		PfromLprime.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PfromR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF;
-
-	for(cand_pos_t d=k+1; d<=l; ++d){
-		energy_t tmp = get_WP(k,d-1) + PfromRprime.get(i,j,d,l);
-		min_energy = std::min(min_energy,tmp);
-	}
-
-	if (min_energy < INF/2){
-		PfromR.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PfromRprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF;
-
-	for(cand_pos_t d=k; d<l; ++d){
-		energy_t tmp=get_PfromRdoubleprime(i,j,k,d)+get_WP(d+1,l);
-		min_energy = std::min(min_energy,tmp);
-	}
-	
-	if (min_energy < INF/2){
-		PfromRprime.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PfromM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF;
-
-	for(cand_pos_t d=i; d<j; ++d){
-		energy_t tmp = PfromMprime.get(i,d,k,l)+get_WP(d+1,j);
-		min_energy = std::min(min_energy,tmp);
-	}
-
-	if (min_energy < INF/2){
-		PfromM.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PfromMprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF;
-
-	for(cand_pos_t d=k+1; d<=l; ++d){
-		energy_t tmp= get_WP(k,d-1) + get_PfromMdoubleprime(i,j,d,l);
-		min_energy = std::min(min_energy,tmp);
-	}
-	
-	if (min_energy < INF/2){
-		PfromMprime.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PfromO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF;
-
-	for(cand_pos_t d=i+1; d<=j; ++d){
-		energy_t tmp = get_WP(i,d-1) + PfromOprime.get(d,j,k,l);
-		min_energy = std::min(min_energy,tmp);
-	}
-
-	if (min_energy < INF/2){
-		PfromO.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PfromOprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF;
-
-	for(cand_pos_t d=k; d<l; ++d){
-		energy_t tmp=get_PfromOdoubleprime(i,j,k,d)+get_WP(d+1,j);
-		min_energy = std::min(min_energy,tmp);
-	}
-	
-	if (min_energy < INF/2){
-		PfromOprime.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PfromLreO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF;
-
-	for(cand_pos_t d=i+1; d<=j; ++d){
-		energy_t tmp = get_WP(i,d-1) + PfromLreOprime.get(d,j,k,l);
-		min_energy = std::min(min_energy,tmp);
-	}
-
-	if (min_energy < INF/2){
-		PfromLreO.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PfromLreOprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF;
-
-	for(cand_pos_t d=i; d<j; ++d){
-		energy_t tmp=get_PfromLreOdoubleprime(i,d,k,l)+get_WP(d+1,j);
-		min_energy = std::min(min_energy,tmp);
-	}
-	
-	if (min_energy < INF/2){
-		PfromLreOprime.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PfromLreR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF;
-
-	for(cand_pos_t d=i+1; d<=j; ++d){
-		energy_t tmp = get_WP(i,d-1) + PfromLreRprime.get(d,j,k,l);
-		min_energy = std::min(min_energy,tmp);
-	}
-
-	if (min_energy < INF/2){
-		PfromLreR.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PfromLreRprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF;
-
-	for(cand_pos_t d=i; d<j; ++d){
-		energy_t tmp=get_PfromLreRdoubleprime(i,d,k,l)+get_WP(d+1,j);
-		min_energy = std::min(min_energy,tmp);
-	}
-	
-	if (min_energy < INF/2){
-		PfromLreRprime.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PfromMreO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF;
-
-	for(cand_pos_t d=i+1; d<j; ++d){
-		energy_t tmp = PfromMreOprime.get(i,d,k,l)+get_WP(d+1,j);
-		min_energy = std::min(min_energy,tmp);
-	}
-
-	if (min_energy < INF/2){
-		PfromMreO.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PfromMreOprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF;
-
-	for(cand_pos_t d=k+1; d<l; ++d){
-		energy_t tmp=get_PfromMreOdoubleprime(i,j,d,l)+get_WP(k,d-1);
-		min_energy = std::min(min_energy,tmp);
-	}
-	
-	if (min_energy < INF/2){
-		PfromMreOprime.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PfromMreR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF;
-
-	for(cand_pos_t d=i+1; d<j; ++d){
-		energy_t tmp = PfromMreRprime.get(i,d,k,l)+get_WP(d+1,j);
-		min_energy = std::min(min_energy,tmp);
-	}
-
-	if (min_energy < INF/2){
-		PfromMreR.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PfromMreRprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF;
-
-	for(cand_pos_t d=k+1; d<l; ++d){
-		energy_t tmp=get_PfromMreRdoubleprime(i,j,d,l)+get_WP(k,d-1);
-		min_energy = std::min(min_energy,tmp);
-	}
-	
-	if (min_energy < INF/2){
-		PfromMreRprime.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PfromLMreR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF;
-
-	for(cand_pos_t d=i+1; d<=j; ++d){
-		energy_t tmp = get_WP(i,d-1) + PfromLMreRprime.get(d,j,k,l);
-		min_energy = std::min(min_energy,tmp);
-	}
-
-	if (min_energy < INF/2){
-		PfromLMreR.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PfromLMreRprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF;
-
-	for(cand_pos_t d=i; d<j; ++d){
-		energy_t tmp=get_PfromLMreRdoubleprime(i,d,k,l)+get_WP(d+1,j);
-		min_energy = std::min(min_energy,tmp);
-	}
-	
-	if (min_energy < INF/2){
-		PfromLMreRprime.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PfromLMorO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF;
-
-	for(cand_pos_t d=i+1; d<=j; ++d){
-		energy_t tmp = get_WP(i,d-1) + PfromLMorOprime.get(d,j,k,l);
-		min_energy = std::min(min_energy,tmp);
-	}
-
-	if (min_energy < INF/2){
-		PfromLMorO.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PfromLMorOprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF;
-
-	for(cand_pos_t d=i; d<j; ++d){
-		energy_t tmp=get_PfromLMorOdoubleprime(i,d,k,l)+get_WP(d+1,j);
-		min_energy = std::min(min_energy,tmp);
-	}
-	
-	if (min_energy < INF/2){
-		PfromLMorOprime.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PLmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-    for(cand_pos_t d = i; d<=j; ++d){
-        if (d>i){
-            tmp=get_WB(i,d-1)+PLmloop10.get(d,j,k,l);
-            min_energy = std::min(min_energy,tmp);
-        }
-        if(d<j){
-            tmp=PLmloop01.get(i,d,k,l)+get_WB(d+1,j);
-            min_energy = std::min(min_energy,tmp);
-        }
-
-    }
-	if (min_energy < INF/2){
-		PLmloop00.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PLmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-	for(cand_pos_t d = i; d < j; ++d){
-        tmp = cp_penalty*(d-i) + PL.get(d,j,k,l);
-        min_energy = std::min(min_energy,tmp);
-    }
-	if (min_energy < INF/2){
-		PLmloop01.set(i,j,k,l,min_energy);
-	}
-
-}
-
-void pseudo_loop::compute_PLmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-	for(cand_pos_t d = i+1; d <= j; ++d){
-        tmp = PL.get(i,d,k,l) + WBP.get(d+1,j);
-        min_energy = std::min(min_energy,tmp);
-    }
-	if (min_energy < INF/2){
-		PLmloop10.set(i,j,k,l,min_energy);
-	}
-
-}
-
-void pseudo_loop::compute_PRmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-	for(cand_pos_t d=k; d<=l; ++d){
-        if(d>k){
-            tmp=get_WB(k,d-1)+PRmloop00.get(i,j,d,l);
-            min_energy = std::min(min_energy,tmp);
-        }
-        if (d<l){
-            tmp = PRmloop00.get(i,j,k,d)+get_WB(d+1,l);
-            min_energy = std::min(min_energy,tmp);
-        }
-    }
-	if (min_energy < INF/2){
-		PRmloop00.set(i,j,k,l,min_energy);
-	}
-
-}
-
-
-void pseudo_loop::compute_PRmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-	min_energy = PRmloop01.get(i,j,k,l-1)+cp_penalty;
-    for(cand_pos_t d = k; d < l; d++){
-        tmp = PRmloop00.get(i,j,k,d) + WBP.get(d+1,l);
-        min_energy = std::min(min_energy,tmp);
-    }
-	if (min_energy < INF/2){
-		PRmloop01.set(i,j,k,l,min_energy);
-	}
-
-}
-
-void pseudo_loop::compute_PRmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-	min_energy = PRmloop10.get(i,j,k+1,l)+ cp_penalty;
-    for(cand_pos_t d = k+1; d <= l; ++d){
-        tmp = WBP.get(k,d-1) + PRmloop00.get(i,j,d,l);
-        min_energy = std::min(min_energy,tmp);
-    }
-	if (min_energy < INF/2){
-		PRmloop10.set(i,j,k,l,min_energy);
-	}
-
-}
-
-void pseudo_loop::compute_PMmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-    for(cand_pos_t d=i; d<j; ++d){
-        tmp=PMmloop00.get(i,d,k,l)+get_WB(d+1,j);
-        min_energy = std::min(min_energy,tmp);
-    }
-    for(cand_pos_t d=k+1; d<=l; ++d){
-        tmp=PMmloop00.get(i,j,d,l)+get_WB(k,d-1);
-        min_energy = std::min(min_energy,tmp);
-    }
-
-	if (min_energy < INF/2){
-		PMmloop00.set(i,j,k,l,min_energy);
-	}
-}
-
-
-void pseudo_loop::compute_PMmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-	min_energy = PMmloop01.get(i,j,k+1,l)+cp_penalty;
-	for(cand_pos_t d = k; d < l; ++d){
-        tmp = PMmloop00.get(i,j,k,d) + WBP.get(d+1,l);
-        min_energy = std::min(min_energy,tmp);
-    }
-
-	if (min_energy < INF/2){
-		PMmloop01.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PMmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-    for(cand_pos_t d = i+1; d <=j; ++d){
-        tmp = PM.get(i,d,k,d) + get_WB(d+1,j);
-        min_energy = std::min(min_energy,tmp);
-    }
-
-	if (min_energy < INF/2){
-		PMmloop10.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_POmmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-    for(cand_pos_t d=i+1; d<=j; ++d){
-        tmp = get_WB(i,d-1)+POmmloop01.get(d,j,k,l);
-        min_energy = std::min(min_energy,tmp);
-    }
-    for(cand_pos_t d=k; d<l; ++d){
-        tmp = POmmloop10.get(i,j,k,d)+get_WB(d+1,l);
-        min_energy = std::min(min_energy,tmp);
-    }
-
-	if (min_energy < INF/2){
-		POmmloop00.set(i,j,k,l,min_energy);
-	}
-
-}
-
-
-void pseudo_loop::compute_POmmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF;
-
-	for(cand_pos_t d = k; d < l; ++d){
-        energy_t tmp = POm.get(i,j,k,d) + cp_penalty*(l-d);
-        min_energy = std::min(min_energy,tmp);
-    }
-
-	if (min_energy < INF/2){
-		POmmloop01.set(i,j,k,l,min_energy);
-	}
-
-}
-
-void pseudo_loop::compute_POmmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-	for(cand_pos_t d=i+1; d<=j;++d){
-        tmp=WBP.get(i,d-1)+POm.get(d,j,k,l);
-        min_energy = std::min(min_energy,tmp);
-    }
-
-	if (min_energy < INF/2){
-		POmmloop10.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_POsmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-    for(cand_pos_t d=i+1; d<=j; ++d){
-        tmp = get_WB(i,d-1)+POsmloop01.get(d,j,k,l);
-        min_energy = std::min(min_energy,tmp);
-    }
-    for(cand_pos_t d=k; d<l; ++d){
-        tmp = POsmloop10.get(i,j,k,d)+get_WB(d+1,l);
-        min_energy = std::min(min_energy,tmp);
-    }
-
-	if (min_energy < INF/2){
-		POsmloop00.set(i,j,k,l,min_energy);
-	}
-
-}
-
-
-void pseudo_loop::compute_POsmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF;
-
-	for(cand_pos_t d = k; d < l; ++d){
-        energy_t tmp = POs.get(i,j,k,d) + cp_penalty*(l-d);
-        min_energy = std::min(min_energy,tmp);
-    }
-
-	if (min_energy < INF/2){
-		POsmloop01.set(i,j,k,l,min_energy);
-	}
-
-}
-
-void pseudo_loop::compute_POsmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-	for(cand_pos_t d=i+1; d<=j;++d){
-        tmp=WBP.get(i,d-1)+POs.get(d,j,k,l);
-        min_energy = std::min(min_energy,tmp);
-    }
-
-	if (min_energy < INF/2){
-		POsmloop10.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PLreOmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-    for(cand_pos_t d = i; d<=j; ++d){
-        if (d>i){
-            tmp=get_WB(i,d-1)+PLreOmloop10.get(d,j,k,l);
-            min_energy = std::min(min_energy,tmp);
-        }
-        if(d<j){
-            tmp=PLreOmloop01.get(i,d,k,l)+get_WB(d+1,j);
-            min_energy = std::min(min_energy,tmp);
-        }
-
-    }
-	if (min_energy < INF/2){
-		PLreOmloop00.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PLreOmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-	for(cand_pos_t d = i; d < j; ++d){
-        tmp = cp_penalty*(d-i) + PLreO.get(d,j,k,l);
-        min_energy = std::min(min_energy,tmp);
-    }
-	if (min_energy < INF/2){
-		PLreOmloop01.set(i,j,k,l,min_energy);
-	}
-
-}
-
-void pseudo_loop::compute_PLreOmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-	for(cand_pos_t d = i+1; d <= j; ++d){
-        tmp = PLreO.get(i,d,k,l) + WBP.get(d+1,j);
-        min_energy = std::min(min_energy,tmp);
-    }
-	if (min_energy < INF/2){
-		PLreOmloop10.set(i,j,k,l,min_energy);
-	}
-
-}
-
-void pseudo_loop::compute_PLreRmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-    for(cand_pos_t d = i; d<=j; ++d){
-        if (d>i){
-            tmp=get_WB(i,d-1)+PLreRmloop10.get(d,j,k,l);
-            min_energy = std::min(min_energy,tmp);
-        }
-        if(d<j){
-            tmp=PLreRmloop01.get(i,d,k,l)+get_WB(d+1,j);
-            min_energy = std::min(min_energy,tmp);
-        }
-
-    }
-	if (min_energy < INF/2){
-		PLreRmloop00.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PLreRmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-	for(cand_pos_t d = i; d < j; ++d){
-        tmp = cp_penalty*(d-i) + PLreR.get(d,j,k,l);
-        min_energy = std::min(min_energy,tmp);
-    }
-	if (min_energy < INF/2){
-		PLreRmloop01.set(i,j,k,l,min_energy);
-	}
-
-}
-
-void pseudo_loop::compute_PLreRmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-	for(cand_pos_t d = i+1; d <= j; ++d){
-        tmp = PLreR.get(i,d,k,l) + WBP.get(d+1,j);
-        min_energy = std::min(min_energy,tmp);
-    }
-	if (min_energy < INF/2){
-		PLreRmloop10.set(i,j,k,l,min_energy);
-	}
-
-}
-
-void pseudo_loop::compute_PMreOmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-    for(cand_pos_t d=i; d<j; ++d){
-        tmp=PMreOmloop00.get(i,d,k,l)+get_WB(d+1,j);
-        min_energy = std::min(min_energy,tmp);
-    }
-    for(cand_pos_t d=k+1; d<=l; ++d){
-        tmp=PMreOmloop00.get(i,j,d,l)+get_WB(k,d-1);
-        min_energy = std::min(min_energy,tmp);
-    }
-
-	if (min_energy < INF/2){
-		PMreOmloop00.set(i,j,k,l,min_energy);
-	}
-}
-
-
-void pseudo_loop::compute_PMreOmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-	for(cand_pos_t d = k; d < l; ++d){
-        tmp = PMreOmloop00.get(i,j,k,d) + WBP.get(d+1,l);
-        min_energy = std::min(min_energy,tmp);
-    }
-
-	if (min_energy < INF/2){
-		PMreOmloop01.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PMreOmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-    for(cand_pos_t d = i+1; d <=j; ++d){
-        tmp = PMreO.get(i,d,k,l) + get_WB(d+1,j);
-        min_energy = std::min(min_energy,tmp);
-    }
-
-	if (min_energy < INF/2){
-		PMreOmloop10.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PMreRmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-    for(cand_pos_t d=i; d<j; ++d){
-        tmp=PMreRmloop00.get(i,d,k,l)+get_WB(d+1,j);
-        min_energy = std::min(min_energy,tmp);
-    }
-    for(cand_pos_t d=k+1; d<=l; ++d){
-        tmp=PMreRmloop00.get(i,j,d,l)+get_WB(k,d-1);
-        min_energy = std::min(min_energy,tmp);
-    }
-
-	if (min_energy < INF/2){
-		PMreRmloop00.set(i,j,k,l,min_energy);
-	}
-}
-
-
-void pseudo_loop::compute_PMreRmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-	for(cand_pos_t d = k; d < l; ++d){
-        tmp = PMreRmloop00.get(i,j,k,d) + WBP.get(d+1,l);
-        min_energy = std::min(min_energy,tmp);
-    }
-
-	if (min_energy < INF/2){
-		PMreRmloop01.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PMreRmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-    for(cand_pos_t d = i+1; d <=j; ++d){
-        tmp = PMreR.get(i,d,k,l) + get_WB(d+1,j);
-        min_energy = std::min(min_energy,tmp);
-    }
-
-	if (min_energy < INF/2){
-		PMreRmloop10.set(i,j,k,l,min_energy);
-	}
-}
-
-
-
-void pseudo_loop::compute_PLMreRmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-    for(cand_pos_t d = i; d<=j; ++d){
-        if (d>i){
-            tmp=get_WB(i,d-1)+PLMreRmloop10.get(d,j,k,l);
-            min_energy = std::min(min_energy,tmp);
-        }
-        if(d<j){
-            tmp=PLMreRmloop01.get(i,d,k,l)+get_WB(d+1,j);
-            min_energy = std::min(min_energy,tmp);
-        }
-
-    }
-	if (min_energy < INF/2){
-		PLMreRmloop00.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PLMreRmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-	for(cand_pos_t d = i; d < j; ++d){
-        tmp = cp_penalty*(d-i) + PLMreR.get(d,j,k,l);
-        min_energy = std::min(min_energy,tmp);
-    }
-	if (min_energy < INF/2){
-		PLMreRmloop01.set(i,j,k,l,min_energy);
-	}
-
-}
-
-void pseudo_loop::compute_PLMreRmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-	for(cand_pos_t d = i+1; d <= j; ++d){
-        tmp = PLMreR.get(i,d,k,l) + WBP.get(d+1,j);
-        min_energy = std::min(min_energy,tmp);
-    }
-	if (min_energy < INF/2){
-		PLMreRmloop10.set(i,j,k,l,min_energy);
-	}
-
-}
-
-void pseudo_loop::compute_PLMorOmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-    for(cand_pos_t d = i; d<=j; ++d){
-        if (d>i){
-            tmp=get_WB(i,d-1)+PLMorOmloop10.get(d,j,k,l);
-            min_energy = std::min(min_energy,tmp);
-        }
-        if(d<j){
-            tmp=PLMorOmloop01.get(i,d,k,l)+get_WB(d+1,j);
-            min_energy = std::min(min_energy,tmp);
-        }
-
-    }
-	if (min_energy < INF/2){
-		PLMorOmloop00.set(i,j,k,l,min_energy);
-	}
-}
-
-void pseudo_loop::compute_PLMorOmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-	for(cand_pos_t d = i; d < j; ++d){
-        tmp = cp_penalty*(d-i) + PLMorO.get(d,j,k,l);
-        min_energy = std::min(min_energy,tmp);
-    }
-	if (min_energy < INF/2){
-		PLMorOmloop01.set(i,j,k,l,min_energy);
-	}
-
-}
-
-void pseudo_loop::compute_PLMorOmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	energy_t min_energy = INF,tmp=INF;
-
-	for(cand_pos_t d = i+1; d <= j; ++d){
-        tmp = PLMorO.get(i,d,k,l) + WBP.get(d+1,j);
-        min_energy = std::min(min_energy,tmp);
-    }
-	if (min_energy < INF/2){
-		PLMorOmloop10.set(i,j,k,l,min_energy);
-	}
-
-}
-
-
 energy_t pseudo_loop::get_WB(cand_pos_t i, cand_pos_t j){
 	if (i<=0 || j<=0 || i>n || j>n){
 		return INF;
@@ -1393,51 +670,6 @@ energy_t pseudo_loop::get_e_intP(cand_pos_t i, cand_pos_t ip, cand_pos_t jp, can
 	energy_t e_int = compute_int(i,j,ip,jp);
 	energy_t energy = lrint(e_intP_penalty * e_int);
 	return energy;
-}
-
-// penalty for closing pair i.l or l.i of an ordinary multiloop
-// inline energy_t pseudo_loop::beta2(cand_pos_t i, cand_pos_t l){
-// 	return b_penalty;
-// }
-
-// penalty for closing pair i.l or l.i of a multiloop that spans a band
-// inline energy_t pseudo_loop::beta2P(cand_pos_t i, cand_pos_t l){
-// 	return bp_penalty;
-// }
-
-inline bool pseudo_loop::impossible_case(const Index4D &x) const {
-    return !x.is_valid(n);
-}
-
-inline Matrix4D& pseudo_loop::PX_by_mtype(MType type) {
-    static std::array<Matrix4D*,11> matrices{&PL, &PM, &PR, &POm, &POs, &PLreO, &PLreR, &PMreO, &PMreR, &PLMreR, &PLMorO};
-    return *matrices[static_cast<int>(type)];
-}
-
-inline Matrix4D& pseudo_loop::PfromX_by_mtype(MType type) {
-    static std::array<Matrix4D*,11> matrices{&PfromL, &PfromM, &PfromR, &PfromO, &PfromO, &PfromLreO, &PfromLreR, &PfromMreO, &PfromMreR, &PfromLMreR, &PfromLMorO};
-    return *matrices[static_cast<int>(type)];
-}
-
-inline Matrix4D& pseudo_loop::PXmloop00_by_mtype(MType type) {
-    static std::array<Matrix4D*,11> matrices{&PLmloop00, &PMmloop00, &PRmloop00, &POmmloop00, &POsmloop00, &PLreOmloop00, &PLreRmloop00, &PMreOmloop00, &PMreRmloop00, &PLMreRmloop00, &PLMorOmloop00};
-    return *matrices[static_cast<int>(type)];
-}
-
-/**
- * Because of the ordering of Mtype, L and M (the first two are the only two missing). This means that I can just pass Mtype-2 and get the matrices I want
- */
-inline Matrix4D& pseudo_loop::PK1X_by_mtype(MType type) {
-    static std::array<Matrix4D*,9> matrices{&PK1R, &PK1Om, &PK1Os, &PK1LreO, &PK1LreR, &PK1MreO, &PK1MreR, &PK1LMreR, &PK1LMorO};
-    return *matrices[static_cast<int>(type)-2];
-}
-
-/**
- * This follows the same logic as PK1 but it is missing the last two
- */
-inline Matrix4D& pseudo_loop::PK2X_by_mtype(MType type) {
-    static std::array<Matrix4D*,7> matrices{&PK2R, &PK2Om, &PK2Os, &PK2LreO, &PK2LreR, &PK2MreO, &PK2MreR};
-    return *matrices[static_cast<int>(type)-2];
 }
 
 void pseudo_loop::backtrack(minimum_fold *f, seq_interval *cur_interval){

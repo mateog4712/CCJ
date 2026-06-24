@@ -6,9 +6,6 @@
 #include <fstream>
 //! type of 4D matrix -- left, middle, right, outer
 enum class MType {L, M, R, Om, Os, LreO, LreR, MreO, MreR, LMreR, LMorO};
-// enum class PK1Type {Om, Os, LreO, LreR, MreO, MreR, R, LMreR, LMorO};
-// enum class PK2Type {Om, Os, LreO, LreR, MreO, MreR, R};
-// enum class MType {L, M, R, O};
 
 inline std::ostream & operator << (std::ostream &out, MType type) {
     static std::array<std::string,11> symbol {"L","M","R","Om","Os","LreO","LreR","MreO","MreR","LMreR","LMorO"};
