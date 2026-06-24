@@ -21,15 +21,16 @@ public:
 
     void compute_energies(cand_pos_t i, cand_pos_t j);
 
-	void backtrack(minimum_fold *f, seq_interval *cur_interval);
-    void set_stack_interval(seq_interval *stack_interval);
-    seq_interval *get_stack_interval(){return stack_interval;}
+	// void backtrack(minimum_fold *f, seq_interval *cur_interval);
+    // void set_stack_interval(seq_interval *stack_interval);
+    // seq_interval *get_stack_interval(){return stack_interval;}
     std::string get_structure(){return structure;}
     minimum_fold *get_minimum_fold(){return f;}
 	
 	energy_t get_energy(cand_pos_t i, cand_pos_t j){return P.get(i,j);}
 
 	TriangleMatrix P;					// the main loop for pseudoloops and bands
+	void Trace_P(cand_pos_t i, cand_pos_t j, energy_t e);
 private:
 
 	cand_pos_t n;
