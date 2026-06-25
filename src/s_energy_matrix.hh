@@ -6,11 +6,9 @@
 #include <string>
 #include <vector>
 
-extern "C" {
-#include "ViennaRNA/pair_mat.h"
-#include "ViennaRNA/loops/all.h"
-#include "ViennaRNA/params/io.h"
-}
+#include "ViennaRNA/loops.hh"
+#include "ViennaRNA/pair_mat.hh"
+#include "ViennaRNA/params/io.hh"
 
 
 class s_energy_matrix
@@ -42,15 +40,15 @@ class s_energy_matrix
 
         char get_type (cand_pos_t i, cand_pos_t j) { cand_pos_t ij = index[i]+j-i; return nodes[ij].type; }
 
-        energy_t HairpinE(const std::string& seq, const short* S, const short* S1,  const paramT* params, cand_pos_t i, cand_pos_t j);
-        energy_t compute_stack(cand_pos_t i, cand_pos_t j, const paramT *params);
-        energy_t compute_internal(cand_pos_t i, cand_pos_t j, const paramT *params);
-        energy_t compute_int(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, const paramT *params);
+        energy_t HairpinE(const std::string& seq, const short* S, const short* S1,  const vrna_param_t* params, cand_pos_t i, cand_pos_t j);
+        energy_t compute_stack(cand_pos_t i, cand_pos_t j, const vrna_param_t *params);
+        energy_t compute_internal(cand_pos_t i, cand_pos_t j, const vrna_param_t *params);
+        energy_t compute_int(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, const vrna_param_t *params);
 
         void compute_energy_WM (cand_pos_t i, cand_pos_t j,TriangleMatrix &WMB);
         energy_t compute_energy_VM (cand_pos_t i, cand_pos_t j);
-        energy_t E_MLStem(const energy_t& vij,const energy_t& vi1j,const energy_t& vij1,const energy_t& vi1j1,const short* S, paramT* params,cand_pos_t i, cand_pos_t j, cand_pos_t n);
-        energy_t E_MbLoop(const energy_t WM2ij, const energy_t WM2ip1j, const energy_t WM2ijm1, const energy_t WM2ip1jm1, const short* S, paramT* params, cand_pos_t i, cand_pos_t j);
+        energy_t E_MLStem(const energy_t& vij,const energy_t& vi1j,const energy_t& vij1,const energy_t& vi1j1,const short* S, vrna_param_t* params,cand_pos_t i, cand_pos_t j, cand_pos_t n);
+        energy_t E_MbLoop(const energy_t WM2ij, const energy_t WM2ip1j, const energy_t WM2ijm1, const energy_t WM2ip1jm1, const short* S, vrna_param_t* params, cand_pos_t i, cand_pos_t j);
         void compute_WMv_WMp(cand_pos_t i, cand_pos_t j, energy_t WMB);
 
     protected:

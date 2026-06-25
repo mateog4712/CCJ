@@ -17,7 +17,7 @@
 // to create all the matrixes required for simfold
 // and then calls allocate_space in here to allocate
 // space for WMB and V_final
-W_final::W_final(std::string seq, int dangle) : params_(scale_parameters())
+W_final::W_final(std::string seq, int dangle) : params_(vrna_params(NULL))
 {
 	seq_ = seq;
 	this->n = seq.length();
@@ -96,7 +96,7 @@ double W_final::ccj(){
  * @param vij1 The V(i,j-1) energy
  * @param vi1j1 The V(i+1,j-1) energy
 */
-energy_t W_final::E_ext_Stem(const energy_t& vij,const energy_t& vi1j,const energy_t& vij1,const energy_t& vi1j1,const short* S, paramT* params, const cand_pos_t i,const cand_pos_t j, cand_pos_t n){
+energy_t W_final::E_ext_Stem(const energy_t& vij,const energy_t& vi1j,const energy_t& vij1,const energy_t& vi1j1,const short* S, vrna_param_t* params, const cand_pos_t i,const cand_pos_t j, cand_pos_t n){
 
 	energy_t e = INF, en = INF;
   	pair_type tt  = pair[S[i]][S[j]];
@@ -107,12 +107,12 @@ energy_t W_final::E_ext_Stem(const energy_t& vij,const energy_t& vi1j,const ener
 		if (params->model_details.dangles == 2){
 			base_type si1 = i>1 ? S[i-1] : -1;
 			base_type sj1 = j<n ? S[j+1] : -1;
-			en += vrna_E_ext_stem(tt, si1, sj1, params);
+			en += E_ExtLoop(tt, si1, sj1, params);
 		}
 		else{
-			en += vrna_E_ext_stem(tt, -1, -1, params);
+			en += E_ExtLoop(tt, -1, -1, params);
 		}
-		e = MIN2(e, en);
+		e = std::min(e, en);
 	}
 	if(params->model_details.dangles  == 1){
         tt  = pair[S[i+1]][S[j]];
@@ -120,26 +120,26 @@ energy_t W_final::E_ext_Stem(const energy_t& vij,const energy_t& vi1j,const ener
 
 		if (en != INF) {
 			base_type si1 = S[i];
-			en += vrna_E_ext_stem(tt, si1, -1, params);
+			en += E_ExtLoop(tt, si1, -1, params);
 		}
-		e = MIN2(e,en);
+		e = std::min(e,en);
         
         tt  = pair[S[i]][S[j-1]];
 		en = (j-1-i>TURN) ? vij1 : INF; // i j-1
 		if (en != INF) {
 			base_type sj1 = S[j];
-			en += vrna_E_ext_stem(tt, -1, sj1, params);
+			en += E_ExtLoop(tt, -1, sj1, params);
 		}
-		e = MIN2(e,en);
+		e = std::min(e,en);
 
         tt  = pair[S[i+1]][S[j-1]];
 		en = (j-1-i-1>TURN) ? vi1j1 : INF; // i+1 j-1
 		if (en != INF) {
 			base_type si1 = S[i];
 			base_type sj1 = S[j];
-			en += vrna_E_ext_stem(tt, si1, sj1, params);
+			en += E_ExtLoop(tt, si1, sj1, params);
 		}
-		e = MIN2(e,en);
+		e = std::min(e,en);
 	}
 	return e;
 }

@@ -751,7 +751,7 @@ void pseudo_loop::Trace_PX(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,
 energy_t pseudo_loop::compute_int(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 
 	const pair_type ptype_closing = pair[S_[i]][S_[j]];
-    return E_IntLoop(k-i-1,j-l-1,ptype_closing,rtype[pair[S_[k]][S_[l]]],S1_[i+1],S1_[j-1],S1_[k-1],S1_[l+1],const_cast<paramT *>(params_));
+    return E_IntLoop(k-i-1,j-l-1,ptype_closing,rtype[pair[S_[k]][S_[l]]],S1_[i+1],S1_[j-1],S1_[k-1],S1_[l+1],const_cast<vrna_param_t*>(params_));
 }
 
 energy_t pseudo_loop::get_e_stP(cand_pos_t i, cand_pos_t j){
@@ -767,6 +767,3 @@ energy_t pseudo_loop::get_e_intP(cand_pos_t i, cand_pos_t ip, cand_pos_t jp, can
 	energy_t energy = lrint(e_intP_penalty * e_int);
 	return energy;
 }
-
-// I will turn this all into Trace functions as it will be the same since I am calling backtrack over and over.
-// This will also mean I can do things like Trace_PX() as I can find the base pair boundaries through lend and rend. mwahaha

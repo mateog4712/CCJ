@@ -9,11 +9,10 @@
 #include <string>
 #include <vector>
 
-extern "C" {
-#include "ViennaRNA/pair_mat.h"
-#include "ViennaRNA/loops/all.h"
-#include "ViennaRNA/params/io.h"
-}
+#include "ViennaRNA/loops.hh"
+#include "ViennaRNA/pair_mat.hh"
+#include "ViennaRNA/params/io.hh"
+
 
 class W_final{
 	public:
@@ -62,7 +61,7 @@ class W_final{
 
         void backtrack();
 
-        energy_t E_ext_Stem(const energy_t& vij,const energy_t& vi1j,const energy_t& vij1,const energy_t& vi1j1,const short* S, paramT* params, const cand_pos_t i,const cand_pos_t j, cand_pos_t n);
+        energy_t E_ext_Stem(const energy_t& vij,const energy_t& vi1j,const energy_t& vij1,const energy_t& vi1j1,const short* S, vrna_param_t* params, const cand_pos_t i,const cand_pos_t j, cand_pos_t n);
 
         void fill_structure();
 };

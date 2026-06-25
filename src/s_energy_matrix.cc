@@ -51,7 +51,7 @@ s_energy_matrix::~s_energy_matrix ()
  * @param vij1 The V(i,j-1) energy
  * @param vi1j1 The V(i+1,j-1) energy
 */
-energy_t s_energy_matrix::E_MLStem(const energy_t& vij,const energy_t& vi1j,const energy_t& vij1,const energy_t& vi1j1,const short* S, paramT* params,cand_pos_t i, cand_pos_t j, cand_pos_t n){
+energy_t s_energy_matrix::E_MLStem(const energy_t& vij,const energy_t& vi1j,const energy_t& vij1,const energy_t& vi1j1,const short* S, vrna_param_t* params,cand_pos_t i, cand_pos_t j, cand_pos_t n){
 
 	energy_t e = INF,en=INF;
 
@@ -68,7 +68,7 @@ energy_t s_energy_matrix::E_MLStem(const energy_t& vij,const energy_t& vi1j,cons
 		else{
 			en += E_MLstem(type, -1, -1, params);
 		}
-		e = MIN2(e, en);
+		e = std::min(e, en);
 	}
 	
 	if(params->model_details.dangles == 1){
@@ -82,7 +82,7 @@ energy_t s_energy_matrix::E_MLStem(const energy_t& vij,const energy_t& vi1j,cons
 			type = pair[S[i+1]][S[j]];
 			en += E_MLstem(type, mm5, -1, params);
 
-			e = MIN2(e, en);
+			e = std::min(e, en);
 		}
     	
 
@@ -93,7 +93,7 @@ energy_t s_energy_matrix::E_MLStem(const energy_t& vij,const energy_t& vi1j,cons
 			type = pair[S[i]][S[j-1]];
 			en += E_MLstem(type, -1, mm3, params);
 
-			e = MIN2(e, en);
+			e = std::min(e, en);
 		}
     	
 		en = (j-1-i-1>TURN) ? vi1j1 : INF; // i+1 j-1
@@ -103,7 +103,7 @@ energy_t s_energy_matrix::E_MLStem(const energy_t& vij,const energy_t& vi1j,cons
 			type = pair[S[i+1]][S[j-1]];
 			en += E_MLstem(type, mm5, mm3, params);
 	
-			e = MIN2(e, en);
+			e = std::min(e, en);
 		}
 	}
 
@@ -119,7 +119,7 @@ energy_t s_energy_matrix::E_MLStem(const energy_t& vij,const energy_t& vi1j,cons
 * @param dmli1 Row of WM2 from one iteration ago
 * @param dmli2 Row of WM2 from two iterations ago 
 */
-energy_t s_energy_matrix::E_MbLoop(const energy_t WM2ij, const energy_t WM2ip1j, const energy_t WM2ijm1, const energy_t WM2ip1jm1, const short* S, paramT* params, cand_pos_t i, cand_pos_t j){
+energy_t s_energy_matrix::E_MbLoop(const energy_t WM2ij, const energy_t WM2ip1j, const energy_t WM2ijm1, const energy_t WM2ip1jm1, const short* S, vrna_param_t* params, cand_pos_t i, cand_pos_t j){
 
 	energy_t e = INF,en = INF;
   	pair_type tt  = pair[S[j]][S[i]];
@@ -164,7 +164,7 @@ energy_t s_energy_matrix::E_MbLoop(const energy_t WM2ij, const energy_t WM2ip1j,
 				en += E_MLstem(tt, -1, si1, params) + params->MLclosing + params->MLbase;
 	
 			}
-      		e   = MIN2(e, en);
+      		e   = std::min(e, en);
 			
 			/** 
 			* ML pair 3
@@ -177,7 +177,7 @@ energy_t s_energy_matrix::E_MbLoop(const energy_t WM2ij, const energy_t WM2ip1j,
 
 				en += E_MLstem(tt, sj1, -1, params) + params->MLclosing + params->MLbase; 
 			}
-			e   = MIN2(e, en);
+			e   = std::min(e, en);
 			/** 
 			* ML pair 53
 			* new closing pair (i,j) with mb part [i+2.j-2]
@@ -191,7 +191,7 @@ energy_t s_energy_matrix::E_MbLoop(const energy_t WM2ij, const energy_t WM2ip1j,
 
 				en += E_MLstem(tt, sj1, si1, params) + params->MLclosing + 2 * params->MLbase;
 			}
-			e   = MIN2(e, en);
+			e   = std::min(e, en);
       		break;
 		case 0:
 			e = WM2ij;
@@ -272,44 +272,44 @@ energy_t s_energy_matrix::compute_energy_VM(cand_pos_t i, cand_pos_t j)
  * @param i The left index in the base pair
  * @param j The right index in the base pair
 */
-energy_t s_energy_matrix::HairpinE(const std::string& seq, const short* S, const short* S1,  const paramT* params, cand_pos_t i, cand_pos_t j) {
+energy_t s_energy_matrix::HairpinE(const std::string& seq, const short* S, const short* S1,  const vrna_param_t* params, cand_pos_t i, cand_pos_t j) {
 	
 	const int ptype_closing = pair[S[i]][S[j]];
 
 	if (ptype_closing==0) return INF;
 
-	return E_Hairpin(j-i-1,ptype_closing,S1[i+1],S1[j-1],&seq.c_str()[i-1], const_cast<paramT *>(params));
+	return E_Hairpin(j-i-1,ptype_closing,S1[i+1],S1[j-1],&seq.c_str()[i-1], const_cast<vrna_param_t*>(params));
 }
 
 /**
  * @brief non-restricted version
 */
-energy_t s_energy_matrix::compute_internal(cand_pos_t i, cand_pos_t j, const paramT *params){
+energy_t s_energy_matrix::compute_internal(cand_pos_t i, cand_pos_t j, const vrna_param_t *params){
 	energy_t v_iloop = INF;
 	cand_pos_t max_k = std::min(j-TURN-2,i+MAXLOOP+1);
 	const int ptype_closing = pair[S_[i]][S_[j]];
 	for ( cand_pos_t k=i+1; k<=max_k; ++k) {
 		cand_pos_t min_l=std::max(k+TURN+1 + MAXLOOP+2, k+j-i) - MAXLOOP-2;
 		for (int l=j-1; l>=min_l; --l) {
-			energy_t v_iloop_kl = E_IntLoop(k-i-1,j-l-1,ptype_closing,rtype[pair[S_[k]][S_[l]]],S1_[i+1],S1_[j-1],S1_[k-1],S1_[l+1],const_cast<paramT *>(params)) + get_energy(k,l);
+			energy_t v_iloop_kl = E_IntLoop(k-i-1,j-l-1,ptype_closing,rtype[pair[S_[k]][S_[l]]],S1_[i+1],S1_[j-1],S1_[k-1],S1_[l+1],const_cast<vrna_param_t*>(params)) + get_energy(k,l);
 			v_iloop = std::min(v_iloop,v_iloop_kl);	
 		} 
 	}
 	return v_iloop;
 }
 
-energy_t s_energy_matrix::compute_stack(cand_pos_t i, cand_pos_t j, const paramT *params){
+energy_t s_energy_matrix::compute_stack(cand_pos_t i, cand_pos_t j, const vrna_param_t *params){
 
 	const int ptype_closing = pair[S_[i]][S_[j]];
 	cand_pos_t k = i+1;
     cand_pos_t l = j-1;
-    return E_IntLoop(k-i-1,j-l-1,ptype_closing,rtype[pair[S_[k]][S_[l]]],S1_[i+1],S1_[j-1],S1_[k-1],S1_[l+1],const_cast<paramT *>(params)) + get_energy(k,l);
+    return E_IntLoop(k-i-1,j-l-1,ptype_closing,rtype[pair[S_[k]][S_[l]]],S1_[i+1],S1_[j-1],S1_[k-1],S1_[l+1],const_cast<vrna_param_t*>(params)) + get_energy(k,l);
 }
 
-energy_t s_energy_matrix::compute_int(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, const paramT *params){
+energy_t s_energy_matrix::compute_int(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, const vrna_param_t *params){
 
 	const int ptype_closing = pair[S_[i]][S_[j]];
-    return E_IntLoop(k-i-1,j-l-1,ptype_closing,rtype[pair[S_[k]][S_[l]]],S1_[i+1],S1_[j-1],S1_[k-1],S1_[l+1],const_cast<paramT *>(params)) + get_energy(k,l);
+    return E_IntLoop(k-i-1,j-l-1,ptype_closing,rtype[pair[S_[k]][S_[l]]],S1_[i+1],S1_[j-1],S1_[k-1],S1_[l+1],const_cast<vrna_param_t*>(params)) + get_energy(k,l);
 }
 
 void s_energy_matrix::compute_energy (cand_pos_t i, cand_pos_t j)
