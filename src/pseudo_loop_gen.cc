@@ -100,62 +100,66 @@ energy_t pseudo_loop::calc_POiloop(const Index4D &x, MType type){
 }
 
 void pseudo_loop::compute_PfromL(const Index4D &x, MType type){
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 	energy_t min_energy = INF;
 
 	Matrix4D &PfromXprime = PfromXprime_by_mtype(type);
-	for(cand_pos_t d=x.i()+1; d<=x.j(); ++d){
-		energy_t tmp = calc_WP(x.i(),d-1) + PfromXprime.get(d,x.j(),x.k(),x.l());
+	for(cand_pos_t d=i+1; d<=j; ++d){
+		energy_t tmp = calc_WP(i,d-1) + PfromXprime.get(d,j,k,l);
 		min_energy = std::min(min_energy,tmp);
 	}
 
 	if (min_energy < INF/2){
 		Matrix4D &PfromX = PfromX_by_mtype(type);
-		PfromX.set(x.i(),x.j(),x.k(),x.l(),min_energy);
+		PfromX.set(i,j,k,l,min_energy);
 	}
 }
 
 void pseudo_loop::compute_PfromM(const Index4D &x, MType type){
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 	energy_t min_energy = INF;
 
 	Matrix4D &PfromXprime = PfromXprime_by_mtype(type);
-	for(cand_pos_t d=x.i(); d<x.j(); ++d){
-		energy_t tmp = PfromXprime.get(x.i(),d,x.k(),x.l()) + calc_WP(d+1,x.j());
+	for(cand_pos_t d=i; d<j; ++d){
+		energy_t tmp = PfromXprime.get(i,d,k,l) + calc_WP(d+1,j);
 		min_energy = std::min(min_energy,tmp);
 	}
 
 	if (min_energy < INF/2){
 		Matrix4D &PfromX = PfromX_by_mtype(type);
-		PfromX.set(x.i(),x.j(),x.k(),x.l(),min_energy);
+		PfromX.set(i,j,k,l,min_energy);
 	}
 }
 
 void pseudo_loop::compute_PfromR(const Index4D &x, MType type){
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 	energy_t min_energy = INF;
 
 	Matrix4D &PfromXprime = PfromXprime_by_mtype(type);
-	for(cand_pos_t d=x.k()+1; d<=x.l(); ++d){
-		energy_t tmp = calc_WP(x.k(),d-1) + PfromXprime.get(x.i(),x.j(),d,x.l());
+	for(cand_pos_t d=k+1; d<=l; ++d){
+		energy_t tmp = calc_WP(k,d-1) + PfromXprime.get(i,j,d,l);
 		min_energy = std::min(min_energy,tmp);
 	}
 
 	if (min_energy < INF/2){
 		Matrix4D &PfromX = PfromX_by_mtype(type);
-		PfromX.set(x.i(),x.j(),x.k(),x.l(),min_energy);
+		PfromX.set(i,j,k,l,min_energy);
 	}
 }
 
 void pseudo_loop::compute_PfromO(const Index4D &x, MType type){
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 	energy_t min_energy = INF;
 
 	Matrix4D &PfromXprime = PfromXprime_by_mtype(type);
-	for(cand_pos_t d=x.i()+1; d<=x.j(); ++d){
-		energy_t tmp = calc_WP(x.i(),d-1) + PfromXprime.get(d,x.j(),x.k(),x.l());
+	for(cand_pos_t d=i+1; d<=j; ++d){
+		energy_t tmp = calc_WP(i,d-1) + PfromXprime.get(d,j,k,l);
 		min_energy = std::min(min_energy,tmp);
 	}
 
 	if (min_energy < INF/2){
 		Matrix4D &PfromX = PfromX_by_mtype(type);
-		PfromX.set(x.i(),x.j(),x.k(),x.l(),min_energy);
+		PfromX.set(i,j,k,l,min_energy);
 	}
 }
 /**
@@ -164,58 +168,62 @@ void pseudo_loop::compute_PfromO(const Index4D &x, MType type){
  * 
  */
 void pseudo_loop::compute_PfromLprime(const Index4D &x, MType type){
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 	energy_t min_energy = INF;
 
-	for(cand_pos_t d=x.i(); d<x.j(); ++d){
-		energy_t tmp = calc_PfromXdoubleprime(x.i(),d,x.k(),x.l(),type) + calc_WP(d+1,x.j());
+	for(cand_pos_t d=i; d<j; ++d){
+		energy_t tmp = calc_PfromXdoubleprime(i,d,k,l,type) + calc_WP(d+1,j);
 		min_energy = std::min(min_energy,tmp);
 	}
 	
 	if (min_energy < INF/2){
 		Matrix4D &PfromXprime = PfromXprime_by_mtype(type);
-		PfromXprime.set(x.i(),x.j(),x.k(),x.l(),min_energy);
+		PfromXprime.set(i,j,k,l,min_energy);
 	}
 }
 
 void pseudo_loop::compute_PfromMprime(const Index4D &x, MType type){
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 	energy_t min_energy = INF;
 
-	for(cand_pos_t d=x.k()+1; d<=x.l(); ++d){
-		energy_t tmp= calc_WP(x.k(),d-1) + calc_PfromXdoubleprime(x.i(),x.j(),d,x.l(),type);
+	for(cand_pos_t d=k+1; d<=l; ++d){
+		energy_t tmp= calc_WP(k,d-1) + calc_PfromXdoubleprime(i,j,d,l,type);
 		min_energy = std::min(min_energy,tmp);
 	}
 	
 	if (min_energy < INF/2){
 		Matrix4D &PfromXprime = PfromXprime_by_mtype(type);
-		PfromXprime.set(x.i(),x.j(),x.k(),x.l(),min_energy);
+		PfromXprime.set(i,j,k,l,min_energy);
 	}
 }
 
 void pseudo_loop::compute_PfromRprime(const Index4D &x, MType type){
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 	energy_t min_energy = INF;
 
-	for(cand_pos_t d=x.k(); d<x.l(); ++d){
-		energy_t tmp = calc_PfromXdoubleprime(x.i(),x.j(),x.k(),d,type) + calc_WP(d+1,x.l());
+	for(cand_pos_t d=k; d<l; ++d){
+		energy_t tmp = calc_PfromXdoubleprime(i,j,k,d,type) + calc_WP(d+1,l);
 		min_energy = std::min(min_energy,tmp);
 	}
 	
 	if (min_energy < INF/2){
 		Matrix4D &PfromXprime = PfromXprime_by_mtype(type);
-		PfromXprime.set(x.i(),x.j(),x.k(),x.l(),min_energy);
+		PfromXprime.set(i,j,k,l,min_energy);
 	}
 }
 
 void pseudo_loop::compute_PfromOprime(const Index4D &x, MType type){
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 	energy_t min_energy = INF;
 
-	for(cand_pos_t d=x.k(); d<x.l(); ++d){
-		energy_t tmp = calc_PfromXdoubleprime(x.i(),x.j(),x.k(),d,type) + calc_WP(d+1,x.j());
+	for(cand_pos_t d=k; d<l; ++d){
+		energy_t tmp = calc_PfromXdoubleprime(i,j,k,d,type) + calc_WP(d+1,l);
 		min_energy = std::min(min_energy,tmp);
 	}
 	
 	if (min_energy < INF/2){
 		Matrix4D &PfromXprime = PfromXprime_by_mtype(type);
-		PfromXprime.set(x.i(),x.j(),x.k(),x.l(),min_energy);
+		PfromXprime.set(i,j,k,l,min_energy);
 	}
 }
 
@@ -225,15 +233,13 @@ void pseudo_loop::compute_PLmloop00(const Index4D &x, MType type){
 
 	Matrix4D &PXmloop10 = PXmloop10_by_mtype(type);
 	Matrix4D &PXmloop01 = PXmloop01_by_mtype(type);
-    for(cand_pos_t d = i; d<=j; ++d){
-        if (d>i){
-            tmp = calc_WB(i,d-1) + PXmloop10.get(d,j,k,l);
-            min_energy = std::min(min_energy,tmp);
-        }
-        if(d<j){
-            tmp = PXmloop01.get(i,d,k,l) + calc_WB(d+1,j);
-            min_energy = std::min(min_energy,tmp);
-        }
+	for(cand_pos_t d = i+1; d<=j; ++d){
+		tmp = calc_WB(i,d-1) + PXmloop10.get(d,j,k,l);
+        min_energy = std::min(min_energy,tmp);
+	}
+    for(cand_pos_t d = i; d<j; ++d){
+		tmp = PXmloop01.get(i,d,k,l) + calc_WB(d+1,j);
+		min_energy = std::min(min_energy,tmp);
     }
 	if (min_energy < INF/2){
 		Matrix4D &PXmloop00 = PXmloop00_by_mtype(type);
@@ -265,15 +271,13 @@ void pseudo_loop::compute_PRmloop00(const Index4D &x, MType type){
 
 	Matrix4D &PXmloop10 = PXmloop10_by_mtype(type);
 	Matrix4D &PXmloop01 = PXmloop01_by_mtype(type);
-	for(cand_pos_t d=k; d<=l; ++d){
-        if(d>k){
-            tmp=calc_WB(k,d-1) + PXmloop10.get(i,j,d,l);
-            min_energy = std::min(min_energy,tmp);
-        }
-        if (d<l){
-            tmp = PXmloop01.get(i,j,k,d)+calc_WB(d+1,l);
-            min_energy = std::min(min_energy,tmp);
-        }
+	for(cand_pos_t d=k+1; d<=l; ++d){
+		tmp=calc_WB(k,d-1) + PXmloop10.get(i,j,d,l);
+		min_energy = std::min(min_energy,tmp);
+	}
+	for(cand_pos_t d=k; d<l; ++d){
+		tmp = PXmloop01.get(i,j,k,d)+calc_WB(d+1,l);
+		min_energy = std::min(min_energy,tmp);
     }
 	if (min_energy < INF/2){
 		Matrix4D &PXmloop00 = PXmloop00_by_mtype(type);
@@ -325,7 +329,7 @@ void pseudo_loop::compute_PMmloop10(const Index4D &x, MType type){
 
 	Matrix4D &PX = PX_by_mtype(type);
     for(cand_pos_t d = i+1; d <=j; ++d){
-        tmp = PX.get(i,d,k,d) + calc_WB(d+1,j);
+        tmp = PX.get(i,d,k,l) + calc_WB(d+1,j);
         min_energy = std::min(min_energy,tmp);
     }
 
@@ -340,7 +344,7 @@ void pseudo_loop::compute_PRmloop10(const Index4D &x, MType type){
 
 	Matrix4D &PX = PX_by_mtype(type);
     for(cand_pos_t d = k+1; d <= l; ++d){
-        tmp = PX.get(i,j,d,l) + calc_WB(d+1,l);
+        tmp = PX.get(i,j,k,d) + calc_WB(d+1,l);
         min_energy = std::min(min_energy,tmp);
     }
 	if (min_energy < INF/2){
@@ -355,7 +359,7 @@ void pseudo_loop::compute_POmloop10(const Index4D &x, MType type){
 
 	Matrix4D &PX = PX_by_mtype(type);
 	for(cand_pos_t d=i+1; d<=j;++d){
-        tmp=PX.get(d,j,k,l) + calc_WB(d+1,l);
+        tmp=PX.get(i,j,k,d) + calc_WB(d+1,l);
         min_energy = std::min(min_energy,tmp);
     }
 	if (min_energy < INF/2){
@@ -417,7 +421,7 @@ void pseudo_loop::compute_POmloop01(const Index4D &x, MType type){
 	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 
 	Matrix4D &PX = PX_by_mtype(type);
-	for(cand_pos_t d = k; d < l; ++d){
+	for(cand_pos_t d = i; d < j; ++d){
         energy_t tmp = cp_penalty*(d-i) + PX.get(d,j,k,l);
         min_energy = std::min(min_energy,tmp);
     }
@@ -444,19 +448,6 @@ energy_t pseudo_loop::calc_PfromLdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos
 
 	return std::min({b1,b2,b3});
 }
-
-energy_t pseudo_loop::calc_PfromRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return INF;
-	}
-	assert(!(i<=0 || l> n));
-
-	energy_t b1 = PM.get(i,j,k,l) + gamma2(j,k) + PB_penalty;
-	energy_t b2 = calc_PO(i,j,k,l) + gamma2(l,i) + PB_penalty;
-
-	return std::min({b1,b2});
-}
-
 energy_t pseudo_loop::calc_PfromMdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
@@ -469,7 +460,17 @@ energy_t pseudo_loop::calc_PfromMdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos
 
 	return std::min({b1,b2,b3});
 }
+energy_t pseudo_loop::calc_PfromRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	if (!(i <= j && j < k-1 && k <= l)){
+		return INF;
+	}
+	assert(!(i<=0 || l> n));
 
+	energy_t b1 = PM.get(i,j,k,l) + gamma2(j,k) + PB_penalty;
+	energy_t b2 = calc_PO(i,j,k,l) + gamma2(l,i) + PB_penalty;
+
+	return std::min({b1,b2});
+}
 energy_t pseudo_loop::calc_PfromOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
@@ -481,7 +482,6 @@ energy_t pseudo_loop::calc_PfromOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos
 
 	return std::min({b1,b2});
 }
-
 energy_t pseudo_loop::calc_PfromLreOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
@@ -493,7 +493,6 @@ energy_t pseudo_loop::calc_PfromLreOdoubleprime(cand_pos_t i,cand_pos_t j, cand_
 
 	return std::min({b1,b2});
 }
-
 energy_t pseudo_loop::calc_PfromLreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
@@ -505,7 +504,6 @@ energy_t pseudo_loop::calc_PfromLreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_
 
 	return std::min({b1,b2});
 }
-
 energy_t pseudo_loop::calc_PfromMreOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
@@ -517,7 +515,6 @@ energy_t pseudo_loop::calc_PfromMreOdoubleprime(cand_pos_t i,cand_pos_t j, cand_
 
 	return std::min({b1,b2});
 }
-
 energy_t pseudo_loop::calc_PfromMreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
@@ -529,7 +526,6 @@ energy_t pseudo_loop::calc_PfromMreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_
 
 	return std::min({b1,b2});
 }
-
 energy_t pseudo_loop::calc_PfromLMreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
@@ -540,7 +536,6 @@ energy_t pseudo_loop::calc_PfromLMreRdoubleprime(cand_pos_t i,cand_pos_t j, cand
 
 	return b1;
 }
-
 energy_t pseudo_loop::calc_PfromLMorOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return INF;
@@ -552,7 +547,6 @@ energy_t pseudo_loop::calc_PfromLMorOdoubleprime(cand_pos_t i,cand_pos_t j, cand
 
 	return std::min(b1,b2);
 }
-
 energy_t pseudo_loop::calc_WB(cand_pos_t i, cand_pos_t l){
 	if (i<=0 || l<=0 || i>n || l>n){
 		return INF;
@@ -560,7 +554,6 @@ energy_t pseudo_loop::calc_WB(cand_pos_t i, cand_pos_t l){
 	if (i>l) return 0;
 	return (std::min(cp_penalty*(l-i+1),WBP.get(i,l)));
 }
-
 energy_t pseudo_loop::calc_WP(cand_pos_t i, cand_pos_t l){
 	if (i<=0 || l<=0 || i>n || l>n){
 		return INF;
@@ -568,8 +561,6 @@ energy_t pseudo_loop::calc_WP(cand_pos_t i, cand_pos_t l){
 	if (i>l) return 0; // needed as this will happen 
 	return (std::min(PUP_penalty*(l-i+1),WPP.get(i,l)));
 }
-
-
 ////////////////////////// Traceback ////////////////////////////////
 
 void pseudo_loop::Trace_WB(cand_pos_t i, cand_pos_t l, energy_t e){
@@ -678,66 +669,6 @@ void pseudo_loop::Trace_P(cand_pos_t i, cand_pos_t l, energy_t e){
 	}
 	__builtin_unreachable();
 }
-void pseudo_loop::Trace_PX1(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l, MType type, energy_t e){
-	if (debug) std::cout << "PX1 at " << i << " and " << j << " and " << k << " and " << l << " with type: " << type << " and en: " << e << std::endl;
-	Matrix4D &PX = PX_by_mtype(type);
-	energy_t tmp = INF;
-	for(cand_pos_t d = i+1;d<=j;++d){
-		tmp = PX.get(i,d,k,l) + calc_WP(d+1,j) + PB_penalty;
-		if(e==tmp){
-			Trace_PX(i,d,k,l,type,PX.get(i,d,k,l));
-			Trace_WP(d+1,j,calc_WP(d+1,j));
-			return;
-		}
-	}
-	__builtin_unreachable();
-}
-void pseudo_loop::Trace_PX2(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l, MType type, energy_t e){
-	if (debug) std::cout << "PX2 at " << i << " and " << j << " and " << k << " and " << l << " with type: " << type << " and en: " << e << std::endl;
-	Matrix4D &PK1X = PK1X_by_mtype(type);
-	energy_t tmp = INF;
-	for(cand_pos_t d = k;d<l;++d){
-		tmp = PK1X.get(i,j,d,l) + calc_WP(k,d-1);
-		if(e==tmp){
-			Trace_PX1(i,j,d,l,type,PK1X.get(i,j,d,l));
-			Trace_WP(k,d-1,calc_WP(k,d-1));
-			return;
-		}
-	}
-	__builtin_unreachable();
-}
-void pseudo_loop::Trace_PX(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l, MType type, energy_t e){
-	if (debug) std::cout << "PX at " << i << " and " << j << " and " << k << " and " << l << " with type: " << type << " and en: " << e << std::endl;
-	const Index4D x(i,j,k,l);
-	const int ptype_closing = can_pair(x.lend(type),x.rend(type));//pair[S_[x.lend(type)]][S_[x.rend(type)]];
-	f[x.lend(type)].pair = x.rend(type);
-	f[x.rend(type)].pair = x.lend(type);
-	// std::cout << x.lend(type) << " " << x.rend(type) << " " << S_[x.lend(type)] << "\t" << S_[x.rend(type)] << pair[S_[x.lend(type)]][S_[x.rend(type)]] << "\t" << ptype_closing << std::endl;
-	// exit(0);
-	if (ptype_closing>0){
-		if(type == MType::Os){
-			if(x.i()==x.j() && x.k()==x.l()){
-				if(e==gamma2(x.l(),x.i())) return;
-			}
-		} else if (x.difference(type)>TURN){
-			Index4D xp(x);
-			// xp.shrink(type);
-			// Matrix4D &PfromX = PfromX_by_mtype(type);
-			// b3 = PfromX.get(xp) + penalty(xp, gamma2, type);
-		}
-		// energy_t tmp = calc_PXmloop(x,type);
-		// if(e==tmp){
-		// 	Trace_PXmloop(i,j,k,l,type,tmp);
-		// 	return;
-		// }
-		energy_t tmp = calc_PXiloop(x, type);
-		if(e==tmp){
-			Trace_PXiloop(x,type,tmp);
-			return;
-		}
-	}
-	__builtin_unreachable();
-}
 
 void pseudo_loop::Trace_PLiloop(const Index4D &x, MType type, energy_t e){
 	if (debug) std::cout << "PLiloop at " << x.i() << " and " << x.j() << " and " << x.k() << " and " << x.l() << " with type: " << type << " and en: " << e << std::endl;
@@ -764,6 +695,7 @@ void pseudo_loop::Trace_PLiloop(const Index4D &x, MType type, energy_t e){
 			}
 		}
 	}
+	__builtin_unreachable();
 }
 void pseudo_loop::Trace_PMiloop(const Index4D &x, MType type, energy_t e){
 	if (debug) std::cout << "PMiloop at " << x.i() << " and " << x.j() << " and " << x.k() << " and " << x.l() << " with type: " << type << " and en: " << e << std::endl;
@@ -790,7 +722,7 @@ void pseudo_loop::Trace_PMiloop(const Index4D &x, MType type, energy_t e){
 			}
 		}
 	}
-
+	__builtin_unreachable();
 }
 void pseudo_loop::Trace_PRiloop(const Index4D &x, MType type, energy_t e){
 	if (debug) std::cout << "PRiloop at " << x.i() << " and " << x.j() << " and " << x.k() << " and " << x.l() << " with type: " << type << " and en: " << e << std::endl;
@@ -817,7 +749,7 @@ void pseudo_loop::Trace_PRiloop(const Index4D &x, MType type, energy_t e){
 			}
 		}
 	}
-
+	__builtin_unreachable();
 }
 void pseudo_loop::Trace_POiloop(const Index4D &x, MType type, energy_t e){
 	if (debug) std::cout << "POiloop at " << x.i() << " and " << x.j() << " and " << x.k() << " and " << x.l() << " with type: " << type << " and en: " << e << std::endl;
@@ -844,5 +776,500 @@ void pseudo_loop::Trace_POiloop(const Index4D &x, MType type, energy_t e){
 			}
 		}
 	}
+	__builtin_unreachable();
+}
+/**
+ * 
+ * 
+ * 
+ * 
+ */
+void pseudo_loop::Trace_PfromL(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e){
+	Matrix4D &PfromXprime = PfromXprime_by_mtype(type);
+	for(cand_pos_t d=i+1; d<=j; ++d){
+		energy_t tmp = calc_WP(i,d-1) + PfromXprime.get(d,j,k,l);
+		if(e==tmp){
+			Trace_WP(i,d-1,calc_WP(i,d-1));
+			Trace_PfromXprime(d,j,k,l,type,PfromXprime.get(d,j,k,l));
+			return;
+		}
+	}
+	__builtin_unreachable();
+}
+void pseudo_loop::Trace_PfromM(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e){
+	Matrix4D &PfromXprime = PfromXprime_by_mtype(type);
+	for(cand_pos_t d=i; d<j; ++d){
+		energy_t tmp = PfromXprime.get(i,d,k,l) + calc_WP(d+1,j);
+		if(e==tmp){
+			Trace_PfromXprime(i,d,k,l,type,PfromXprime.get(i,d,k,l));
+			Trace_WP(d+1,j,calc_WP(d+1,j));
+			return;
+		}
+	}
+	__builtin_unreachable();
+}
+void pseudo_loop::Trace_PfromR(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e){
+	Matrix4D &PfromXprime = PfromXprime_by_mtype(type);
+	for(cand_pos_t d=k+1; d<=l; ++d){
+		energy_t tmp = calc_WP(k,d-1) + PfromXprime.get(i,j,d,l);
+		if(e==tmp){
+			Trace_WP(k,d-1,calc_WP(k,d-1));
+			Trace_PfromXprime(i,j,d,l,type,PfromXprime.get(i,j,d,l));
+			return;
+		}
+	}
+	__builtin_unreachable();
+}
+void pseudo_loop::Trace_PfromO(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e){
+	Matrix4D &PfromXprime = PfromXprime_by_mtype(type);
+	for(cand_pos_t d=i+1; d<=j; ++d){
+		energy_t tmp = calc_WP(i,d-1) + PfromXprime.get(d,j,k,l);
+		if(e==tmp){
+			Trace_WP(i,d-1,calc_WP(i,d-1));
+			Trace_PfromXprime(d,j,k,l,type,PfromXprime.get(d,j,k,l));
+			return;
+		}
+	}
+	__builtin_unreachable();
+}
+/**
+ * 
+ * 
+ * 
+ * 
+ */
+void pseudo_loop::Trace_PfromLprime(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e){
+	for(cand_pos_t d=i; d<j; ++d){
+		energy_t tmp = calc_PfromXdoubleprime(i,d,k,l,type) + calc_WP(d+1,j);
+		if(e==tmp){
+			Trace_PfromXdoubleprime(i,d,k,l,type,calc_PfromXdoubleprime(i,d,k,l,type));
+			Trace_WP(d+1,j,calc_WP(d+1,j));
+			return;
+		}
+	}
+	__builtin_unreachable();
+}
+void pseudo_loop::Trace_PfromMprime(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e){
+	for(cand_pos_t d=k+1; d<=l; ++d){
+		energy_t tmp= calc_WP(k,d-1) + calc_PfromXdoubleprime(i,j,d,l,type);
+		if(e==tmp){
+			Trace_WP(k,d-1,calc_WP(k,d-1));
+			Trace_PfromXdoubleprime(i,j,d,l,type,calc_PfromXdoubleprime(i,j,d,l,type));
+			return;
+		}
+	}
+	__builtin_unreachable();
+}
+void pseudo_loop::Trace_PfromRprime(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e){
+	for(cand_pos_t d=k; d<l; ++d){
+		energy_t tmp = calc_PfromXdoubleprime(i,j,k,d,type) + calc_WP(d+1,l);
+		if(e==tmp){
+			Trace_PfromXdoubleprime(i,j,k,d,type,calc_PfromXdoubleprime(i,j,k,d,type));
+			Trace_WP(d+1,l,calc_WP(d+1,l));
+			return;
+		}
+	}
+	__builtin_unreachable();
+}
+void pseudo_loop::Trace_PfromOprime(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e){
+	for(cand_pos_t d=k; d<l; ++d){
+		energy_t tmp = calc_PfromXdoubleprime(i,j,k,d,type) + calc_WP(d+1,l);
+		if(e==tmp){
+			Trace_PfromXdoubleprime(i,j,k,d,type,calc_PfromXdoubleprime(i,j,k,d,type));
+			Trace_WP(d+1,l,calc_WP(d+1,l));
+			return;
+		}
+	}
+	__builtin_unreachable();
+}
 
+
+
+/**
+ * 
+ * 
+ * 
+ */
+void pseudo_loop::Trace_PLmloop00(const Index4D &x, MType type, energy_t e){
+	assert(!impossible_case(x));
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
+
+	energy_t tmp = INF;
+	Matrix4D &PXmloop10 = PXmloop10_by_mtype(type);
+	Matrix4D &PXmloop01 = PXmloop01_by_mtype(type);
+	for(cand_pos_t d = i+1; d<=j; ++d){
+		tmp = calc_WB(i,d-1) + PXmloop10.get(d,j,k,l);
+        if(e==tmp){
+			Index4D xp(d,j,k,l);
+			Trace_WB(i,d-1,calc_WB(i,d-1));
+			Trace_PXmloop10(xp,type,PXmloop10.get(d,j,k,l));
+			return;
+		}
+	}
+    for(cand_pos_t d = i; d<j; ++d){
+		tmp = PXmloop01.get(i,d,k,l) + calc_WB(d+1,j);
+		if(e==tmp){
+			Index4D xp(i,d,k,l);
+			Trace_PXmloop01(xp,type,PXmloop01.get(i,d,k,l));
+			Trace_WB(d+1,j,calc_WB(d+1,j));
+			return;
+		}
+    }
+	__builtin_unreachable();
+}
+void pseudo_loop::Trace_PMmloop00(const Index4D &x, MType type, energy_t e){
+	assert(!impossible_case(x));
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
+
+	energy_t tmp = INF;
+	Matrix4D &PXmloop10 = PXmloop10_by_mtype(type);
+	Matrix4D &PXmloop01 = PXmloop01_by_mtype(type);
+    for(cand_pos_t d=i; d<j; ++d){
+        tmp=PXmloop10.get(i,d,k,l) + calc_WB(d+1,j);
+        if(e==tmp){
+			Index4D xp(i,d,k,l);
+			Trace_WB(d+1,j,calc_WB(d+1,j));
+			Trace_PXmloop10(xp,type,PXmloop10.get(i,d,k,l));
+			return;
+		}
+    }
+    for(cand_pos_t d=k+1; d<=l; ++d){
+        tmp=PXmloop01.get(i,j,d,l) + calc_WB(k,d-1);
+		if(e==tmp){
+			Index4D xp(i,j,d,l);
+			Trace_PXmloop01(xp,type,PXmloop01.get(i,j,d,l));
+			Trace_WB(k,d-1,calc_WB(k,d-1));
+			return;
+		} 
+    }
+	__builtin_unreachable();
+}
+void pseudo_loop::Trace_PRmloop00(const Index4D &x, MType type, energy_t e){
+	assert(!impossible_case(x));
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
+
+	energy_t tmp = INF;
+	Matrix4D &PXmloop10 = PXmloop10_by_mtype(type);
+	Matrix4D &PXmloop01 = PXmloop01_by_mtype(type);
+	for(cand_pos_t d=k+1; d<=l; ++d){
+		tmp=calc_WB(k,d-1) + PXmloop10.get(i,j,d,l);
+		if(e==tmp){
+			Index4D xp(i,j,d,l);
+			Trace_WB(k,d-1,calc_WB(k,d-1));
+			Trace_PXmloop10(xp,type,PXmloop10.get(i,j,d,l));
+			return;
+		}
+	}
+	for(cand_pos_t d=k; d<l; ++d){
+		tmp = PXmloop01.get(i,j,k,d)+calc_WB(d+1,l);
+		if(e==tmp){
+			Index4D xp(i,j,k,d);
+			Trace_PXmloop01(xp,type,PXmloop01.get(i,j,k,d));
+			Trace_WB(d+1,l,calc_WB(d+1,l));
+			return;
+		} 
+    }
+	__builtin_unreachable();
+}
+void pseudo_loop::Trace_POmloop00(const Index4D &x, MType type, energy_t e){
+	assert(!impossible_case(x));
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
+
+	energy_t tmp = INF;
+	Matrix4D &PXmloop10 = PXmloop10_by_mtype(type);
+	Matrix4D &PXmloop01 = PXmloop01_by_mtype(type);
+    for(cand_pos_t d=i+1; d<=j; ++d){
+        tmp = calc_WB(i,d-1)+PXmloop10.get(d,j,k,l);
+        if(e==tmp){
+			Index4D xp(d,j,k,l);
+			Trace_WB(i,d-1,calc_WB(i,d-1));
+			Trace_PXmloop10(xp,type,PXmloop10.get(d,j,k,l));
+			return;
+		}
+    }
+    for(cand_pos_t d=k; d<l; ++d){
+        tmp = PXmloop01.get(i,j,k,d)+calc_WB(d+1,l);
+        if(e==tmp){
+			Index4D xp(i,j,k,d);
+			Trace_PXmloop01(xp,type,PXmloop01.get(i,j,k,d));
+			Trace_WB(d+1,l,calc_WB(d+1,l));
+			return;
+		} 
+    }
+	__builtin_unreachable();
+}
+/**
+ * 
+ * 
+ * 
+ */
+void pseudo_loop::Trace_PLmloop10(const Index4D &x, MType type, energy_t e){
+	assert(!impossible_case(x));
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
+
+	energy_t tmp = INF;
+	Matrix4D &PX = PX_by_mtype(type);
+	for(cand_pos_t d = i+1; d <= j; ++d){
+        tmp = PX.get(i,d,k,l) + calc_WB(d+1,j);
+        if(e==tmp){
+			Trace_PX(i,d,k,l,type,PX.get(i,d,k,l));
+			Trace_WB(d+1,j,calc_WB(d+1,j));
+			return;
+		}
+    }
+	__builtin_unreachable();
+}
+void pseudo_loop::Trace_PMmloop10(const Index4D &x, MType type, energy_t e){
+	assert(!impossible_case(x));
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
+
+	energy_t tmp = INF;
+	Matrix4D &PX = PX_by_mtype(type);
+    for(cand_pos_t d = i+1; d <=j; ++d){
+        tmp = PX.get(i,d,k,l) + calc_WB(d+1,j);
+        if(e==tmp){
+			Trace_PX(i,d,k,l,type,PX.get(i,d,k,l));
+			Trace_WB(d+1,j,calc_WB(d+1,j));
+			return;
+		}
+    }
+	__builtin_unreachable();
+}
+void pseudo_loop::Trace_PRmloop10(const Index4D &x, MType type, energy_t e){
+	assert(!impossible_case(x));
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
+
+	energy_t tmp = INF;
+	Matrix4D &PX = PX_by_mtype(type);
+    for(cand_pos_t d = k+1; d <= l; ++d){
+        tmp = PX.get(i,j,k,d) + calc_WB(d+1,l);
+        if(e==tmp){
+			Trace_PX(i,j,k,d,type,PX.get(i,j,k,d));
+			Trace_WB(d+1,l,calc_WB(d+1,l));
+			return;
+		}
+    }
+	__builtin_unreachable();
+}
+void pseudo_loop::Trace_POmloop10(const Index4D &x, MType type, energy_t e){
+	assert(!impossible_case(x));
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
+
+	energy_t tmp = INF;
+	Matrix4D &PX = PX_by_mtype(type);
+	for(cand_pos_t d=i+1; d<=j;++d){
+        tmp=PX.get(i,j,k,d) + calc_WB(d+1,l);
+        if(e==tmp){
+			Trace_PX(i,j,k,d,type,PX.get(i,j,k,d));
+			Trace_WB(d+1,l,calc_WB(d+1,l));
+			return;
+		}
+    }
+	__builtin_unreachable();
+}
+/**
+ * 
+ * 
+ * 
+ */
+void pseudo_loop::Trace_PLmloop01(const Index4D &x, MType type, energy_t e){
+	assert(!impossible_case(x));
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
+
+	energy_t tmp=INF;
+	Matrix4D &PX = PX_by_mtype(type);
+	for(cand_pos_t d = i; d < j; ++d){
+        tmp = cp_penalty*(d-i) + PX.get(d,j,k,l);
+		if(e==tmp){
+			Trace_PX(d,j,k,l,type,PX.get(d,j,k,l));
+			return;
+		}
+    }
+	__builtin_unreachable();
+}
+void pseudo_loop::Trace_PMmloop01(const Index4D &x, MType type, energy_t e){
+	assert(!impossible_case(x));
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
+
+	energy_t tmp = INF;
+	Matrix4D &PX = PX_by_mtype(type);
+	for(cand_pos_t d = k; d < l; ++d){
+        tmp = cp_penalty*(d-k) + PX.get(i,j,d,l);
+        if(e==tmp){
+			Trace_PX(i,j,d,l,type,PX.get(i,j,d,l));
+			return;
+		}
+    }
+	__builtin_unreachable();
+}
+void pseudo_loop::Trace_PRmloop01(const Index4D &x, MType type, energy_t e){
+	assert(!impossible_case(x));
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
+
+	energy_t tmp = INF;
+	Matrix4D &PX = PX_by_mtype(type);
+    for(cand_pos_t d = k; d < l; d++){
+        tmp = cp_penalty*(d-k) + PX.get(i,j,d,l);
+		if(e==tmp){
+			Trace_PX(i,j,d,l,type,PX.get(i,j,d,l));
+			return;
+		}
+    }
+	__builtin_unreachable();
+}
+void pseudo_loop::Trace_POmloop01(const Index4D &x, MType type, energy_t e){
+	assert(!impossible_case(x));
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
+
+	energy_t tmp = INF;
+	Matrix4D &PX = PX_by_mtype(type);
+	for(cand_pos_t d = i; d < j; ++d){
+        tmp = cp_penalty*(d-i) + PX.get(d,j,k,l);
+		if(e==tmp){
+			Trace_PX(d,j,k,l,type,PX.get(d,j,k,l));
+			return;
+		}
+    }
+	__builtin_unreachable();
+}
+/**
+ * 
+ * 
+ * 
+ * 
+ */
+void pseudo_loop::Trace_PfromLdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e){
+	__builtin_unreachable();
+	energy_t tmp = PR.get(i,j,k,l) + gamma2(l,k) + PB_penalty;
+	if(e==tmp){
+		Trace_PX(i,j,k,l,MType::R,PR.get(i,j,k,l));
+	}
+	tmp = PM.get(i,j,k,l) + gamma2(j,k) + PB_penalty;
+	if(e==tmp){
+		Trace_PX(i,j,k,l,MType::M,PM.get(i,j,k,l));
+	}
+	tmp = POs.get(i,j,k,l) + gamma2(l,i) + PB_penalty;
+	if(e==tmp){
+		Trace_PX(i,j,k,l,MType::Os,POs.get(i,j,k,l));
+	}
+	tmp = POm.get(i,j,k,l) + gamma2(l,i) + PB_penalty;
+	if(e==tmp){
+		Trace_PX(i,j,k,l,MType::Om,POm.get(i,j,k,l));
+	}
+
+}
+void pseudo_loop::Trace_PfromMdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e){
+	energy_t tmp = PL.get(i,j,k,l) + gamma2(j,i) + PB_penalty;
+	if(e==tmp){
+		Trace_PX(i,j,k,l,MType::L,PL.get(i,j,k,l));
+	}
+	tmp = PR.get(i,j,k,l) + gamma2(l,k) + PB_penalty;
+	if(e==tmp){
+		Trace_PX(i,j,k,l,MType::R,PR.get(i,j,k,l));
+	}
+	tmp = POm.get(i,j,k,l) + gamma2(l,i) + PB_penalty;
+	if(e==tmp){
+		Trace_PX(i,j,k,l,MType::Om,POm.get(i,j,k,l));
+	}
+	__builtin_unreachable();
+}
+void pseudo_loop::Trace_PfromRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e){
+	energy_t tmp = PM.get(i,j,k,l) + gamma2(j,k) + PB_penalty;
+	if(e==tmp){
+		Trace_PX(i,j,k,l,MType::M,PM.get(i,j,k,l));
+	}
+	tmp = POs.get(i,j,k,l) + gamma2(l,i) + PB_penalty;
+	if(e==tmp){
+		Trace_PX(i,j,k,l,MType::Os,POs.get(i,j,k,l));
+	}
+	tmp = POm.get(i,j,k,l) + gamma2(l,i) + PB_penalty;
+	if(e==tmp){
+		Trace_PX(i,j,k,l,MType::Om,POm.get(i,j,k,l));
+	}
+	__builtin_unreachable();
+}
+void pseudo_loop::Trace_PfromOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e){
+	energy_t tmp = PL.get(i,j,k,l) + gamma2(j,i) + PB_penalty;
+	if(e==tmp){
+		Trace_PX(i,j,k,l,MType::L,PL.get(i,j,k,l));
+	}
+	tmp = PR.get(i,j,k,l) + gamma2(l,k) + PB_penalty;
+	if(e==tmp){
+		Trace_PX(i,j,k,l,MType::R,PR.get(i,j,k,l));
+	}
+	__builtin_unreachable();
+}
+void pseudo_loop::Trace_PfromLreOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e){
+	energy_t tmp = PMreO.get(i,j,k,l) + gamma2(j,k) + PB_penalty;
+	if(e==tmp){
+		Trace_PX(i,j,k,l,MType::MreO,PMreO.get(i,j,k,l));
+	}
+	tmp = POs.get(i,j,k,l) + gamma2(l,i) + PB_penalty;
+	if(e==tmp){
+		Trace_PX(i,j,k,l,MType::Os,POs.get(i,j,k,l));
+	}
+	tmp = POm.get(i,j,k,l) + gamma2(l,i) + PB_penalty;
+	if(e==tmp){
+		Trace_PX(i,j,k,l,MType::Om,POm.get(i,j,k,l));
+	}
+	__builtin_unreachable();
+}
+void pseudo_loop::Trace_PfromLreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e){
+	energy_t tmp = PMreR.get(i,j,k,l) + gamma2(j,k) + PB_penalty;
+	if(e==tmp){
+		Trace_PX(i,j,k,l,MType::MreR,PMreR.get(i,j,k,l));
+	}
+	tmp = PR.get(i,j,k,l) + gamma2(l,k) + PB_penalty;
+	if(e==tmp){
+		Trace_PX(i,j,k,l,MType::R,PR.get(i,j,k,l));
+	}
+	__builtin_unreachable();
+}
+void pseudo_loop::Trace_PfromMreOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e){
+	energy_t tmp = PLreO.get(i,j,k,l) + gamma2(j,i) + PB_penalty;
+	if(e==tmp){
+		Trace_PX(i,j,k,l,MType::LreO,PLreO.get(i,j,k,l));
+	}
+	tmp = POs.get(i,j,k,l) + gamma2(l,i) + PB_penalty;
+	if(e==tmp){
+		Trace_PX(i,j,k,l,MType::Os,POs.get(i,j,k,l));
+	}
+	tmp = POm.get(i,j,k,l) + gamma2(l,i) + PB_penalty;
+	if(e==tmp){
+		Trace_PX(i,j,k,l,MType::Om,POm.get(i,j,k,l));
+	}
+	__builtin_unreachable();
+}
+void pseudo_loop::Trace_PfromMreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e){
+	energy_t tmp = PLreR.get(i,j,k,l) + gamma2(j,i) + PB_penalty;
+	if(e==tmp){
+		Trace_PX(i,j,k,l,MType::LreR,PLreR.get(i,j,k,l));
+	}
+	tmp = PR.get(i,j,k,l) + gamma2(l,k) + PB_penalty;
+	if(e==tmp){
+		Trace_PX(i,j,k,l,MType::R,PR.get(i,j,k,l));
+	}
+	__builtin_unreachable();
+}
+void pseudo_loop::Trace_PfromLMreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e){
+	energy_t tmp = PMreR.get(i,j,k,l) + gamma2(j,k) + PB_penalty;
+	if(e==tmp){
+		Trace_PX(i,j,k,l,MType::MreR,PMreR.get(i,j,k,l));
+	}
+	__builtin_unreachable();
+}
+void pseudo_loop::Trace_PfromLMorOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e){
+	energy_t tmp = PM.get(i,j,k,l) + gamma2(j,k) + PB_penalty;
+	if(e==tmp){
+		Trace_PX(i,j,k,l,MType::M,PM.get(i,j,k,l));
+	}
+	tmp = POs.get(i,j,k,l) + gamma2(l,i) + PB_penalty;
+	if(e==tmp){
+		Trace_PX(i,j,k,l,MType::Os,POs.get(i,j,k,l));
+	}
+	tmp = POm.get(i,j,k,l) + gamma2(l,i) + PB_penalty;
+	if(e==tmp){
+		Trace_PX(i,j,k,l,MType::Om,POm.get(i,j,k,l));
+	}
+	__builtin_unreachable();
 }

@@ -221,8 +221,8 @@ private:
 	energy_t calc_PfromMdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	energy_t calc_PfromOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	energy_t calc_PfromLreOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	energy_t calc_PfromMreOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	energy_t calc_PfromLreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	energy_t calc_PfromMreOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	energy_t calc_PfromMreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	energy_t calc_PfromLMreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
 	energy_t calc_PfromLMorOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l);
@@ -233,14 +233,59 @@ private:
 	void Trace_WBP(cand_pos_t i, cand_pos_t l, energy_t e);
 	void Trace_WP(cand_pos_t i, cand_pos_t l, energy_t e);
 	void Trace_WPP(cand_pos_t i, cand_pos_t l, energy_t e);
+
 	void Trace_PX1(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l, MType type, energy_t e);
 	void Trace_PX2(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l, MType type, energy_t e);
 	void Trace_PX(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l, MType type, energy_t e);
 	void Trace_PXiloop(const Index4D &x, MType type, energy_t e);
+	void Trace_PXmloop(const Index4D &x, MType type, energy_t e);
+	void Trace_PXmloop00(const Index4D &x, MType type, energy_t e);
+	void Trace_PXmloop01(const Index4D &x, MType type, energy_t e);
+	void Trace_PXmloop10(const Index4D &x, MType type, energy_t e);
+	void Trace_PfromX(const Index4D &x, MType type, energy_t e);
+	void Trace_PfromXprime(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l, MType type, energy_t e);
+	void Trace_PfromXdoubleprime(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l, MType type, energy_t e);
+
 	void Trace_PLiloop(const Index4D &x, MType type, energy_t e);
 	void Trace_PMiloop(const Index4D &x, MType type, energy_t e);
 	void Trace_PRiloop(const Index4D &x, MType type, energy_t e);
 	void Trace_POiloop(const Index4D &x, MType type, energy_t e);
+
+	void Trace_PLmloop00(const Index4D &x, MType type, energy_t e);
+	void Trace_PMmloop00(const Index4D &x, MType type, energy_t e);
+	void Trace_PRmloop00(const Index4D &x, MType type, energy_t e);
+	void Trace_POmloop00(const Index4D &x, MType type, energy_t e);
+
+	void Trace_PLmloop01(const Index4D &x, MType type, energy_t e);
+	void Trace_PMmloop01(const Index4D &x, MType type, energy_t e);
+	void Trace_PRmloop01(const Index4D &x, MType type, energy_t e);
+	void Trace_POmloop01(const Index4D &x, MType type, energy_t e);
+
+	void Trace_PLmloop10(const Index4D &x, MType type, energy_t e);
+	void Trace_PMmloop10(const Index4D &x, MType type, energy_t e);
+	void Trace_PRmloop10(const Index4D &x, MType type, energy_t e);
+	void Trace_POmloop10(const Index4D &x, MType type, energy_t e);
+
+	void Trace_PfromL(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e);
+	void Trace_PfromM(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e);
+	void Trace_PfromR(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e);
+	void Trace_PfromO(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e);
+
+	void Trace_PfromLprime(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e);
+	void Trace_PfromMprime(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e);
+	void Trace_PfromRprime(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e);
+	void Trace_PfromOprime(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e);
+
+	void Trace_PfromLdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e);
+	void Trace_PfromRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e);
+	void Trace_PfromMdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e);
+	void Trace_PfromOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e);
+	void Trace_PfromLreOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e);
+	void Trace_PfromLreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e);
+	void Trace_PfromMreOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e);
+	void Trace_PfromMreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e);
+	void Trace_PfromLMreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e);
+	void Trace_PfromLMorOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e);
 
 
     // function to allocate space for the arrays
