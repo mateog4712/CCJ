@@ -78,9 +78,9 @@ private:
     std::vector<energy_t> m_;
 };
 
-class TriangleMatrix_PF {
+class TriangleMatrixPF {
 public:
-    TriangleMatrix_PF() {}
+    TriangleMatrixPF() {}
 
     void init(cand_pos_t n, std::vector<cand_pos_t> &index, pf_t return_val=0.0){
         n_ = n;
@@ -248,22 +248,36 @@ public:
 
     }
 
-    int get_uc(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l) const {
+    pf_t get_uc(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l) const {
         assert(!(i<=0 || l> n_));
 
-        int val = m_[index(i,j,k,l)];
+        pf_t val = m_[index(i,j,k,l)];
         return val;
     }
 
-    int get(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l) const {
+    pf_t get(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l) const {
         if (!(i <= j && j < k-1 && k <= l)){
             return 0.0;
         }
         return get_uc(i,j,k,l);
     }
 
-    void set(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e) {
+    pf_t get(const Index4D &x) const {
+        return get(x.i(),x.j(),x.k(),x.l());
+    }
+
+    void set(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, pf_t e) {
         m_[index(i,j,k,l)] = e;
+    }
+
+    void setI(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, pf_t e) {
+        // if (e >= INTERN_INF) e=INTERN_INF;
+        // assert(e >= std::numeric_limits<energy_t>::min() ); // Should I have something for this
+        m_[index(i,j,k,l)] = e;
+    }
+
+    void setI(const Index4D &x, pf_t e) {
+        setI(x.i(),x.j(),x.k(),x.l(),e);
     }
 
     static void construct_index(index_offset_t &index, cand_pos_t n){

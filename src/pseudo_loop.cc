@@ -40,9 +40,6 @@ void pseudo_loop::allocate_space()
 	P.init(n+1,index);
 	
 	// 4D matrix initialization
-	// PK.init(n,index3D);
-	// PO.init(n,index3D);
-
 	PL.init(n,index3D);
 	PfromL.init(n,index3D);
 	PfromLprime.init(n,index3D);
@@ -75,7 +72,6 @@ void pseudo_loop::allocate_space()
 	POsmloop00.init(n,index3D);
 	POsmloop01.init(n,index3D);
 	POsmloop10.init(n,index3D);
-
 
 	PLreO.init(n,index3D);
 	PfromLreO.init(n,index3D);
@@ -142,7 +138,6 @@ void pseudo_loop::allocate_space()
 
 	PK1LMreR.init(n,index3D);
 	PK1LMorO.init(n,index3D);
-
 }
 
 pseudo_loop::~pseudo_loop()
@@ -154,9 +149,7 @@ void pseudo_loop::compute_energies(cand_pos_t i, cand_pos_t l)
 
 	// 1) compute all energies over region [i,l]
 	compute_P(i,l);
-
 	compute_WBP(i,l);
-
 	compute_WPP(i,l);
 
 	//2) compute all energies over gapped region [i,j]U[k,l]
@@ -255,7 +248,6 @@ void pseudo_loop::compute_energies(cand_pos_t i, cand_pos_t l)
 			compute_PK2X(x,MType::R);
 		}
 	}
-
 }
 
 void pseudo_loop::compute_WBP(cand_pos_t i, cand_pos_t l){
@@ -405,7 +397,6 @@ energy_t pseudo_loop::calc_PXiloop(const Index4D &x, MType type){
     }
     __builtin_unreachable();
 }
-
 void pseudo_loop::compute_PfromX(const Index4D &x, MType type){
     switch(type) {
     case MType::L: return compute_PfromL(x,type);
@@ -422,7 +413,6 @@ void pseudo_loop::compute_PfromX(const Index4D &x, MType type){
     }
     __builtin_unreachable();
 }
-
 void pseudo_loop::compute_PfromXprime(const Index4D &x, MType type){
     switch(type) {
     case MType::L: return compute_PfromLprime(x,type);
@@ -456,7 +446,6 @@ energy_t pseudo_loop::calc_PfromXdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos
     }
     __builtin_unreachable();
 }
-
 void pseudo_loop::compute_PXmloop00(const Index4D &x, MType type){
     switch(type) {
     case MType::L: return compute_PLmloop00(x,type);

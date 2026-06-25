@@ -14,6 +14,10 @@ option "input-file" i
     "Give a path to an input file containing the sequence (and input structure if known)"
     string optional
 
+option "output-file" o
+    "Give a path to an output file which will the sequence, and its structure and energy"
+    string optional
+
 option "dangles" d
     "Specify the dangle model to be used (base is 2)"
     int default="2" optional
@@ -22,12 +26,24 @@ option "paramFile" P
     "Read energy parameters from paramfile, instead of using the default parameter set."
     string optional
 
+option "samples" s
+    "Give the number of samples for the stochastic backtracking (default: 1000)"
+    int default="1000" optional
+
+option "fatgraph" f
+    "Give the number of fatgraphs outputted, along with their frequencies (default 1)"
+    int default="1" optional
+
 option "noConv" -
     "Do not convert DNA into RNA. This will use the Matthews 2004 parameters for DNA"
     flag off
 
 option "noGU" -
     "Turn off G-U and U-G (and G-T and T-G) base pairing"
+    flag off
+
+option "noPS" -
+    "Don't create a Postscript drawing of the base pair probabilities"
     flag off
 
 text "\nThe input sequence is read from standard input, unless it is\ngiven on the command line.\n"

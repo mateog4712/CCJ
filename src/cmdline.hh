@@ -42,24 +42,39 @@ struct args_info
   char * input_file_arg;	/**< @brief Give a path to an input file containing the sequence (and input structure if known).  */
   char * input_file_orig;	/**< @brief Give a path to an input file containing the sequence (and input structure if known) original value given at command line.  */
   const char *input_file_help; /**< @brief Give a path to an input file containing the sequence (and input structure if known) help description.  */
+  char * output_file_arg;	/**< @brief Give a path to an output file which will the sequence, and its structure and energy.  */
+  char * output_file_orig;	/**< @brief Give a path to an output file which will the sequence, and its structure and energy original value given at command line.  */
+  const char *output_file_help; /**< @brief Give a path to an output file which will the sequence, and its structure and energy help description.  */
   int dangles_arg;	/**< @brief Specify the dangle model to be used (base is 2) (default='2').  */
   char * dangles_orig;	/**< @brief Specify the dangle model to be used (base is 2) original value given at command line.  */
   const char *dangles_help; /**< @brief Specify the dangle model to be used (base is 2) help description.  */
   char * paramFile_arg;	/**< @brief Read energy parameters from paramfile, instead of using the default parameter set..  */
   char * paramFile_orig;	/**< @brief Read energy parameters from paramfile, instead of using the default parameter set. original value given at command line.  */
   const char *paramFile_help; /**< @brief Read energy parameters from paramfile, instead of using the default parameter set. help description.  */
+  int samples_arg;	/**< @brief Give the number of samples for the stochastic backtracking (default: 1000) (default='1000').  */
+  char * samples_orig;	/**< @brief Give the number of samples for the stochastic backtracking (default: 1000) original value given at command line.  */
+  const char *samples_help; /**< @brief Give the number of samples for the stochastic backtracking (default: 1000) help description.  */
+  int fatgraph_arg;	/**< @brief Give the number of fatgraphs outputted, along with their frequencies (default 1) (default='1').  */
+  char * fatgraph_orig;	/**< @brief Give the number of fatgraphs outputted, along with their frequencies (default 1) original value given at command line.  */
+  const char *fatgraph_help; /**< @brief Give the number of fatgraphs outputted, along with their frequencies (default 1) help description.  */
   int noConv_flag;	/**< @brief Do not convert DNA into RNA. This will use the Matthews 2004 parameters for DNA (default=off).  */
   const char *noConv_help; /**< @brief Do not convert DNA into RNA. This will use the Matthews 2004 parameters for DNA help description.  */
   int noGU_flag;	/**< @brief Turn off G-U and U-G (and G-T and T-G) base pairing (default=off).  */
   const char *noGU_help; /**< @brief Turn off G-U and U-G (and G-T and T-G) base pairing help description.  */
+  int noPS_flag;	/**< @brief Don't create a Postscript drawing of the base pair probabilities (default=off).  */
+  const char *noPS_help; /**< @brief Don't create a Postscript drawing of the base pair probabilities help description.  */
   
   unsigned int help_given ;	/**< @brief Whether help was given.  */
   unsigned int version_given ;	/**< @brief Whether version was given.  */
   unsigned int input_file_given ;	/**< @brief Whether input-file was given.  */
+  unsigned int output_file_given ;	/**< @brief Whether output-file was given.  */
   unsigned int dangles_given ;	/**< @brief Whether dangles was given.  */
   unsigned int paramFile_given ;	/**< @brief Whether paramFile was given.  */
+  unsigned int samples_given ;	/**< @brief Whether samples was given.  */
+  unsigned int fatgraph_given ;	/**< @brief Whether fatgraph was given.  */
   unsigned int noConv_given ;	/**< @brief Whether noConv was given.  */
   unsigned int noGU_given ;	/**< @brief Whether noGU was given.  */
+  unsigned int noPS_given ;	/**< @brief Whether noPS was given.  */
 
   char **inputs ; /**< @brief unnamed options (options without names) */
   unsigned inputs_num ; /**< @brief unnamed options number */

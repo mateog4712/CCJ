@@ -1,7 +1,7 @@
 #include "part_func.hh"
 // #include "dot_plot.hh"
 #include "h_externs.hh"
-#include "pf_externs.hh"
+#include "pf_globals.hh"
 
 #include <algorithm>
 #include <iostream>
@@ -29,11 +29,8 @@
 #define RESCALE_BF(dG, dH, dT, kT) (exp(-TRUNC_MAYBE((double)RESCALE_dG((dG), (dH), (dT))) * 10. / kT))
 
 W_final_pf::W_final_pf(std::string &seq, std::string &MFE_structure, double MFE_energy, int dangle, int num_samples, bool PSplot)
-    : exp_params_(scale_pf_parameters()) {
-    this->seq = seq;
-    this->MFE_structure = MFE_structure;
+    : seq(seq), MFE_structure(MFE_structure), exp_params_(vrna_exp_params(NULL)), PSplot(PSplot) {
     this->n = seq.length();
-    this->PSplot = PSplot;
     this->num_samples = num_samples;
 
     make_pair_matrix();
@@ -46,8 +43,9 @@ W_final_pf::W_final_pf(std::string &seq, std::string &MFE_structure, double MFE_
     expMLbase.resize(n + 1);
     expcp_pen.resize(n + 1);
     expPUP_pen.resize(n + 1);
-	TriangleMatrix_PF::new_index(index,n+1);
+	TriangleMatrixPF::new_index(index,n+1);
 	Matrix4DPF::construct_index(index3D,n);
+	init_can_pair();
     // Allocate space
     V.init(n+1,index);
     VM.init(n+1,index);
@@ -61,31 +59,104 @@ W_final_pf::W_final_pf(std::string &seq, std::string &MFE_structure, double MFE_
 	P.init(n+1,index);
 
 	// 4D matrix initialization
-	PK.init(n,index3D);
 	PL.init(n,index3D);
-	PR.init(n,index3D);
-	PM.init(n,index3D);
-	PO.init(n,index3D);
 	PfromL.init(n,index3D);
-	PfromR.init(n,index3D);
-	PfromM.init(n,index3D);
-	PfromO.init(n,index3D);
-
+	PfromLprime.init(n,index3D);
 	PLmloop00.init(n,index3D);
 	PLmloop01.init(n,index3D);
 	PLmloop10.init(n,index3D);
 
+	PR.init(n,index3D);
+	PfromR.init(n,index3D);
+	PfromRprime.init(n,index3D);
 	PRmloop00.init(n,index3D);
 	PRmloop01.init(n,index3D);
 	PRmloop10.init(n,index3D);
 
+	PM.init(n,index3D);
+	PfromM.init(n,index3D);
+	PfromMprime.init(n,index3D);
 	PMmloop00.init(n,index3D);
 	PMmloop01.init(n,index3D);
 	PMmloop10.init(n,index3D);
 
-	POmloop00.init(n,index3D);
-	POmloop01.init(n,index3D);
-	POmloop10.init(n,index3D);
+	POm.init(n,index3D);
+	PfromO.init(n,index3D);
+	PfromOprime.init(n,index3D);
+	POmmloop00.init(n,index3D);
+	POmmloop01.init(n,index3D);
+	POmmloop10.init(n,index3D);
+
+	POs.init(n,index3D);
+	POsmloop00.init(n,index3D);
+	POsmloop01.init(n,index3D);
+	POsmloop10.init(n,index3D);
+
+	PLreO.init(n,index3D);
+	PfromLreO.init(n,index3D);
+	PfromLreOprime.init(n,index3D);
+	PLreOmloop00.init(n,index3D);
+	PLreOmloop01.init(n,index3D);
+	PLreOmloop10.init(n,index3D);
+
+	PLreR.init(n,index3D);
+	PfromLreR.init(n,index3D);
+	PfromLreRprime.init(n,index3D);
+	PLreRmloop00.init(n,index3D);
+	PLreRmloop01.init(n,index3D);
+	PLreRmloop10.init(n,index3D);
+
+	PMreO.init(n,index3D);
+	PfromMreO.init(n,index3D);
+	PfromMreOprime.init(n,index3D);
+	PMreOmloop00.init(n,index3D);
+	PMreOmloop01.init(n,index3D);
+	PMreOmloop10.init(n,index3D);
+
+	PMreR.init(n,index3D);
+	PfromMreR.init(n,index3D);
+	PfromMreRprime.init(n,index3D);
+	PMreRmloop00.init(n,index3D);
+	PMreRmloop01.init(n,index3D);
+	PMreRmloop10.init(n,index3D);
+
+	PLMreR.init(n,index3D);
+	PfromLMreR.init(n,index3D);
+	PfromLMreRprime.init(n,index3D);
+	PLMreRmloop00.init(n,index3D);
+	PLMreRmloop01.init(n,index3D);
+	PLMreRmloop10.init(n,index3D);
+
+	PLMorO.init(n,index3D);
+	PfromLMorO.init(n,index3D);
+	PfromLMorOprime.init(n,index3D);
+	PLMorOmloop00.init(n,index3D);
+	PLMorOmloop01.init(n,index3D);
+	PLMorOmloop10.init(n,index3D);
+
+	PK1Om.init(n,index3D);
+	PK2Om.init(n,index3D);
+
+	PK1Os.init(n,index3D);
+	PK2Os.init(n,index3D);
+
+	PK1LreO.init(n,index3D);
+	PK2LreO.init(n,index3D);
+
+	PK1MreO.init(n,index3D);
+	PK2MreO.init(n,index3D);
+
+	PK1LreR.init(n,index3D);
+	PK2LreR.init(n,index3D);
+
+	PK1MreR.init(n,index3D);
+	PK2MreR.init(n,index3D);
+
+	PK1R.init(n,index3D);
+	PK2R.init(n,index3D);
+
+	PK1LMreR.init(n,index3D);
+	PK1LMorO.init(n,index3D);
 
     rescale_pk_globals();
     exp_params_rescale(MFE_energy);
@@ -104,7 +175,7 @@ void W_final_pf::exp_params_rescale(double mfe) {
 
     if (exp_params_->pf_scale < 1.) exp_params_->pf_scale = 1.;
 
-    exp_params_->pf_scale = 1.; // My scaling is bad so I need this to be 1 right now.
+    exp_params_->pf_scale = 1.; // I don't think it even needs scaling for the lengths it can do
 
     this->scale[0] = 1.;
     this->scale[1] = (pf_t)(1. / exp_params_->pf_scale);
@@ -181,8 +252,8 @@ pf_t W_final_pf::exp_Extloop(cand_pos_t i, cand_pos_t j) {
     pair_type tt = pair[S_[i]][S_[j]];
 
     if (exp_params_->model_details.dangles == 1 || exp_params_->model_details.dangles == 2) {
-        base_type si1 = i > 1 ? S_[i - 1] : -1;
-        base_type sj1 = j < n ? S_[j + 1] : -1;
+        base_type si1 = i > 1 ? S_[i-1] : -1;
+        base_type sj1 = j < n ? S_[j+1] : -1;
         return exp_E_ExtLoop(tt, si1, sj1, exp_params_);
     } else {
         return exp_E_ExtLoop(tt, -1, -1, exp_params_);
@@ -192,8 +263,8 @@ pf_t W_final_pf::exp_Extloop(cand_pos_t i, cand_pos_t j) {
 pf_t W_final_pf::exp_MLstem(cand_pos_t i, cand_pos_t j) {
     pair_type tt = pair[S_[i]][S_[j]];
     if (exp_params_->model_details.dangles == 1 || exp_params_->model_details.dangles == 2) {
-        base_type si1 = i > 1 ? S_[i - 1] : -1;
-        base_type sj1 = j < n ? S_[j + 1] : -1;
+        base_type si1 = i > 1 ? S_[i-1] : -1;
+        base_type sj1 = j < n ? S_[j+1] : -1;
         return exp_E_MLstem(tt, si1, sj1, exp_params_);
     } else {
         return exp_E_MLstem(tt, -1, -1, exp_params_);
@@ -203,8 +274,8 @@ pf_t W_final_pf::exp_MLstem(cand_pos_t i, cand_pos_t j) {
 pf_t W_final_pf::exp_Mbloop(cand_pos_t i, cand_pos_t j) {
     pair_type tt = pair[S_[j]][S_[i]];
     if (exp_params_->model_details.dangles == 1 || exp_params_->model_details.dangles == 2) {
-        base_type si1 = i > 1 ? S_[i + 1] : -1;
-        base_type sj1 = j < n ? S_[j - 1] : -1;
+        base_type si1 = i > 1 ? S_[i+1] : -1;
+        base_type sj1 = j < n ? S_[j-1] : -1;
         return exp_E_MLstem(tt, sj1, si1, exp_params_);
     } else {
         return exp_E_MLstem(tt, -1, -1, exp_params_);
@@ -300,60 +371,106 @@ void W_final_pf::compute_energy(cand_pos_t i, cand_pos_t j) {
 }
 
 void W_final_pf::compute_pk_energies(cand_pos_t i, cand_pos_t l) {
-
+	
     // 1) compute all energies over region [i,l]
 	compute_P(i,l);
-
 	compute_WBP(i,l);
-
 	compute_WPP(i,l);
 
 	//2) compute all energies over gapped region [i,j]U[k,l]
 	for(cand_pos_t j = i; j<l; ++j){
+		// Hosna, July 8, 2014
+		// in original recurrences we have j< k-1, so I am changing k=j+1 to k=j+2
 		for(cand_pos_t k = l; k>=j+2; --k){
+			Index4D x(i,j,k,l);
 
-			compute_PLmloop00(i,j,k,l);
+			compute_PXmloop00(x,MType::L);
+			compute_PXmloop00(x,MType::M);
+			compute_PXmloop00(x,MType::R);
+			compute_PXmloop00(x,MType::Om);
+			compute_PXmloop00(x,MType::Os);
+			compute_PXmloop00(x,MType::LreO);
+			compute_PXmloop00(x,MType::LreR);
+			compute_PXmloop00(x,MType::MreO);
+			compute_PXmloop00(x,MType::MreR);
+			compute_PXmloop00(x,MType::LMreR);
+			compute_PXmloop00(x,MType::LMorO);
 
-			compute_PLmloop01(i,j,k,l);
+			compute_PXmloop01(x,MType::L);
+			compute_PXmloop01(x,MType::M);
+			compute_PXmloop01(x,MType::R);
+			compute_PXmloop01(x,MType::Om);
+			compute_PXmloop01(x,MType::Os);
+			compute_PXmloop01(x,MType::LreO);
+			compute_PXmloop01(x,MType::LreR);
+			compute_PXmloop01(x,MType::MreO);
+			compute_PXmloop01(x,MType::MreR);
+			compute_PXmloop01(x,MType::LMreR);
+			compute_PXmloop01(x,MType::LMorO);
 
-			compute_PLmloop10(i,j,k,l);
+			compute_PXmloop10(x,MType::L);
+			compute_PXmloop10(x,MType::M);
+			compute_PXmloop10(x,MType::R);
+			compute_PXmloop10(x,MType::Om);
+			compute_PXmloop10(x,MType::Os);
+			compute_PXmloop10(x,MType::LreO);
+			compute_PXmloop10(x,MType::LreR);
+			compute_PXmloop10(x,MType::MreO);
+			compute_PXmloop10(x,MType::MreR);
+			compute_PXmloop10(x,MType::LMreR);
+			compute_PXmloop10(x,MType::LMorO);
 
-			compute_PRmloop00(i,j,k,l);
+			compute_PX(x,MType::L);
+			compute_PX(x,MType::M);
+			compute_PX(x,MType::R);
+			compute_PX(x,MType::Om);
+			compute_PX(x,MType::Os);
+			compute_PX(x,MType::LreO);
+			compute_PX(x,MType::LreR);
+			compute_PX(x,MType::MreO);
+			compute_PX(x,MType::MreR);
+			compute_PX(x,MType::LMreR);
+			compute_PX(x,MType::LMorO);
 
-			compute_PRmloop01(i,j,k,l);
+			compute_PfromX(x,MType::L);
+			compute_PfromX(x,MType::M);
+			compute_PfromX(x,MType::R);
+			compute_PfromX(x,MType::Om);
+			compute_PfromX(x,MType::LreO);
+			compute_PfromX(x,MType::LreR);
+			compute_PfromX(x,MType::MreO);
+			compute_PfromX(x,MType::MreR);
+			compute_PfromX(x,MType::LMreR);
+			compute_PfromX(x,MType::LMorO);
 
-			compute_PRmloop10(i,j,k,l);
+			compute_PfromXprime(x,MType::L);
+			compute_PfromXprime(x,MType::R);
+			compute_PfromXprime(x,MType::M);
+			compute_PfromXprime(x,MType::Om);
+			compute_PfromXprime(x,MType::LreO);
+			compute_PfromXprime(x,MType::LreR);
+			compute_PfromXprime(x,MType::MreO);
+			compute_PfromXprime(x,MType::MreR);
+			compute_PfromXprime(x,MType::LMreR);
+			compute_PfromXprime(x,MType::LMorO);
 
-			compute_PMmloop00(i,j,k,l);
+			compute_PK1X(x,MType::Om);
+			compute_PK1X(x,MType::Os);
+			compute_PK1X(x,MType::LreO);
+			compute_PK1X(x,MType::LreR);
+			compute_PK1X(x,MType::MreO);
+			compute_PK1X(x,MType::MreR);
+			compute_PK1X(x,MType::R);
+			compute_PK1X(x,MType::LMreR);
+			compute_PK1X(x,MType::LMorO);
 
-			compute_PMmloop01(i,j,k,l);
-
-			compute_PMmloop10(i,j,k,l);
-
-			compute_POmloop00(i,j,k,l);
-
-			compute_POmloop01(i,j,k,l);
-
-			compute_POmloop10(i,j,k,l);
-
-			compute_PL(i,j,k,l);
-
-			compute_PR(i,j,k,l);
-
-			compute_PM(i,j,k,l);
-
-			compute_PO(i,j,k,l);
-
-			compute_PfromL(i,j,k,l);
-
-			compute_PfromR(i,j,k,l);
-
-			compute_PfromM(i,j,k,l);
-
-			compute_PfromO(i,j,k,l);
-
-			compute_PK(i,j,k,l);
-
+			compute_PK2X(x,MType::Om);
+			compute_PK2X(x,MType::Os);
+			compute_PK2X(x,MType::LreO);
+			compute_PK2X(x,MType::LreR);
+			compute_PK2X(x,MType::MreO);
+			compute_PK2X(x,MType::MreR);
+			compute_PK2X(x,MType::R);
 		}
 	}
 }
@@ -362,8 +479,8 @@ void W_final_pf::compute_WBP(cand_pos_t i, cand_pos_t l){
 	pf_t contributions = 0;
 
 	for(cand_pos_t d=i; d< l; ++d){
-		contributions += V.get(d,l)*beta2P(l,d)*expPPS_penalty;
-		contributions += P.get(d,l)*expPSM_penalty*expPPS_penalty;
+		contributions += calc_WB(i,d-1)*V.get(d,l)*expbp_penalty*expPPS_penalty;
+		contributions += calc_WB(i,d-1)*P.get(d,l)*expPSM_penalty*expPPS_penalty;
 	}
 	contributions+=WBP.get(i,l-1)*expcp_pen[1];
 	WBP.set(i,l) = contributions;
@@ -373,8 +490,8 @@ void W_final_pf::compute_WPP(cand_pos_t i, cand_pos_t l){
 	pf_t contributions = 0;
 
 	for(cand_pos_t d=i; d<l; ++d){
-		contributions += get_WP(i,d-1)*V.get(d,l)*gamma2(l,d)*expPPS_penalty;
-		contributions += get_WP(i,d-1)*P.get(d,l)*expPSP_penalty*expPPS_penalty;
+		contributions += calc_WP(i,d-1)*V.get(d,l)*gamma2(l,d)*expPPS_penalty;
+		contributions += calc_WP(i,d-1)*P.get(d,l)*expPSP_penalty*expPPS_penalty;
 	}
 	contributions+=WBP.get(i,l-1)*expPUP_pen[1];
 	WPP.set(i,l) = contributions;
@@ -385,490 +502,740 @@ void W_final_pf::compute_P(cand_pos_t i, cand_pos_t l){
 	for(cand_pos_t j=i; j<l; ++j){
 		for (cand_pos_t d=j+1; d<l; ++d){
 			for (cand_pos_t k=d+1; k<l; ++k){
-				contributions += PK.get(i,j,d+1,k)*PK.get(j+1,d,k+1,l);
+				contributions += PK1Om.get(i,j,d+1,k)*PK2Om.get(j+1,d,k+1,l);
+				contributions += PK1Om.get(i,j,d+1,k)*PK2Os.get(j+1,d,k+1,l);
+				contributions += PK1Om.get(i,j,d+1,k)*PK2LreO.get(j+1,d,k+1,l);
+				contributions += PK1Om.get(i,j,d+1,k)*PK2MreO.get(j+1,d,k+1,l);
+				contributions += PK1Om.get(i,j,d+1,k)*PK2LreR.get(j+1,d,k+1,l);
+				contributions += PK1Om.get(i,j,d+1,k)*PK2MreR.get(j+1,d,k+1,l);
+				contributions += PK1Om.get(i,j,d+1,k)*PK2R.get(j+1,d,k+1,l);
+
+				contributions += PK1Os.get(i,j,d+1,k)*PK2Om.get(j+1,d,k+1,l);
+				contributions += PK1Os.get(i,j,d+1,k)*PK2Os.get(j+1,d,k+1,l);
+				contributions +=PK1Os.get(i,j,d+1,k)*PK2MreO.get(j+1,d,k+1,l);
+				contributions += PK1Os.get(i,j,d+1,k)*PK2MreR.get(j+1,d,k+1,l);
+				contributions += PK1Os.get(i,j,d+1,k)*PK2R.get(j+1,d,k+1,l);
+
+				contributions += PK1LreO.get(i,j,d+1,k)*PK2Om.get(j+1,d,k+1,l);
+				contributions += PK1LreO.get(i,j,d+1,k)*PK2LreO.get(j+1,d,k+1,l);
+				contributions += PK1LreO.get(i,j,d+1,k)*PK2MreO.get(j+1,d,k+1,l);
+
+				contributions += PK1LMreR.get(i,j,d+1,k)*PK2Om.get(j+1,d,k+1,l);
+				contributions += PK1LMreR.get(i,j,d+1,k)*PK2LreO.get(j+1,d,k+1,l);
+				contributions += PK1LMreR.get(i,j,d+1,k)*PK2MreO.get(j+1,d,k+1,l);
+
+				contributions += PK1LMorO.get(i,j,d+1,k)*PK2LreR.get(j+1,d,k+1,l);
+				contributions += PK1LMorO.get(i,j,d+1,k)*PK2MreR.get(j+1,d,k+1,l);
+				contributions += PK1LMorO.get(i,j,d+1,k)*PK2R.get(j+1,d,k+1,l);
 			}
 		}
 	}
 	P.set(i,l) = contributions;
 }
 
-void W_final_pf::compute_PK(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+template<class Penalty> energy_t W_final_pf::penalty(const Index4D &x, Penalty p, MType type) {
+    switch(type) {
+    case MType::L: return p(x.j(),x.i());
+    case MType::M: return p(x.j(),x.k());
+    case MType::R: return p(x.l(),x.k());
+    case MType::Om: return p(x.l(),x.i());
+	case MType::Os: return p(x.l(),x.i());
+	case MType::LreO: return p(x.j(),x.i());
+	case MType::LreR: return p(x.j(),x.i());
+	case MType::MreO: return p(x.j(),x.k());
+	case MType::MreR: return p(x.j(),x.k());
+	case MType::LMreR: return p(x.j(),x.i());
+	case MType::LMorO: return p(x.j(),x.i());
+    }
+    __builtin_unreachable();
+}
+/**
+ * This always chops from the interior with every single recurrence which means the code is the same and can be made generic
+ */
+void W_final_pf::compute_PK1X(const Index4D &x, MType type){
+	pf_t contributions = 0;
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
+	Matrix4DPF &PX = PX_by_mtype(type);
+
+	for(cand_pos_t d = i+1;d<=j;++d){
+		contributions += PX.get(i,d,k,l)*calc_WP(d+1,j)*expPB_penalty;
+	}
+	Matrix4DPF &PK1X = PK1X_by_mtype(type);
+	PK1X.set(i,j,k,l,contributions);
+}
+/**
+ * Same as PK1
+ */
+void W_final_pf::compute_PK2X(const Index4D &x, MType type){
+	pf_t contributions = 0;
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
+	Matrix4DPF &PK1X = PK1X_by_mtype(type);
+
+	for(cand_pos_t d = k;d<l;++d){
+		contributions += PK1X.get(i,j,d,l)*calc_WP(k,d-1);
+	}
+	Matrix4DPF &PK2X = PK2X_by_mtype(type);
+	PK2X.set(i,j,k,l,contributions);
+}
+/**
+ * This was a case where the code was almost the same for all recurrences.
+ * Each time, you would take the respective recurrence, shrink the related indices
+ * by one and then add the penalties. This could be solve by the Index4D shrink function
+ * which shrinks based on the Mtype. And so 10 functions become one
+ */
+pf_t W_final_pf::calc_PXmloop(const Index4D &x, MType type){
+	if(impossible_case(x)) return 0;
+
+	Index4D xp(x);
+	xp.shrink(type);
+	Matrix4DPF &PXmloop00 = PXmloop00_by_mtype(type);
+	return PXmloop00.get(xp.i(),xp.j(),xp.k(),xp.l())*ap_penalty*bp_penalty;
+}
+pf_t W_final_pf::calc_PXiloop(const Index4D &x, MType type){
+	switch(type) {
+    case MType::L: return calc_PLiloop(x,type);
+    case MType::M: return calc_PMiloop(x,type);
+    case MType::R: return calc_PRiloop(x,type);
+    case MType::Om: return calc_POiloop(x,type);
+	case MType::Os: return calc_POiloop(x,type);
+	case MType::LreO: return calc_PLiloop(x,type);
+	case MType::LreR: return calc_PLiloop(x,type);
+	case MType::MreO: return calc_PMiloop(x,type);
+	case MType::MreR: return calc_PMiloop(x,type);
+	case MType::LMreR: return calc_PLiloop(x,type);
+	case MType::LMorO: return calc_PLiloop(x,type);
+    }
+    __builtin_unreachable();
+}
+void W_final_pf::compute_PfromX(const Index4D &x, MType type){
+    switch(type) {
+    case MType::L: return compute_PfromL(x,type);
+    case MType::M: return compute_PfromM(x,type);
+    case MType::R: return compute_PfromR(x,type);
+    case MType::Om: return compute_PfromO(x,type);
+	case MType::Os: return;
+	case MType::LreO: return compute_PfromL(x,type);
+	case MType::LreR: return compute_PfromL(x,type);
+	case MType::MreO: return compute_PfromM(x,type);
+	case MType::MreR: return compute_PfromM(x,type);
+	case MType::LMreR: return compute_PfromL(x,type);
+	case MType::LMorO: return compute_PfromL(x,type);
+    }
+    __builtin_unreachable();
+}
+void W_final_pf::compute_PfromXprime(const Index4D &x, MType type){
+    switch(type) {
+    case MType::L: return compute_PfromLprime(x,type);
+    case MType::M: return compute_PfromMprime(x,type);
+    case MType::R: return compute_PfromRprime(x,type);
+    case MType::Om: return compute_PfromOprime(x,type);
+	case MType::Os: return;
+	case MType::LreO: return compute_PfromLprime(x,type);
+	case MType::LreR: return compute_PfromLprime(x,type);
+	case MType::MreO: return compute_PfromMprime(x,type);
+	case MType::MreR: return compute_PfromMprime(x,type);
+	case MType::LMreR: return compute_PfromLprime(x,type);
+	case MType::LMorO: return compute_PfromLprime(x,type);
+    }
+    __builtin_unreachable();
+}
+pf_t W_final_pf::calc_PfromXdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, MType type){
+    switch(type) {
+    case MType::L: return calc_PfromLdoubleprime(i,j,k,l);
+    case MType::M: return calc_PfromMdoubleprime(i,j,k,l);
+    case MType::R: return calc_PfromRdoubleprime(i,j,k,l);
+    case MType::Om: return calc_PfromOdoubleprime(i,j,k,l);
+	case MType::Os: return 0;
+	case MType::LreO: return calc_PfromLreOdoubleprime(i,j,k,l);
+	case MType::LreR: return calc_PfromLreRdoubleprime(i,j,k,l);
+	case MType::MreO: return calc_PfromMreOdoubleprime(i,j,k,l);
+	case MType::MreR: return calc_PfromMreRdoubleprime(i,j,k,l);
+	case MType::LMreR: return calc_PfromLMreRdoubleprime(i,j,k,l);
+	case MType::LMorO: return calc_PfromLMorOdoubleprime(i,j,k,l);
+    }
+    __builtin_unreachable();
+}
+void W_final_pf::compute_PXmloop00(const Index4D &x, MType type){
+    switch(type) {
+    case MType::L: return compute_PLmloop00(x,type);
+    case MType::M: return compute_PMmloop00(x,type);
+    case MType::R: return compute_PRmloop00(x,type);
+    case MType::Om: return compute_POmloop00(x,type);
+	case MType::Os: return compute_POmloop00(x,type);
+	case MType::LreO: return compute_PLmloop00(x,type);
+	case MType::LreR: return compute_PLmloop00(x,type);
+	case MType::MreO: return compute_PMmloop00(x,type);
+	case MType::MreR: return compute_PMmloop00(x,type);
+	case MType::LMreR: return compute_PLmloop00(x,type);
+	case MType::LMorO: return compute_PLmloop00(x,type);
+    }
+    __builtin_unreachable();
+}
+void W_final_pf::compute_PXmloop01(const Index4D &x, MType type){
+    switch(type) {
+    case MType::L: return compute_PLmloop01(x,type);
+    case MType::M: return compute_PMmloop01(x,type);
+    case MType::R: return compute_PRmloop01(x,type);
+    case MType::Om: return compute_POmloop01(x,type);
+	case MType::Os: return compute_POmloop01(x,type);
+	case MType::LreO: return compute_PLmloop01(x,type);
+	case MType::LreR: return compute_PLmloop01(x,type);
+	case MType::MreO: return compute_PMmloop01(x,type);
+	case MType::MreR: return compute_PMmloop01(x,type);
+	case MType::LMreR: return compute_PLmloop01(x,type);
+	case MType::LMorO: return compute_PLmloop01(x,type);
+    }
+    __builtin_unreachable();
+}
+void W_final_pf::compute_PXmloop10(const Index4D &x, MType type){
+    switch(type) {
+    case MType::L: return compute_PLmloop10(x,type);
+    case MType::M: return compute_PMmloop10(x,type);
+    case MType::R: return compute_PRmloop10(x,type);
+    case MType::Om: return compute_POmloop10(x,type);
+	case MType::Os: return compute_POmloop10(x,type);
+	case MType::LreO: return compute_PLmloop10(x,type);
+	case MType::LreR: return compute_PLmloop10(x,type);
+	case MType::MreO: return compute_PMmloop10(x,type);
+	case MType::MreR: return compute_PMmloop10(x,type);
+	case MType::LMreR: return compute_PLmloop10(x,type);
+	case MType::LMorO: return compute_PLmloop10(x,type);
+    }
+    __builtin_unreachable();
+}
+/**
+ * As this just calls the other functions, we can reduce it to just a PX.
+ * ptype closing can be done because lend and rend give the correct indices
+ * for each recurrence. The functions coming after just use their respective
+ * PX functions
+ */
+void W_final_pf::compute_PX(const Index4D &x, MType type){
+    pf_t contributions = 0;
+	Matrix4DPF &PX = PX_by_mtype(type);
+
+	const int ptype_closing = pair[S_[x.lend(type)]][S_[x.rend(type)]];
+
+	if (ptype_closing>0){
+		contributions += calc_PXiloop(x, type);
+		contributions += calc_PXmloop(x,type);
+
+		if(type == MType::Os){
+			if(x.i()==x.j() && x.k()==x.l()){
+				contributions+=gamma2(x.l(),x.i());
+			}
+		} else if (x.difference(type)>TURN){
+			Index4D xp(x);
+			xp.shrink(type);
+			Matrix4DPF &PfromX = PfromX_by_mtype(type);
+			contributions += PfromX.get(xp)*penalty(xp, gamma2, type);
+		}
+	}
+	PX.setI(x, contributions);
+}
+/**
+ * These should probably just be in a matrix at this point; there are so many arrays, why have four less and recompute every time;
+ * It would mean not having four more though, but 11. Remember to probably switch this!!
+ */
+pf_t W_final_pf::calc_PLiloop(const Index4D &x, MType type){
+	if(impossible_case(x)) return 0;
+	if(!can_pair(x.lend(type),x.rend(type))) return 0;
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
+
+	Matrix4DPF &PX = PX_by_mtype(type);
+	pf_t contributions = 0;
+	if (i+TURN+2<j) { 
+		contributions += PX.get(i+1,j-1,k,l)*get_e_stP(i,j);
+	}
+	cand_pos_t max_d = std::min(j,i+MAXLOOP);
+	for(cand_pos_t d= i+1; d<max_d; ++d){
+		cand_pos_t min_dp = std::max(d+TURN,j-MAXLOOP);
+		for(cand_pos_t dp = j-1; dp > min_dp; --dp){
+			if (!can_pair(d,dp)) continue;
+			contributions += get_e_intP(i,d,dp,j)*PX.get(d,dp,k,l);
+		}
+	}
+	return contributions;
+}
+pf_t W_final_pf::calc_PMiloop(const Index4D &x, MType type){
+	if(impossible_case(x)) return 0;
+	if(!can_pair(x.lend(type),x.rend(type))) return 0;
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
+
+	Matrix4DPF &PX = PX_by_mtype(type);
+	pf_t contributions = 0;
+	if (i<j && k<l) {
+		contributions += PX.get(i,j-1,k+1,l)*get_e_stP(j-1,k+1);
+	}
+	cand_pos_t max_d = std::max(i,j-MAXLOOP);
+	for(cand_pos_t d= j-1; d>max_d; --d){
+		cand_pos_t min_dp = std::min(l,k+MAXLOOP); // could switch these here so that we are increasing in the first for like all the others
+		for (cand_pos_t dp=k+1; dp <min_dp; ++dp) {
+			if (!can_pair(d,dp)) continue;
+			contributions += get_e_intP(d,j,k,dp)*PX.get(i,d,dp,l);
+		}
+	}
+	return contributions;
+}
+pf_t W_final_pf::calc_PRiloop(const Index4D &x, MType type){
+	if(impossible_case(x)) return 0;
+	if(!can_pair(x.lend(type),x.rend(type))) return 0;
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
+
+	Matrix4DPF &PX = PX_by_mtype(type);
+	pf_t contributions = 0;
+	if (k+TURN+2<l) { 
+		contributions += PX.get(i,j,k+1,l-1)*get_e_stP(k,l);
+	}
+	cand_pos_t max_d = std::min(l,k+MAXLOOP);
+	for(cand_pos_t d= k+1; d<max_d; ++d){
+		cand_pos_t min_dp = std::max(d+TURN,l-MAXLOOP);
+		for(cand_pos_t dp=l-1; dp > min_dp; --dp){
+			if (!can_pair(d,dp)) continue;
+			contributions += get_e_intP(k,d,dp,l)*PX.get(i,j,d,dp);
+		}
+	}
+	return contributions;
+}
+pf_t W_final_pf::calc_POiloop(const Index4D &x, MType type){
+	if(impossible_case(x)) return 0;
+	if(!can_pair(x.lend(type),x.rend(type))) return 0;
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
+
+	Matrix4DPF &PX = PX_by_mtype(type);
+	pf_t contributions = 0;
+	if (i<j && k<l ) { 
+		contributions += PX.get(i+1,j,k,l-1)*get_e_stP(i,l);
+	}
+	cand_pos_t max_d = std::min(j,i+MAXLOOP);
+	for(cand_pos_t d= i+1; d<max_d; ++d){
+		cand_pos_t min_dp = std::max(l-MAXLOOP,k);
+		for (cand_pos_t dp=l-1; dp >min_dp; --dp) {
+			if (!can_pair(d,dp)) continue;
+			contributions += get_e_intP(i,d,dp,l)*PX.get(d,j,k,dp);
+		}
+	}
+	return contributions;
+}
+/**
+ * 
+ * 
+ * 
+ */
+void W_final_pf::compute_PfromL(const Index4D &x, MType type){
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 	pf_t contributions = 0;
 
-	for(cand_pos_t d=i+1; d< j; ++d){
-		contributions += PK.get(i,d,k,l)*get_WP(d+1,j);  //12G1
+	Matrix4DPF &PfromXprime = PfromXprime_by_mtype(type);
+	for(cand_pos_t d=i+1; d<=j; ++d){
+		contributions += calc_WP(i,d-1)*PfromXprime.get(d,j,k,l);
 	}
 
-	for(cand_pos_t d=k+1; d< l; ++d){
-		contributions += PK.get(i,j,d,l)*get_WP(k,d-1); //1G21
+	Matrix4DPF &PfromX = PfromX_by_mtype(type);
+	PfromX.set(i,j,k,l,contributions);
+}
+
+void W_final_pf::compute_PfromM(const Index4D &x, MType type){
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
+	pf_t contributions = 0;
+
+	Matrix4DPF &PfromXprime = PfromXprime_by_mtype(type);
+	for(cand_pos_t d=i; d<j; ++d){
+		contributions += PfromXprime.get(i,d,k,l)*calc_WP(d+1,j);
 	}
 
-	contributions += PL.get(i,j,k,l)*gamma2(j,i)*expPB_penalty;
-	contributions += PM.get(i,j,k,l)*gamma2(j,k)*expPB_penalty;
-	contributions += PR.get(i,j,k,l)*gamma2(l,k)*expPB_penalty;
-	contributions += PO.get(i,j,k,l)*gamma2(l,i)*expPB_penalty;
+	Matrix4DPF &PfromX = PfromX_by_mtype(type);
+	PfromX.set(i,j,k,l,contributions);
+}
+
+void W_final_pf::compute_PfromR(const Index4D &x, MType type){
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
+	pf_t contributions = 0;
+
+	Matrix4DPF &PfromXprime = PfromXprime_by_mtype(type);
+	for(cand_pos_t d=k+1; d<=l; ++d){
+		contributions += calc_WP(k,d-1)*PfromXprime.get(i,j,d,l);
+	}
+
+	Matrix4DPF &PfromX = PfromX_by_mtype(type);
+	PfromX.set(i,j,k,l,contributions);
+}
+
+void W_final_pf::compute_PfromO(const Index4D &x, MType type){
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
+	pf_t contributions = 0;
+
+	Matrix4DPF &PfromXprime = PfromXprime_by_mtype(type);
+	for(cand_pos_t d=i+1; d<=j; ++d){
+		contributions += calc_WP(i,d-1)*PfromXprime.get(d,j,k,l);
+	}
+
+	Matrix4DPF &PfromX = PfromX_by_mtype(type);
+	PfromX.set(i,j,k,l,contributions);
+}
+/**
+ * 
+ * 
+ * 
+ */
+void W_final_pf::compute_PfromLprime(const Index4D &x, MType type){
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
+	pf_t contributions = 0;
+
+	for(cand_pos_t d=i; d<j; ++d){
+		contributions += calc_PfromXdoubleprime(i,d,k,l,type)*calc_WP(d+1,j);
+	}
 	
-    PK.set(i,j,k,l,contributions);
+	Matrix4DPF &PfromXprime = PfromXprime_by_mtype(type);
+	PfromXprime.set(i,j,k,l,contributions);
 }
 
-void W_final_pf::compute_PL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+void W_final_pf::compute_PfromMprime(const Index4D &x, MType type){
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 	pf_t contributions = 0;
 
-	const int ptype_closing = pair[S_[i]][S_[j]];
-
-	if (ptype_closing>0){
-
-		contributions += get_PLiloop(i,j,k,l);
-
-		contributions += get_PLmloop(i,j,k,l)*expbp_penalty;
-
-		if (j>=(i+TURN+1)){
-			contributions += PfromL.get(i+1,j-1,k,l)*gamma2(j,i);
-		}
+	for(cand_pos_t d=k+1; d<=l; ++d){
+		contributions += calc_WP(k,d-1)*calc_PfromXdoubleprime(i,j,d,l,type);
 	}
-	PL.set(i,j,k,l,contributions);
-}
-
-void W_final_pf::compute_PR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	pf_t contributions = 0;
-
-	const int ptype_closing = pair[S_[k]][S_[l]];
-
-	if (ptype_closing>0){
-		contributions += get_PRiloop(i,j,k,l);
-
-		contributions += get_PRmloop(i,j,k,l)*expbp_penalty;
-
-		if (l>=(k+TURN+1)){
-			contributions += PfromR.get(i,j,k+1,l-1)*gamma2(l,k);
-		}
-	}
-	PR.set(i,j,k,l,contributions);
-}
-
-void W_final_pf::compute_PM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	pf_t contributions = 0;
-
-	const int ptype_closing = pair[S_[j]][S_[k]];
-	if (ptype_closing>0){
-		contributions += get_PMiloop(i,j,k,l);
-
-		contributions += get_PMmloop(i,j,k,l)*expbp_penalty;
-
-		if (k>=(j+TURN-1)){
-			contributions += PfromM.get(i,j-1,k+1,l)*gamma2(j,k);
-		}
-
-		if(i==j && k==l){
-			contributions += gamma2(i,l);
-		}
-	}
-	PM.set(i,j,k,l,contributions);
-}
-
-void W_final_pf::compute_PO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	pf_t contributions = 0;
-
-	const int ptype_closing = pair[S_[i]][S_[l]];
-
-	if (ptype_closing>0){
-		contributions += get_POiloop(i,j,k,l);
-
-		contributions += get_POmloop(i,j,k,l)*expbp_penalty;
-
-		// Hosna, July 11, 2014
-		// To avoid addition of close base pairs we check for the following here
-		if (l>=(i+TURN+1)){
-			contributions += PfromO.get(i+1,j,k,l-1)*gamma2(l,i);
-		}
-	}
-	PO.set(i,j,k,l,contributions);
-}
-
-void W_final_pf::compute_PfromL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	pf_t contributions = 0;
-
-	for(cand_pos_t d=i+1; d< j; ++d){
-		contributions += PfromL.get(d,j,k,l)*get_WP(i,d-1);
-		contributions += PfromL.get(i,d,k,l)*get_WP(d+1,j);
-	}
-
-	contributions += PR.get(i,j,k,l)*gamma2(l,k)*expPB_penalty;
-
-	contributions += PM.get(i,j,k,l)*gamma2(j,k)*expPB_penalty;
-
-	contributions += PO.get(i,j,k,l)*gamma2(l,i)*expPB_penalty;
-
-	PfromL.set(i,j,k,l,contributions);
-}
-
-void W_final_pf::compute_PfromR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	pf_t contributions = 0;
-
-	for(cand_pos_t d=k+1; d< l; ++d){
-		contributions += PfromR.get(i,j,d,l)*get_WP(k,d-1);
-		contributions += PfromR.get(i,j,k,d)*get_WP(d+1,l);
-	}
-
-	contributions += PM.get(i,j,k,l)*gamma2(j,k)*expPB_penalty;
-
-	contributions += PO.get(i,j,k,l)*gamma2(l,i)*expPB_penalty;
-
-	PfromR.set(i,j,k,l,contributions);
-}
-
-void W_final_pf::compute_PfromM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	pf_t contributions = 0;
-
-	for(cand_pos_t d=i+1; d<j; ++d){
-		contributions += PfromM.get(i,d,k,l)*get_WP(d+1,j);
-	}
-	for(cand_pos_t d=k+1; d<l; ++d){
-		contributions += PfromM.get(i,j,d,l)*get_WP(k,d-1);
-	}
-
-	contributions += PL.get(i,j,k,l)*gamma2(j,i)*expPB_penalty;
-
-	contributions += PR.get(i,j,k,l)*gamma2(l,k)*expPB_penalty;
-
-	PfromM.set(i,j,k,l,contributions);
-}
-
-void W_final_pf::compute_PfromO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	pf_t contributions = 0;
-
-	for(cand_pos_t d=i+1; d< j; ++d){
-		contributions += PfromO.get(d,j,k,l)*get_WP(i,d-1);
-	}
-	for(cand_pos_t d=k+1; d<l; ++d){
-		contributions += PfromO.get(i,j,k,d)*get_WP(d+1,l);
-	}
-
-	contributions += PL.get(i,j,k,l)*gamma2(j,i)*expPB_penalty;
-
-	contributions += PR.get(i,j,k,l)*gamma2(l,k)*expPB_penalty;
-
-    PfromO.set(i,j,k,l,contributions);
-}
-
-void W_final_pf::compute_PLmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	pf_t contributions = 0;
-
-	contributions += PL.get(i,j,k,l)*beta2P(j,i);
-    for(cand_pos_t d = i; d<=j; ++d){
-        if (d>i){
-            contributions += get_WB(i,d-1)*PLmloop00.get(d,j,k,l);
-        }
-        if(d<j){
-            contributions += PLmloop00.get(i,d,k,l)*get_WB(d+1,j);
-        }
-
-    }
-	PLmloop00.set(i,j,k,l,contributions);	
-}
-
-void W_final_pf::compute_PLmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	pf_t contributions = 0;
 	
-	for(cand_pos_t d = i; d < j; ++d){
-        contributions += PLmloop00.get(i,d,k,l)*WBP.get(d+1,j);
-    }
-	PLmloop01.set(i,j,k,l,contributions);
-
+	Matrix4DPF &PfromXprime = PfromXprime_by_mtype(type);
+	PfromXprime.set(i,j,k,l,contributions);
 }
 
-void W_final_pf::compute_PLmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+void W_final_pf::compute_PfromRprime(const Index4D &x, MType type){
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 	pf_t contributions = 0;
 
-	for(cand_pos_t d = i+1; d <= j; ++d){
-        contributions += WBP.get(i,d-1)*PLmloop00.get(d,j,k,l);
-        if(d<j){
-            contributions += PLmloop10.get(i,d,k,l)*get_WB(d+1,j);
-        }
-    }
-	PLmloop10.set(i,j,k,l,contributions);
+	for(cand_pos_t d=k; d<l; ++d){
+		contributions += calc_PfromXdoubleprime(i,j,k,d,type)*calc_WP(d+1,l);
+	}
+	
+	Matrix4DPF &PfromXprime = PfromXprime_by_mtype(type);
+	PfromXprime.set(i,j,k,l,contributions);
 }
 
-void W_final_pf::compute_PRmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+void W_final_pf::compute_PfromOprime(const Index4D &x, MType type){
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 	pf_t contributions = 0;
 
-	contributions += PR.get(i,j,k,l)*beta2P(l,k);
-	for(cand_pos_t d=k; d<=l; ++d){
-        if(d>k){
-            contributions += get_WB(k,d-1)*PRmloop00.get(i,j,d,l);
-        }
-        if (d<l){
-            contributions += PRmloop00.get(i,j,k,d)*get_WB(d+1,l);
-        }
-    }
-	PRmloop00.set(i,j,k,l,contributions);
+	for(cand_pos_t d=k; d<l; ++d){
+		contributions += calc_PfromXdoubleprime(i,j,k,d,type)*calc_WP(d+1,l);
+	}
+	
+	Matrix4DPF &PfromXprime = PfromXprime_by_mtype(type);
+	PfromXprime.set(i,j,k,l,contributions);
 }
-
-
-void W_final_pf::compute_PRmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+/**
+ * 
+ * 
+ * 
+ */
+void W_final_pf::compute_PLmloop00(const Index4D &x, MType type){
 	pf_t contributions = 0;
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 
-	contributions += PRmloop01.get(i,j,k,l-1)*expcp_pen[1];
-    for(cand_pos_t d = k; d < l; d++){
-        contributions += PRmloop00.get(i,j,k,d)*WBP.get(d+1,l);
+	Matrix4DPF &PXmloop10 = PXmloop10_by_mtype(type);
+	Matrix4DPF &PXmloop01 = PXmloop01_by_mtype(type);
+	for(cand_pos_t d = i+1; d<=j; ++d){
+		contributions += calc_WB(i,d-1)*PXmloop10.get(d,j,k,l);
+	}
+    for(cand_pos_t d = i; d<j; ++d){
+		contributions += PXmloop01.get(i,d,k,l)*calc_WB(d+1,j);
     }
-	PRmloop01.set(i,j,k,l,contributions);
+	Matrix4DPF &PXmloop00 = PXmloop00_by_mtype(type);
+	PXmloop00.set(i,j,k,l,contributions);
 }
-
-void W_final_pf::compute_PRmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+void W_final_pf::compute_PMmloop00(const Index4D &x, MType type){
 	pf_t contributions = 0;
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 
-	contributions += PRmloop10.get(i,j,k+1,l)*expcp_pen[1];
-    for(cand_pos_t d = k+1; d <= l; ++d){
-        contributions += WBP.get(k,d-1)*PRmloop00.get(i,j,d,l);
-    }
-	PRmloop10.set(i,j,k,l,contributions);
-}
-
-void W_final_pf::compute_PMmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	pf_t contributions = 0;
-
-	contributions += PM.get(i,j,k,l)*beta2P(j,k);
+	Matrix4DPF &PXmloop10 = PXmloop10_by_mtype(type);
+	Matrix4DPF &PXmloop01 = PXmloop01_by_mtype(type);
     for(cand_pos_t d=i; d<j; ++d){
-        contributions += PMmloop00.get(i,d,k,l)*get_WB(d+1,j);
+        contributions += PXmloop10.get(i,d,k,l)*calc_WB(d+1,j);
     }
     for(cand_pos_t d=k+1; d<=l; ++d){
-        contributions += PMmloop00.get(i,j,d,l)*get_WB(k,d-1);
+        contributions += PXmloop01.get(i,j,d,l)*calc_WB(k,d-1);
     }
-	PMmloop00.set(i,j,k,l,contributions);
+	Matrix4DPF &PXmloop00 = PXmloop00_by_mtype(type);
+	PXmloop00.set(i,j,k,l,contributions);
 }
-
-
-void W_final_pf::compute_PMmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+void W_final_pf::compute_PRmloop00(const Index4D &x, MType type){
 	pf_t contributions = 0;
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 
-	contributions += PMmloop01.get(i,j,k+1,l)+expcp_pen[1];
-	for(cand_pos_t d = k; d < l; ++d){
-        contributions += PMmloop00.get(i,j,k,d)*WBP.get(d+1,l);
+	Matrix4DPF &PXmloop10 = PXmloop10_by_mtype(type);
+	Matrix4DPF &PXmloop01 = PXmloop01_by_mtype(type);
+	for(cand_pos_t d=k+1; d<=l; ++d){
+		contributions += calc_WB(k,d-1)*PXmloop10.get(i,j,d,l);
+	}
+	for(cand_pos_t d=k; d<l; ++d){
+		contributions += PXmloop01.get(i,j,k,d)*calc_WB(d+1,l);
     }
-	PMmloop01.set(i,j,k,l,contributions);
+	Matrix4DPF &PXmloop00 = PXmloop00_by_mtype(type);
+	PXmloop00.set(i,j,k,l,contributions);
 }
-
-void W_final_pf::compute_PMmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+void W_final_pf::compute_POmloop00(const Index4D &x, MType type){
 	pf_t contributions = 0;
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 
-	contributions += PMmloop10.get(i,j-1,k,l)*expcp_pen[1];
-	for(cand_pos_t d=i+1; d<=j;++d){
-        contributions += WBP.get(i,d-1)*PMmloop00.get(d,j,k,l);
-    }
-    for(cand_pos_t d = k+1; d < l; ++d){
-        contributions += POmloop10.get(i,j,k,d)*get_WB(d+1,l);
-    }
-	PMmloop10.set(i,j,k,l,contributions);
-}
-
-void W_final_pf::compute_POmloop00(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	pf_t contributions = 0;
-
-	contributions += PO.get(i,j,k,l)*beta2P(l,i);
+	Matrix4DPF &PXmloop10 = PXmloop10_by_mtype(type);
+	Matrix4DPF &PXmloop01 = PXmloop01_by_mtype(type);
     for(cand_pos_t d=i+1; d<=j; ++d){
-        contributions += get_WB(i,d-1)*POmloop00.get(d,j,k,l);
+        contributions += calc_WB(i,d-1)*PXmloop10.get(d,j,k,l);
     }
     for(cand_pos_t d=k; d<l; ++d){
-        contributions = POmloop00.get(i,j,k,d)*get_WB(d+1,l);
+        contributions += PXmloop01.get(i,j,k,d)*calc_WB(d+1,l);
     }
-	POmloop00.set(i,j,k,l,contributions);
+	Matrix4DPF &PXmloop00 = PXmloop00_by_mtype(type);
+	PXmloop00.set(i,j,k,l,contributions);
 }
-
-
-void W_final_pf::compute_POmloop01(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+/**
+ * 
+ * 
+ * 
+ */
+void W_final_pf::compute_PLmloop10(const Index4D &x, MType type){
 	pf_t contributions = 0;
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 
-	for(cand_pos_t d = k; d < l; ++d){
-        contributions += POmloop00.get(i,j,k,d)*WBP.get(d+1,l);
+	Matrix4DPF &PX = PX_by_mtype(type);
+	for(cand_pos_t d = i+1; d <= j; ++d){
+        contributions += PX.get(i,d,k,l)*calc_WB(d+1,j);
     }
-	POmloop01.set(i,j,k,l,contributions);
+	Matrix4DPF &PXmloop10 = PXmloop10_by_mtype(type);
+	PXmloop10.set(i,j,k,l,contributions);
 }
-
-void W_final_pf::compute_POmloop10(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+void W_final_pf::compute_PMmloop10(const Index4D &x, MType type){
 	pf_t contributions = 0;
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 
+	Matrix4DPF &PX = PX_by_mtype(type);
+    for(cand_pos_t d = i+1; d <=j; ++d){
+        contributions += PX.get(i,d,k,l)*calc_WB(d+1,j);
+    }
+	Matrix4DPF &PXmloop10 = PXmloop10_by_mtype(type);
+	PXmloop10.set(i,j,k,l,contributions);
+}
+void W_final_pf::compute_PRmloop10(const Index4D &x, MType type){
+	pf_t contributions = 0;
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
+
+	Matrix4DPF &PX = PX_by_mtype(type);
+    for(cand_pos_t d = k+1; d <= l; ++d){
+        contributions += PX.get(i,j,k,d)*calc_WB(d+1,l);
+    }
+	Matrix4DPF &PXmloop10 = PXmloop10_by_mtype(type);
+	PXmloop10.set(i,j,k,l,contributions);
+}
+void W_final_pf::compute_POmloop10(const Index4D &x, MType type){
+	pf_t contributions = 0;
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
+
+	Matrix4DPF &PX = PX_by_mtype(type);
 	for(cand_pos_t d=i+1; d<=j;++d){
-        contributions += WBP.get(i,d-1)*POmloop00.get(d,j,k,l);
+        contributions += PX.get(i,j,k,d)*calc_WB(d+1,l);
     }
-    for(cand_pos_t d = k+1; d < l; ++d){
-        contributions += POmloop10.get(i,j,k,d) + get_WB(d+1,l);
+	Matrix4DPF &PXmloop10 = PXmloop10_by_mtype(type);
+	PXmloop10.set(i,j,k,l,contributions);
+}
+ /**
+  * 
+  * 
+  * 
+  */
+void W_final_pf::compute_PLmloop01(const Index4D &x, MType type){
+	pf_t contributions = 0;
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
+
+	Matrix4DPF &PX = PX_by_mtype(type);
+	for(cand_pos_t d = i; d < j; ++d){
+        contributions += expcp_pen[d-i]*PX.get(d,j,k,l);
     }
 
-	POmloop10.set(i,j,k,l,contributions);
+	Matrix4DPF &PXmloop01 = PXmloop01_by_mtype(type);
+	PXmloop01.set(i,j,k,l,contributions);
 }
-
-pf_t W_final_pf::get_WB(cand_pos_t i, cand_pos_t j){
-	if (i<=0 || j<=0 || i>n || j>n){
-		return 0;
-	}
-	if (i>j) return 1;
-	return expcp_pen[j-i+1]+WBP.get(i,j);
-}
-
-pf_t W_final_pf::get_WP(cand_pos_t i, cand_pos_t j){
-	if (i<=0 || j<=0 || i>n || j>n){
-		return 0;
-	}
-	if (i>j) return 1; // needed as this will happen 
-	return expPUP_pen[j-i+1]+WPP.get(i,j);
-}
-
-// pf_t W_final_pf::get_PM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-// 	if (!(i <= j && j < k-1 && k <= l)){
-// 		return 0;
-// 	}
-// 	assert(!(i<=0 || l> n));
-
-// 	int ptype_closing = pair[S_[j]][S_[k]];
-// 	if (ptype_closing == 0){
-// 		return 0;
-// 	}
-// 	cand_pos_t ij = index[i]+j-i;
-// 	cand_pos_t kl = index[k]+l-k;
-// 	if (i ==j && k ==l){
-// 		return gamma2(i,l);   ////// Does this suggest I could be missing a case or would it be set to this already?
-// 	}
-
-// 	return PM[ij][kl];
-// }
-
-pf_t W_final_pf::get_PLiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return 0;
-	}
-	assert(!(i<=0 || l> n));
-
-	const int ptype_closing = pair[S_[i]][S_[j]];
-	if(ptype_closing == 0) return 0;
-
+void W_final_pf::compute_PMmloop01(const Index4D &x, MType type){
 	pf_t contributions = 0;
-	contributions += PL.get(i+1,j-1,k,l)*get_e_stP(i,j);
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 
-	for(cand_pos_t d= i+1; d<std::min(j,i+MAXLOOP); ++d){
-		for(cand_pos_t dp = j-1; dp > std::max(d+TURN,j-MAXLOOP); --dp){
-			cand_pos_t u1 = d-(i)-1; // check these
-			cand_pos_t u2 = (j)-dp-1;
-			contributions += get_e_intP(i,d,dp,j)*PL.get(d,dp,k,l)*scale[u1 + u2 + 2];
-		}
-	}
-	return contributions;
+	Matrix4DPF &PX = PX_by_mtype(type);
+	for(cand_pos_t d = k; d < l; ++d){
+        contributions += expcp_pen[d-k]*PX.get(i,j,d,l);
+    }
+
+	Matrix4DPF &PXmloop01 = PXmloop01_by_mtype(type);
+	PXmloop01.set(i,j,k,l,contributions);
 }
-
-pf_t W_final_pf::get_PLmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return 0;
-	}
-	assert(!(i<=0 || l> n));
-    pf_t contributions = 0;
-	contributions += PLmloop10.get(i+1,j-1,k,l)*expap_penalty*beta2P(j,i);
-    contributions += PLmloop01.get(i+1,j-1,k,l)*ap_penalty*beta2P(j,i);
-
-	return contributions;
-}
-
-pf_t W_final_pf::get_PRiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return 0;
-	}
-	assert(!(i<=0 || l> n));
-
-	const int ptype_closing = pair[S_[k]][S_[l]];
-	if(ptype_closing == 0) return 0;
-
+void W_final_pf::compute_PRmloop01(const Index4D &x, MType type){
 	pf_t contributions = 0;
-	contributions += PR.get(i,j,k+1,l-1)*get_e_stP(k,l);
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 
-	for(cand_pos_t d= k+1; d<std::min(l,k+MAXLOOP); ++d){
-		for(cand_pos_t dp=l-1; dp > std::max(d+TURN,l-MAXLOOP); --dp){
-			cand_pos_t u1 = d-(k)-1; // check these
-			cand_pos_t u2 = (l)-dp-1;
-			contributions += get_e_intP(k,d,dp,l)*PR.get(i,j,d,dp)*scale[u1 + u2 + 2];
-		}
-	}
-	return contributions;
+	Matrix4DPF &PX = PX_by_mtype(type);
+    for(cand_pos_t d = k; d < l; d++){
+        contributions += expcp_pen[d-k]*PX.get(i,j,d,l);
+    }
+
+	Matrix4DPF &PXmloop01 = PXmloop01_by_mtype(type);
+	PXmloop01.set(i,j,k,l,contributions);
 }
-
-pf_t W_final_pf::get_PRmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return 0;
-	}
-	assert(!(i<=0 || l> n));
-    pf_t contributions = 0;
-	contributions += PRmloop10.get(i,j,k+1,l-1)*expap_penalty*beta2P(l,k);
-    contributions += PRmloop01.get(i,j,k+1,l-1)*expap_penalty*beta2P(l,k);
-
-	return contributions;
-}
-
-pf_t W_final_pf::get_PMiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return 0;
-	}
-	assert(!(i<=0 || l> n));
-
-	const int ptype_closing = pair[S_[j]][S_[k]];
-	if(ptype_closing == 0) return 0;
-
+void W_final_pf::compute_POmloop01(const Index4D &x, MType type){
 	pf_t contributions = 0;
-	contributions += PM.get(i,j-1,k+1,l)*get_e_stP(j-1,k+1);
+	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 
-	for(cand_pos_t d= j-1; d>std::max(i,j-MAXLOOP); --d){
-		for (cand_pos_t dp=k+1; dp <std::min(l,k+MAXLOOP); ++dp) {
-			cand_pos_t u1 = (j)-d-1; // check these
-			cand_pos_t u2 = dp-(k)-1;
-			contributions += get_e_intP(d,j,k,dp)*PM.get(i,d,dp,l)*scale[u1 + u2 + 2];
-		}
-	}
-	return contributions;
+	Matrix4DPF &PX = PX_by_mtype(type);
+	for(cand_pos_t d = i; d < j; ++d){
+        contributions += expcp_pen[d-i]*PX.get(d,j,k,l);
+    }
+
+	Matrix4DPF &PXmloop01 = PXmloop01_by_mtype(type);
+	PXmloop01.set(i,j,k,l,contributions);
 }
-
-pf_t W_final_pf::get_PMmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+/**
+ * 
+ * 
+ * 
+ */
+pf_t W_final_pf::calc_PfromLdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
 	assert(!(i<=0 || l> n));
-    pf_t contributions = 0;
-	contributions += PMmloop10.get(i,j-1,k+1,l)*expap_penalty*beta2P(j,k);
-    contributions += PMmloop01.get(i,j-1,k+1,l)*expap_penalty*beta2P(j,k);
-
-	return contributions;
-}
-
-pf_t W_final_pf::get_POiloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
-	if (!(i <= j && j < k-1 && k <= l)){
-		return 0;
-	}
-	assert(!(i<=0 || l> n));
-
-	const int ptype_closing = pair[S_[i]][S_[l]];
-	if(ptype_closing == 0) return 0;
-
 	pf_t contributions = 0;
-	contributions += PO.get(i+1,j,k,l-1)*get_e_stP(i,l);
+	contributions += PR.get(i,j,k,l)*gamma2(l,k)*expPB_penalty;
+	contributions += PM.get(i,j,k,l)*gamma2(j,k)*expPB_penalty;
+	contributions += POm.get(i,j,k,l)*gamma2(l,i)*expPB_penalty;
+	contributions += POs.get(i,j,k,l)*gamma2(l,i)*expPB_penalty;
 
-	for(cand_pos_t d= i+1; d<std::min(j,i+MAXLOOP); ++d){
-		for (cand_pos_t dp=l-1; dp >std::max(l-MAXLOOP,k); --dp) {
-			cand_pos_t u1 = d-(i)-1; // check these
-			cand_pos_t u2 = (l)-dp-1;
-			contributions += get_e_intP(i,d,dp,l)*PO.get(d,j,dp,k)*scale[u1 + u2 + 2];
-		}
-	}
 	return contributions;
 }
-
-pf_t W_final_pf::get_POmloop(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
+pf_t W_final_pf::calc_PfromMdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l){
 	if (!(i <= j && j < k-1 && k <= l)){
 		return 0;
 	}
 	assert(!(i<=0 || l> n));
-    pf_t contributions = 0;
-	contributions += POmloop10.get(i+1,j,k,l-1)*expap_penalty*beta2P(l,i);
-    contributions += POmloop01.get(i+1,j,k,l-1)*expap_penalty*beta2P(l,i);
+	pf_t contributions = 0;
+	contributions += PL.get(i,j,k,l)*gamma2(j,i)*expPB_penalty;
+	contributions += PR.get(i,j,k,l)*gamma2(l,k)*expPB_penalty;
+	contributions += POm.get(i,j,k,l)*gamma2(l,i)*expPB_penalty;
 
 	return contributions;
 }
+pf_t W_final_pf::calc_PfromRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	if (!(i <= j && j < k-1 && k <= l)){
+		return 0;
+	}
+	assert(!(i<=0 || l> n));
+	pf_t contributions = 0;
+	contributions += PM.get(i,j,k,l)*gamma2(j,k)*expPB_penalty;
+	contributions += POm.get(i,j,k,l)*gamma2(l,i)*expPB_penalty;
+	contributions += POs.get(i,j,k,l)*gamma2(l,i)*expPB_penalty;
 
+	return contributions;
+}
+pf_t W_final_pf::calc_PfromOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	if (!(i <= j && j < k-1 && k <= l)){
+		return 0;
+	}
+	assert(!(i<=0 || l> n));
+	pf_t contributions = 0;
+	contributions += PL.get(i,j,k,l)*gamma2(j,i)*expPB_penalty;
+	contributions += PR.get(i,j,k,l)*gamma2(l,k)*expPB_penalty;
+
+	return contributions;
+}
+pf_t W_final_pf::calc_PfromLreOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	if (!(i <= j && j < k-1 && k <= l)){
+		return 0;
+	}
+	assert(!(i<=0 || l> n));
+	pf_t contributions = 0;
+	contributions += PMreO.get(i,j,k,l)*gamma2(j,k)*expPB_penalty;
+	contributions += POm.get(i,j,k,l)*gamma2(l,i)*expPB_penalty;
+	contributions += POs.get(i,j,k,l)*gamma2(l,i)*expPB_penalty;
+
+	return contributions;
+}
+pf_t W_final_pf::calc_PfromLreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	if (!(i <= j && j < k-1 && k <= l)){
+		return 0;
+	}
+	assert(!(i<=0 || l> n));
+	pf_t contributions = 0;
+	contributions += PMreR.get(i,j,k,l)*gamma2(j,k)*expPB_penalty;
+	contributions += PR.get(i,j,k,l)*gamma2(l,k)*expPB_penalty;
+
+	return contributions;
+}
+pf_t W_final_pf::calc_PfromMreOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	if (!(i <= j && j < k-1 && k <= l)){
+		return 0;
+	}
+	assert(!(i<=0 || l> n));
+	pf_t contributions = 0;
+	contributions += PLreO.get(i,j,k,l)*gamma2(j,i)*expPB_penalty;
+	contributions += POm.get(i,j,k,l)*gamma2(l,i)*expPB_penalty;
+	contributions += POs.get(i,j,k,l)*gamma2(l,i)*expPB_penalty;
+
+	return contributions;
+}
+pf_t W_final_pf::calc_PfromMreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	if (!(i <= j && j < k-1 && k <= l)){
+		return 0;
+	}
+	assert(!(i<=0 || l> n));
+	pf_t contributions = 0;
+	contributions += PLreR.get(i,j,k,l)*gamma2(j,i)*expPB_penalty;
+	contributions += PR.get(i,j,k,l)*gamma2(l,k)*expPB_penalty;
+
+	return contributions;
+}
+pf_t W_final_pf::calc_PfromLMreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	if (!(i <= j && j < k-1 && k <= l)){
+		return 0;
+	}
+	assert(!(i<=0 || l> n));
+	pf_t contributions = 0;
+	contributions += PMreR.get(i,j,k,l)*gamma2(j,k)*expPB_penalty;
+
+	return contributions;
+}
+pf_t W_final_pf::calc_PfromLMorOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l){
+	if (!(i <= j && j < k-1 && k <= l)){
+		return 0;
+	}
+	assert(!(i<=0 || l> n));
+	pf_t contributions = 0;
+	contributions += PM.get(i,j,k,l)*gamma2(j,k)*expPB_penalty;
+	contributions += POm.get(i,j,k,l)*gamma2(l,i)*expPB_penalty;
+	contributions += POs.get(i,j,k,l)*gamma2(l,i)*expPB_penalty;
+
+	return contributions;
+}
+/**
+ * 
+ * 
+ * 
+ */
+pf_t W_final_pf::calc_WB(cand_pos_t i, cand_pos_t l){
+	if (i<=0 || l<=0 || i>n || l>n){
+		return 0;
+	}
+	if (i>l) return 1;
+	return expcp_pen[l-i+1]*WBP.get(i,l);
+}
+pf_t W_final_pf::calc_WP(cand_pos_t i, cand_pos_t l){
+	if (i<=0 || l<=0 || i>n || l>n){
+		return 0;
+	}
+	if (i>l) return 1; // needed as this will happen 
+	return expPUP_pen[l-i+1]*WPP.get(i,l);
+}
+/**
+ * 
+ * 
+ * 
+ */
 pf_t W_final_pf::compute_int(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l) {
     const pair_type ptype_closing = pair[S_[i]][S_[j]];
     return exp_E_IntLoop(k - i - 1, j - l - 1, ptype_closing, rtype[pair[S_[k]][S_[l]]], S1_[i + 1], S1_[j - 1], S1_[k - 1], S1_[l + 1], exp_params_);
@@ -888,15 +1255,4 @@ pf_t W_final_pf::get_e_intP(cand_pos_t i, cand_pos_t ip, cand_pos_t jp, cand_pos
     pf_t e_int = compute_int(i, j, ip, jp);
 
     return pow(e_int, e_intP_penalty);
-}
-
-
-// penalty for closing pair i.l or l.i of an ordinary multiloop
-inline pf_t W_final_pf::beta2(cand_pos_t i, cand_pos_t l){
-	return expb_penalty;
-}
-
-// penalty for closing pair i.l or l.i of a multiloop that spans a band
-inline pf_t W_final_pf::beta2P(cand_pos_t i, cand_pos_t l){
-	return expbp_penalty;
 }

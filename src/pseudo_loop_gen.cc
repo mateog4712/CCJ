@@ -11,7 +11,8 @@
 #define debug 0
 
 /**
- * These should probably just be in a matrix at this point; there are so many arrays, why have four less and recompute every time; Remember to probably switch this!!
+ * These should probably just be in a matrix at this point; there are so many arrays, why have four less and recompute every time;
+ * It would mean not having four more though, but 11. Remember to probably switch this!!
  */
 energy_t pseudo_loop::calc_PLiloop(const Index4D &x, MType type){
 	if(impossible_case(x)) return INF;
@@ -33,9 +34,6 @@ energy_t pseudo_loop::calc_PLiloop(const Index4D &x, MType type){
 	}
 	return min_energy;
 }
-
-// I know that stacks flip the second stack basepair, do I need to consider that here and when is k.j better done than j.k
-// Would it make it easier for understanding since we are moving outward instead of inward?
 energy_t pseudo_loop::calc_PMiloop(const Index4D &x, MType type){
 	if(impossible_case(x)) return INF;
 	if(!can_pair(x.lend(type),x.rend(type))) return INF;
@@ -56,7 +54,6 @@ energy_t pseudo_loop::calc_PMiloop(const Index4D &x, MType type){
 	}
 	return min_energy;
 }
-
 energy_t pseudo_loop::calc_PRiloop(const Index4D &x, MType type){
 	if(impossible_case(x)) return INF;
 	if(!can_pair(x.lend(type),x.rend(type))) return INF;
@@ -77,7 +74,6 @@ energy_t pseudo_loop::calc_PRiloop(const Index4D &x, MType type){
 	}
 	return min_energy;
 }
-
 energy_t pseudo_loop::calc_POiloop(const Index4D &x, MType type){
 	if(impossible_case(x)) return INF;
 	if(!can_pair(x.lend(type),x.rend(type))) return INF;
@@ -98,7 +94,11 @@ energy_t pseudo_loop::calc_POiloop(const Index4D &x, MType type){
 	}
 	return min_energy;
 }
-
+/**
+ * 
+ * 
+ * 
+ */
 void pseudo_loop::compute_PfromL(const Index4D &x, MType type){
 	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 	energy_t min_energy = INF;
@@ -226,7 +226,11 @@ void pseudo_loop::compute_PfromOprime(const Index4D &x, MType type){
 		PfromXprime.set(i,j,k,l,min_energy);
 	}
 }
-
+/**
+ * 
+ * 
+ * 
+ */
 void pseudo_loop::compute_PLmloop00(const Index4D &x, MType type){
 	energy_t min_energy = INF,tmp=INF;
 	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
@@ -253,11 +257,11 @@ void pseudo_loop::compute_PMmloop00(const Index4D &x, MType type){
 	Matrix4D &PXmloop10 = PXmloop10_by_mtype(type);
 	Matrix4D &PXmloop01 = PXmloop01_by_mtype(type);
     for(cand_pos_t d=i; d<j; ++d){
-        tmp=PXmloop10.get(i,d,k,l) + calc_WB(d+1,j);
+        tmp = PXmloop10.get(i,d,k,l) + calc_WB(d+1,j);
         min_energy = std::min(min_energy,tmp);
     }
     for(cand_pos_t d=k+1; d<=l; ++d){
-        tmp=PXmloop01.get(i,j,d,l) + calc_WB(k,d-1);
+        tmp = PXmloop01.get(i,j,d,l) + calc_WB(k,d-1);
         min_energy = std::min(min_energy,tmp);
     }
 	if (min_energy < INF/2){
@@ -272,7 +276,7 @@ void pseudo_loop::compute_PRmloop00(const Index4D &x, MType type){
 	Matrix4D &PXmloop10 = PXmloop10_by_mtype(type);
 	Matrix4D &PXmloop01 = PXmloop01_by_mtype(type);
 	for(cand_pos_t d=k+1; d<=l; ++d){
-		tmp=calc_WB(k,d-1) + PXmloop10.get(i,j,d,l);
+		tmp = calc_WB(k,d-1) + PXmloop10.get(i,j,d,l);
 		min_energy = std::min(min_energy,tmp);
 	}
 	for(cand_pos_t d=k; d<l; ++d){
@@ -291,11 +295,11 @@ void pseudo_loop::compute_POmloop00(const Index4D &x, MType type){
 	Matrix4D &PXmloop10 = PXmloop10_by_mtype(type);
 	Matrix4D &PXmloop01 = PXmloop01_by_mtype(type);
     for(cand_pos_t d=i+1; d<=j; ++d){
-        tmp = calc_WB(i,d-1)+PXmloop10.get(d,j,k,l);
+        tmp = calc_WB(i,d-1) + PXmloop10.get(d,j,k,l);
         min_energy = std::min(min_energy,tmp);
     }
     for(cand_pos_t d=k; d<l; ++d){
-        tmp = PXmloop01.get(i,j,k,d)+calc_WB(d+1,l);
+        tmp = PXmloop01.get(i,j,k,d) + calc_WB(d+1,l);
         min_energy = std::min(min_energy,tmp);
     }
 	if (min_energy < INF/2){
@@ -351,7 +355,6 @@ void pseudo_loop::compute_PRmloop10(const Index4D &x, MType type){
 		Matrix4D &PXmloop10 = PXmloop10_by_mtype(type);
 		PXmloop10.set(i,j,k,l,min_energy);
 	}
-
 }
 void pseudo_loop::compute_POmloop10(const Index4D &x, MType type){
 	energy_t min_energy = INF,tmp=INF;
@@ -417,12 +420,12 @@ void pseudo_loop::compute_PRmloop01(const Index4D &x, MType type){
 	}
 }
 void pseudo_loop::compute_POmloop01(const Index4D &x, MType type){
-	energy_t min_energy = INF;
+	energy_t min_energy = INF,tmp=INF;
 	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 
 	Matrix4D &PX = PX_by_mtype(type);
 	for(cand_pos_t d = i; d < j; ++d){
-        energy_t tmp = cp_penalty*(d-i) + PX.get(d,j,k,l);
+        tmp = cp_penalty*(d-i) + PX.get(d,j,k,l);
         min_energy = std::min(min_energy,tmp);
     }
 

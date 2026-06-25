@@ -34,13 +34,17 @@ const char *args_info_versiontext = "";
 const char *args_info_description = "Read RNA sequence from stdin or cmdline; predict minimum\nfree energy and optimum structure";
 
 const char *args_info_help[] = {
-  "  -h, --help               Print help and exit",
-  "  -V, --version            Print version and exit",
-  "  -i, --input-file=STRING  Give a path to an input file containing the sequence\n                             (and input structure if known)",
-  "  -d, --dangles=INT        Specify the dangle model to be used (base is 2)\n                             (default=`2')",
-  "  -P, --paramFile=STRING   Read energy parameters from paramfile, instead of\n                             using the default parameter set.",
-  "      --noConv             Do not convert DNA into RNA. This will use the\n                             Matthews 2004 parameters for DNA  (default=off)",
-  "      --noGU               Turn off G-U and U-G (and G-T and T-G) base pairing\n                             (default=off)",
+  "  -h, --help                Print help and exit",
+  "  -V, --version             Print version and exit",
+  "  -i, --input-file=STRING   Give a path to an input file containing the\n                              sequence (and input structure if known)",
+  "  -o, --output-file=STRING  Give a path to an output file which will the\n                              sequence, and its structure and energy",
+  "  -d, --dangles=INT         Specify the dangle model to be used (base is 2)\n                              (default=`2')",
+  "  -P, --paramFile=STRING    Read energy parameters from paramfile, instead of\n                              using the default parameter set.",
+  "  -s, --samples=INT         Give the number of samples for the stochastic\n                              backtracking (default: 1000)  (default=`1000')",
+  "  -f, --fatgraph=INT        Give the number of fatgraphs outputted, along with\n                              their frequencies (default 1)  (default=`1')",
+  "      --noConv              Do not convert DNA into RNA. This will use the\n                              Matthews 2004 parameters for DNA  (default=off)",
+  "      --noGU                Turn off G-U and U-G (and G-T and T-G) base pairing\n                              (default=off)",
+  "      --noPS                Don't create a Postscript drawing of the base pair\n                              probabilities  (default=off)",
   "\nThe input sequence is read from standard input, unless it is\ngiven on the command line.\n",
     0
 };
@@ -70,10 +74,14 @@ void clear_given (struct args_info *args_info)
   args_info->help_given = 0 ;
   args_info->version_given = 0 ;
   args_info->input_file_given = 0 ;
+  args_info->output_file_given = 0 ;
   args_info->dangles_given = 0 ;
   args_info->paramFile_given = 0 ;
+  args_info->samples_given = 0 ;
+  args_info->fatgraph_given = 0 ;
   args_info->noConv_given = 0 ;
   args_info->noGU_given = 0 ;
+  args_info->noPS_given = 0 ;
 }
 
 static
@@ -82,12 +90,19 @@ void clear_args (struct args_info *args_info)
   FIX_UNUSED (args_info);
   args_info->input_file_arg = NULL;
   args_info->input_file_orig = NULL;
+  args_info->output_file_arg = NULL;
+  args_info->output_file_orig = NULL;
   args_info->dangles_arg = 2;
   args_info->dangles_orig = NULL;
   args_info->paramFile_arg = NULL;
   args_info->paramFile_orig = NULL;
+  args_info->samples_arg = 1000;
+  args_info->samples_orig = NULL;
+  args_info->fatgraph_arg = 1;
+  args_info->fatgraph_orig = NULL;
   args_info->noConv_flag = 0;
   args_info->noGU_flag = 0;
+  args_info->noPS_flag = 0;
   
 }
 
@@ -99,10 +114,14 @@ void init_args_info(struct args_info *args_info)
   args_info->help_help = args_info_help[0] ;
   args_info->version_help = args_info_help[1] ;
   args_info->input_file_help = args_info_help[2] ;
-  args_info->dangles_help = args_info_help[3] ;
-  args_info->paramFile_help = args_info_help[4] ;
-  args_info->noConv_help = args_info_help[5] ;
-  args_info->noGU_help = args_info_help[6] ;
+  args_info->output_file_help = args_info_help[3] ;
+  args_info->dangles_help = args_info_help[4] ;
+  args_info->paramFile_help = args_info_help[5] ;
+  args_info->samples_help = args_info_help[6] ;
+  args_info->fatgraph_help = args_info_help[7] ;
+  args_info->noConv_help = args_info_help[8] ;
+  args_info->noGU_help = args_info_help[9] ;
+  args_info->noPS_help = args_info_help[10] ;
   
 }
 
@@ -197,9 +216,13 @@ cmdline_parser_release (struct args_info *args_info)
   unsigned int i;
   free_string_field (&(args_info->input_file_arg));
   free_string_field (&(args_info->input_file_orig));
+  free_string_field (&(args_info->output_file_arg));
+  free_string_field (&(args_info->output_file_orig));
   free_string_field (&(args_info->dangles_orig));
   free_string_field (&(args_info->paramFile_arg));
   free_string_field (&(args_info->paramFile_orig));
+  free_string_field (&(args_info->samples_orig));
+  free_string_field (&(args_info->fatgraph_orig));
   
   
   for (i = 0; i < args_info->inputs_num; ++i)
@@ -241,14 +264,22 @@ cmdline_parser_dump(FILE *outfile, struct args_info *args_info)
     write_into_file(outfile, "version", 0, 0 );
   if (args_info->input_file_given)
     write_into_file(outfile, "input-file", args_info->input_file_orig, 0);
+  if (args_info->output_file_given)
+    write_into_file(outfile, "output-file", args_info->output_file_orig, 0);
   if (args_info->dangles_given)
     write_into_file(outfile, "dangles", args_info->dangles_orig, 0);
   if (args_info->paramFile_given)
     write_into_file(outfile, "paramFile", args_info->paramFile_orig, 0);
+  if (args_info->samples_given)
+    write_into_file(outfile, "samples", args_info->samples_orig, 0);
+  if (args_info->fatgraph_given)
+    write_into_file(outfile, "fatgraph", args_info->fatgraph_orig, 0);
   if (args_info->noConv_given)
     write_into_file(outfile, "noConv", 0, 0 );
   if (args_info->noGU_given)
     write_into_file(outfile, "noGU", 0, 0 );
+  if (args_info->noPS_given)
+    write_into_file(outfile, "noPS", 0, 0 );
   
 
   i = EXIT_SUCCESS;
@@ -512,14 +543,18 @@ cmdline_parser_internal (
         { "help",	0, NULL, 'h' },
         { "version",	0, NULL, 'V' },
         { "input-file",	1, NULL, 'i' },
+        { "output-file",	1, NULL, 'o' },
         { "dangles",	1, NULL, 'd' },
         { "paramFile",	1, NULL, 'P' },
+        { "samples",	1, NULL, 's' },
+        { "fatgraph",	1, NULL, 'f' },
         { "noConv",	0, NULL, 0 },
         { "noGU",	0, NULL, 0 },
+        { "noPS",	0, NULL, 0 },
         { 0,  0, 0, 0 }
       };
 
-      c = getopt_long (argc, argv, "hVi:d:P:", long_options, &option_index);
+      c = getopt_long (argc, argv, "hVi:o:d:P:s:f:", long_options, &option_index);
 
       if (c == -1) break;	/* Exit from `while (1)' loop.  */
 
@@ -543,6 +578,18 @@ cmdline_parser_internal (
               &(local_args_info.input_file_given), optarg, 0, 0, ARG_STRING,
               check_ambiguity, override, 0, 0,
               "input-file", 'i',
+              additional_error))
+            goto failure;
+        
+          break;
+        case 'o':	/* Give a path to an output file which will the sequence, and its structure and energy.  */
+        
+        
+          if (update_arg( (void *)&(args_info->output_file_arg), 
+               &(args_info->output_file_orig), &(args_info->output_file_given),
+              &(local_args_info.output_file_given), optarg, 0, 0, ARG_STRING,
+              check_ambiguity, override, 0, 0,
+              "output-file", 'o',
               additional_error))
             goto failure;
         
@@ -571,6 +618,30 @@ cmdline_parser_internal (
             goto failure;
         
           break;
+        case 's':	/* Give the number of samples for the stochastic backtracking (default: 1000).  */
+        
+        
+          if (update_arg( (void *)&(args_info->samples_arg), 
+               &(args_info->samples_orig), &(args_info->samples_given),
+              &(local_args_info.samples_given), optarg, 0, "1000", ARG_INT,
+              check_ambiguity, override, 0, 0,
+              "samples", 's',
+              additional_error))
+            goto failure;
+        
+          break;
+        case 'f':	/* Give the number of fatgraphs outputted, along with their frequencies (default 1).  */
+        
+        
+          if (update_arg( (void *)&(args_info->fatgraph_arg), 
+               &(args_info->fatgraph_orig), &(args_info->fatgraph_given),
+              &(local_args_info.fatgraph_given), optarg, 0, "1", ARG_INT,
+              check_ambiguity, override, 0, 0,
+              "fatgraph", 'f',
+              additional_error))
+            goto failure;
+        
+          break;
 
         case 0:	/* Long option with no short option */
           /* Do not convert DNA into RNA. This will use the Matthews 2004 parameters for DNA.  */
@@ -593,6 +664,18 @@ cmdline_parser_internal (
             if (update_arg((void *)&(args_info->noGU_flag), 0, &(args_info->noGU_given),
                 &(local_args_info.noGU_given), optarg, 0, 0, ARG_FLAG,
                 check_ambiguity, override, 1, 0, "noGU", '-',
+                additional_error))
+              goto failure;
+          
+          }
+          /* Don't create a Postscript drawing of the base pair probabilities.  */
+          else if (strcmp (long_options[option_index].name, "noPS") == 0)
+          {
+          
+          
+            if (update_arg((void *)&(args_info->noPS_flag), 0, &(args_info->noPS_given),
+                &(local_args_info.noPS_given), optarg, 0, 0, ARG_FLAG,
+                check_ambiguity, override, 1, 0, "noPS", '-',
                 additional_error))
               goto failure;
           

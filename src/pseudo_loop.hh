@@ -21,8 +21,6 @@ public:
     void compute_energies(cand_pos_t i, cand_pos_t j);
 
 	void set_fold(minimum_fold *f);
-    std::string get_structure(){return structure;}
-    minimum_fold *get_minimum_fold(){return f;}
 	
 	energy_t get_energy(cand_pos_t i, cand_pos_t j){return P.get(i,j);}
 
@@ -41,7 +39,7 @@ private:
 	minimum_fold *f;
 	vrna_param_t *params_;
 
-	std::vector<cand_pos_t> index;				// the array to keep the index of two dimensional arrays like WI and weakly_closed
+	std::vector<cand_pos_t> index;				// the array to keep the index of two dimensional arrays like WPP and WBP
 	index_offset_t index3D;
 
 	short *S_;
@@ -343,11 +341,5 @@ private:
 		static std::array<Matrix4D*,7> matrices{&PK2R, &PK2Om, &PK2Os, &PK2LreO, &PK2LreR, &PK2MreO, &PK2MreR};
 		return *matrices[static_cast<int>(type)-2];
 	}
-
-  	// Hosna: Feb 19th 2007
-  	// used for backtracking
-  	void insert_node (cand_pos_t i, cand_pos_t j, char type);//, seq_interval *stack_interval);
-	void insert_node(int i, int j, int k, int l, char type);
-
 };
 #endif /*PSEUDO_LOOP_H_*/

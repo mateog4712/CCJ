@@ -1,7 +1,7 @@
 #ifndef PF_GLOBALS
 #define PF_GLOBALS
 
-#include "pf_externs.hh"
+// #include "pf_externs.hh"
 
 double expPS_penalty;
 double expPSM_penalty;

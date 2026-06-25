@@ -22,7 +22,7 @@ SET(SOURCE
   src/CCJ.cc
   src/cmdline.cc
   src/s_energy_matrix.cc
-#   src/part_func.cc
+  src/part_func.cc
   src/dot_plot.cc
 #   src/stoch_backtrack.cc
 )
