@@ -634,36 +634,136 @@ void pseudo_loop::Trace_P(cand_pos_t i, cand_pos_t l, energy_t e){
 	for(cand_pos_t j=i; j<l; ++j){
 		for (cand_pos_t d=j+1; d<l; ++d){
 			for (cand_pos_t k=d+1; k<l; ++k){
-				// b1 = PK1Om.get(i,j,d+1,k) + PK2Om.get(j+1,d,k+1,l);
-				// b2 = PK1Om.get(i,j,d+1,k) + PK2Os.get(j+1,d,k+1,l);
-				// b3 = PK1Om.get(i,j,d+1,k) + PK2LreO.get(j+1,d,k+1,l);
-				// b4 = PK1Om.get(i,j,d+1,k) + PK2MreO.get(j+1,d,k+1,l);
-				// b5 = PK1Om.get(i,j,d+1,k) + PK2LreR.get(j+1,d,k+1,l);
-				// b6 = PK1Om.get(i,j,d+1,k) + PK2MreR.get(j+1,d,k+1,l);
-				// b7 = PK1Om.get(i,j,d+1,k) + PK2R.get(j+1,d,k+1,l);
+				tmp = PK1Om.get(i,j,d+1,k) + PK2Om.get(j+1,d,k+1,l); // b1
+				if(e==tmp){
+					Trace_PX1(i,j,d+1,k,MType::Om,PK1Om.get(i,j,d+1,k));
+					Trace_PX2(j+1,d,k+1,l,MType::Om,PK2Om.get(j+1,d,k+1,l));
+					return;
+				}
+				tmp = PK1Om.get(i,j,d+1,k) + PK2Os.get(j+1,d,k+1,l); // b2
+				if(e==tmp){
+					Trace_PX1(i,j,d+1,k,MType::Om,PK1Om.get(i,j,d+1,k));
+					Trace_PX2(j+1,d,k+1,l,MType::Os,PK2Os.get(j+1,d,k+1,l));
+					return;
+				}
+				tmp = PK1Om.get(i,j,d+1,k) + PK2LreO.get(j+1,d,k+1,l); // b3
+				if(e==tmp){
+					Trace_PX1(i,j,d+1,k,MType::Om,PK1Om.get(i,j,d+1,k));
+					Trace_PX2(j+1,d,k+1,l,MType::LreO,PK2LreO.get(j+1,d,k+1,l));
+					return;
+				}
+				tmp = PK1Om.get(i,j,d+1,k) + PK2MreO.get(j+1,d,k+1,l); // b4
+				if(e==tmp){
+					Trace_PX1(i,j,d+1,k,MType::Om,PK1Om.get(i,j,d+1,k));
+					Trace_PX2(j+1,d,k+1,l,MType::MreO,PK2MreO.get(j+1,d,k+1,l));
+					return;
+				}
+				tmp = PK1Om.get(i,j,d+1,k) + PK2LreR.get(j+1,d,k+1,l); // b5
+				if(e==tmp){
+					Trace_PX1(i,j,d+1,k,MType::Om,PK1Om.get(i,j,d+1,k));
+					Trace_PX2(j+1,d,k+1,l,MType::LreR,PK2LreR.get(j+1,d,k+1,l));
+					return;
+				}
+				tmp = PK1Om.get(i,j,d+1,k) + PK2MreR.get(j+1,d,k+1,l); // b6
+				if(e==tmp){
+					Trace_PX1(i,j,d+1,k,MType::Om,PK1Om.get(i,j,d+1,k));
+					Trace_PX2(j+1,d,k+1,l,MType::MreR,PK2MreR.get(j+1,d,k+1,l));
+					return;
+				}
+				tmp = PK1Om.get(i,j,d+1,k) + PK2R.get(j+1,d,k+1,l); // b7
+				if(e==tmp){
+					Trace_PX1(i,j,d+1,k,MType::Om,PK1Om.get(i,j,d+1,k));
+					Trace_PX2(j+1,d,k+1,l,MType::R,PK2R.get(j+1,d,k+1,l));
+					return;
+				}
 
-				// b8 = PK1Os.get(i,j,d+1,k) + PK2Om.get(j+1,d,k+1,l);
-				tmp = PK1Os.get(i,j,d+1,k) + PK2Os.get(j+1,d,k+1,l);
+				tmp = PK1Os.get(i,j,d+1,k) + PK2Om.get(j+1,d,k+1,l); // b8
+				if(e==tmp){
+					Trace_PX1(i,j,d+1,k,MType::Os,PK1Os.get(i,j,d+1,k));
+					Trace_PX2(j+1,d,k+1,l,MType::Om,PK2Om.get(j+1,d,k+1,l));
+					return;
+				}
+				tmp = PK1Os.get(i,j,d+1,k) + PK2Os.get(j+1,d,k+1,l); // b9
 				if(e==tmp){
 					Trace_PX1(i,j,d+1,k,MType::Os,PK1Os.get(i,j,d+1,k));
 					Trace_PX2(j+1,d,k+1,l,MType::Os,PK2Os.get(j+1,d,k+1,l));
 					return;
 				}
-				// b10 = PK1Os.get(i,j,d+1,k) + PK2MreO.get(j+1,d,k+1,l);
-				// b11 = PK1Os.get(i,j,d+1,k) + PK2MreR.get(j+1,d,k+1,l);
-				// b12 = PK1Os.get(i,j,d+1,k) + PK2R.get(j+1,d,k+1,l);
+				tmp = PK1Os.get(i,j,d+1,k) + PK2MreO.get(j+1,d,k+1,l); // b10
+				if(e==tmp){
+					Trace_PX1(i,j,d+1,k,MType::Os,PK1Os.get(i,j,d+1,k));
+					Trace_PX2(j+1,d,k+1,l,MType::MreO,PK2MreO.get(j+1,d,k+1,l));
+					return;
+				}
+				tmp = PK1Os.get(i,j,d+1,k) + PK2MreR.get(j+1,d,k+1,l); // b11
+				if(e==tmp){
+					Trace_PX1(i,j,d+1,k,MType::Os,PK1Os.get(i,j,d+1,k));
+					Trace_PX2(j+1,d,k+1,l,MType::MreR,PK2MreR.get(j+1,d,k+1,l));
+					return;
+				}
+				tmp = PK1Os.get(i,j,d+1,k) + PK2R.get(j+1,d,k+1,l); // b12
+				if(e==tmp){
+					Trace_PX1(i,j,d+1,k,MType::Os,PK1Os.get(i,j,d+1,k));
+					Trace_PX2(j+1,d,k+1,l,MType::R,PK2R.get(j+1,d,k+1,l));
+					return;
+				}
 
-				// b13 = PK1LreO.get(i,j,d+1,k) + PK2Om.get(j+1,d,k+1,l);
-				// b14 = PK1LreO.get(i,j,d+1,k) + PK2LreO.get(j+1,d,k+1,l);
-				// b15 = PK1LreO.get(i,j,d+1,k) + PK2MreO.get(j+1,d,k+1,l);
+				tmp = PK1LreO.get(i,j,d+1,k) + PK2Om.get(j+1,d,k+1,l); // b13
+				if(e==tmp){
+					Trace_PX1(i,j,d+1,k,MType::LreO,PK1LreO.get(i,j,d+1,k));
+					Trace_PX2(j+1,d,k+1,l,MType::Om,PK2Om.get(j+1,d,k+1,l));
+					return;
+				}
+				tmp = PK1LreO.get(i,j,d+1,k) + PK2LreO.get(j+1,d,k+1,l); // b14
+				if(e==tmp){
+					Trace_PX1(i,j,d+1,k,MType::LreO,PK1LreO.get(i,j,d+1,k));
+					Trace_PX2(j+1,d,k+1,l,MType::LreO,PK2LreO.get(j+1,d,k+1,l));
+					return;
+				}
+				tmp = PK1LreO.get(i,j,d+1,k) + PK2MreO.get(j+1,d,k+1,l); // b15
+				if(e==tmp){
+					Trace_PX1(i,j,d+1,k,MType::LreO,PK1LreO.get(i,j,d+1,k));
+					Trace_PX2(j+1,d,k+1,l,MType::MreO,PK2MreO.get(j+1,d,k+1,l));
+					return;
+				}
 
-				// b16 = PK1LMreR.get(i,j,d+1,k) + PK2Om.get(j+1,d,k+1,l);
-				// b17 = PK1LMreR.get(i,j,d+1,k) + PK2LreO.get(j+1,d,k+1,l);
-				// b18 = PK1LMreR.get(i,j,d+1,k) + PK2MreO.get(j+1,d,k+1,l);
+				tmp = PK1LMreR.get(i,j,d+1,k) + PK2Om.get(j+1,d,k+1,l); // b16
+				if(e==tmp){
+					Trace_PX1(i,j,d+1,k,MType::LMreR,PK1LMreR.get(i,j,d+1,k));
+					Trace_PX2(j+1,d,k+1,l,MType::Om,PK2Om.get(j+1,d,k+1,l));
+					return;
+				}
+				tmp = PK1LMreR.get(i,j,d+1,k) + PK2LreO.get(j+1,d,k+1,l); // b17
+				if(e==tmp){
+					Trace_PX1(i,j,d+1,k,MType::LMreR,PK1LMreR.get(i,j,d+1,k));
+					Trace_PX2(j+1,d,k+1,l,MType::LreO,PK2LreO.get(j+1,d,k+1,l));
+					return;
+				}
+				tmp = PK1LMreR.get(i,j,d+1,k) + PK2MreO.get(j+1,d,k+1,l); // b18
+				if(e==tmp){
+					Trace_PX1(i,j,d+1,k,MType::LMreR,PK1LMreR.get(i,j,d+1,k));
+					Trace_PX2(j+1,d,k+1,l,MType::MreO,PK2MreO.get(j+1,d,k+1,l));
+					return;
+				}
 
-				// b19 = PK1LMorO.get(i,j,d+1,k) + PK2LreR.get(j+1,d,k+1,l);
-				// b20 = PK1LMorO.get(i,j,d+1,k) + PK2MreO.get(j+1,d,k+1,l);
-				// b21 = PK1LMorO.get(i,j,d+1,k) + PK2MreO.get(j+1,d,k+1,l);
+				tmp = PK1LMorO.get(i,j,d+1,k) + PK2LreR.get(j+1,d,k+1,l); // b19
+				if(e==tmp){
+					Trace_PX1(i,j,d+1,k,MType::LMorO,PK1LMorO.get(i,j,d+1,k));
+					Trace_PX2(j+1,d,k+1,l,MType::LreR,PK2LreR.get(j+1,d,k+1,l));
+					return;
+				}
+				tmp = PK1LMorO.get(i,j,d+1,k) + PK2MreR.get(j+1,d,k+1,l); // b20
+				if(e==tmp){
+					Trace_PX1(i,j,d+1,k,MType::LMorO,PK1LMorO.get(i,j,d+1,k));
+					Trace_PX2(j+1,d,k+1,l,MType::MreR,PK2MreR.get(j+1,d,k+1,l));
+					return;
+				}
+				tmp = PK1LMorO.get(i,j,d+1,k) + PK2R.get(j+1,d,k+1,l); // b21
+				if(e==tmp){
+					Trace_PX1(i,j,d+1,k,MType::LMorO,PK1LMorO.get(i,j,d+1,k));
+					Trace_PX2(j+1,d,k+1,l,MType::R,PK2R.get(j+1,d,k+1,l));
+					return;
+				}
 			}
 		}
 	}

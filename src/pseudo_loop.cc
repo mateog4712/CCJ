@@ -319,8 +319,8 @@ void pseudo_loop::compute_P(cand_pos_t i, cand_pos_t l){
 				b18 = PK1LMreR.get(i,j,d+1,k) + PK2MreO.get(j+1,d,k+1,l);
 
 				b19 = PK1LMorO.get(i,j,d+1,k) + PK2LreR.get(j+1,d,k+1,l);
-				b20 = PK1LMorO.get(i,j,d+1,k) + PK2MreO.get(j+1,d,k+1,l);
-				b21 = PK1LMorO.get(i,j,d+1,k) + PK2MreO.get(j+1,d,k+1,l);
+				b20 = PK1LMorO.get(i,j,d+1,k) + PK2MreR.get(j+1,d,k+1,l);
+				b21 = PK1LMorO.get(i,j,d+1,k) + PK2R.get(j+1,d,k+1,l);
 				min_energy = std::min({min_energy,b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11,b12,b13,b14,b15,b16,b17,b18,b19,b20,b21});
 			}
 		}
