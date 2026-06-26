@@ -29,7 +29,7 @@
 #define RESCALE_BF(dG, dH, dT, kT) (exp(-TRUNC_MAYBE((double)RESCALE_dG((dG), (dH), (dT))) * 10. / kT))
 
 W_final_pf::W_final_pf(std::string &seq, std::string &MFE_structure, double MFE_energy, int dangle, int num_samples, bool PSplot)
-    : seq(seq), MFE_structure(MFE_structure), exp_params_(vrna_exp_params(NULL)), PSplot(PSplot) {
+    : seq(seq), MFE_structure(MFE_structure), MFE(MFE_energy), exp_params_(vrna_exp_params(NULL)), PSplot(PSplot) {
     this->n = seq.length();
     this->num_samples = num_samples;
 
@@ -159,17 +159,17 @@ W_final_pf::W_final_pf(std::string &seq, std::string &MFE_structure, double MFE_
 	PK1LMorO.init(n,index3D);
 
     rescale_pk_globals();
-    exp_params_rescale(MFE_energy);
+    exp_params_rescale();
     W.resize(n+1,scale[1]);
 }
 
 W_final_pf::~W_final_pf() {}
 
-void W_final_pf::exp_params_rescale(double mfe) {
+void W_final_pf::exp_params_rescale() {
     double e_per_nt, kT;
     kT = exp_params_->kT;
 
-    e_per_nt = mfe * 1000. / this->n;
+    e_per_nt = MFE * 1000. / this->n;
 
     exp_params_->pf_scale = exp(-(exp_params_->model_details.sfact * e_per_nt) / kT);
 
@@ -200,26 +200,21 @@ void W_final_pf::rescale_pk_globals() {
     double TT = (exp_params_->model_details.temperature + K0) / (Tmeasure);
     int pf_smooth = exp_params_->model_details.pf_smooth;
 
-    expPS_penalty = RESCALE_BF(PS_penalty, PS_penalty * 3, TT, kT);
-    expPSM_penalty = RESCALE_BF(PSM_penalty, PSM_penalty * 3, TT, kT);
-    expPSP_penalty = RESCALE_BF(PSP_penalty, PSP_penalty * 3, TT, kT);
-    expPB_penalty = RESCALE_BF(PB_penalty, PB_penalty * 3, TT, kT);
-    expPUP_penalty = RESCALE_BF(PUP_penalty, PUP_penalty * 3, TT, kT);
-    expPPS_penalty = RESCALE_BF(PPS_penalty, PPS_penalty * 3, TT, kT);
+    expPS_penalty = RESCALE_BF(PS_penalty, PS_penalty, TT, kT);
+    expPSM_penalty = RESCALE_BF(PSM_penalty, PSM_penalty, TT, kT);
+    expPSP_penalty = RESCALE_BF(PSP_penalty, PSP_penalty, TT, kT);
+    expPB_penalty = RESCALE_BF(PB_penalty, PB_penalty, TT, kT);
+    expPUP_penalty = RESCALE_BF(PUP_penalty, PUP_penalty, TT, kT);
+    expPPS_penalty = RESCALE_BF(PPS_penalty, PPS_penalty, TT, kT);
 
-    expa_penalty = RESCALE_BF(a_penalty, ML_closingdH, TT, kT);
+    expa_penalty = RESCALE_BF(a_penalty, ML_closingdH, TT, kT); //Should I do a,b,c here?
     expb_penalty = RESCALE_BF(b_penalty, ML_interndH, TT, kT);
     expc_penalty = RESCALE_BF(c_penalty, ML_BASEdH, TT, kT);
 
-    expap_penalty = RESCALE_BF(ap_penalty, ap_penalty * 3, TT, kT);
-    expbp_penalty = RESCALE_BF(bp_penalty, bp_penalty * 3, TT, kT);
-    expcp_penalty = RESCALE_BF(cp_penalty, cp_penalty * 3, TT, kT);
+    expap_penalty = RESCALE_BF(ap_penalty, ap_penalty, TT, kT);
+    expbp_penalty = RESCALE_BF(bp_penalty, bp_penalty, TT, kT);
+    expcp_penalty = RESCALE_BF(cp_penalty, cp_penalty, TT, kT);
 }
-
-inline pf_t W_final_pf::to_Energy(pf_t energy, cand_pos_t length) {
-    return ((-log(energy) - length * log(exp_params_->pf_scale)) * exp_params_->kT / 1000.0);
-}
-
 pf_t W_final_pf::ccj_pf(){
 
 	for (cand_pos_t i = n; i>=1; --i){	
@@ -236,7 +231,7 @@ pf_t W_final_pf::ccj_pf(){
 		contributions += W[j-1]*scale[1];
 		for (cand_pos_t k=1; k<=j-TURN-1; ++k){
 			pf_t acc = (k>1) ? W[k-1]: 1;
-			contributions += acc*V.get(k, j)*exp_Extloop(k, j);
+			contributions += acc*V.get(k,j)*exp_Extloop(k, j);
 			contributions += acc*P.get(k,j)*expPS_penalty;
 		}
 		W[j] = contributions;
@@ -286,7 +281,7 @@ pf_t W_final_pf::HairpinE(cand_pos_t i, cand_pos_t j) {
     const int ptype_closing = pair[S_[i]][S_[j]];
     if (ptype_closing == 0) return 0;
     pf_t e_h = static_cast<pf_t>(exp_E_Hairpin(j - i - 1, ptype_closing, S1_[i + 1], S1_[j - 1], &seq.c_str()[i - 1], exp_params_));
-    e_h *= scale[j - i + 1];
+    e_h *= scale[j-i+1];
     return e_h;
 }
 
@@ -512,7 +507,7 @@ void W_final_pf::compute_P(cand_pos_t i, cand_pos_t l){
 
 				contributions += PK1Os.get(i,j,d+1,k)*PK2Om.get(j+1,d,k+1,l);
 				contributions += PK1Os.get(i,j,d+1,k)*PK2Os.get(j+1,d,k+1,l);
-				contributions +=PK1Os.get(i,j,d+1,k)*PK2MreO.get(j+1,d,k+1,l);
+				contributions += PK1Os.get(i,j,d+1,k)*PK2MreO.get(j+1,d,k+1,l);
 				contributions += PK1Os.get(i,j,d+1,k)*PK2MreR.get(j+1,d,k+1,l);
 				contributions += PK1Os.get(i,j,d+1,k)*PK2R.get(j+1,d,k+1,l);
 
@@ -589,7 +584,7 @@ pf_t W_final_pf::calc_PXmloop(const Index4D &x, MType type){
 	Index4D xp(x);
 	xp.shrink(type);
 	Matrix4DPF &PXmloop00 = PXmloop00_by_mtype(type);
-	return PXmloop00.get(xp.i(),xp.j(),xp.k(),xp.l())*ap_penalty*bp_penalty;
+	return PXmloop00.get(xp.i(),xp.j(),xp.k(),xp.l())*expap_penalty*expbp_penalty;
 }
 pf_t W_final_pf::calc_PXiloop(const Index4D &x, MType type){
 	switch(type) {
@@ -1222,14 +1217,14 @@ pf_t W_final_pf::calc_WB(cand_pos_t i, cand_pos_t l){
 		return 0;
 	}
 	if (i>l) return 1;
-	return expcp_pen[l-i+1]*WBP.get(i,l);
+	return expcp_pen[l-i+1] + WBP.get(i,l);
 }
 pf_t W_final_pf::calc_WP(cand_pos_t i, cand_pos_t l){
 	if (i<=0 || l<=0 || i>n || l>n){
 		return 0;
 	}
 	if (i>l) return 1; // needed as this will happen 
-	return expPUP_pen[l-i+1]*WPP.get(i,l);
+	return expPUP_pen[l-i+1] + WPP.get(i,l);
 }
 /**
  * 

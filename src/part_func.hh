@@ -42,6 +42,7 @@ class W_final_pf {
   private:
     std::string seq;
     std::string MFE_structure;
+	double MFE;
 	cand_pos_t n;
 	vrna_exp_param_t *exp_params_;
     bool PSplot;
@@ -190,10 +191,15 @@ class W_final_pf {
     }
 	///////// Functions //////
 
-    double to_Energy(pf_t energy, cand_pos_t length);
+    inline pf_t to_Energy(pf_t energy, cand_pos_t length) {
+    return ((-log(energy) - length * log(exp_params_->pf_scale)) * exp_params_->kT / 1000.0);
+	}
+	inline pf_t to_PF(pf_t energy, cand_pos_t length) {
+		return exp(-(energy*1000/exp_params_->kT)-length*log(exp_params_->pf_scale));
+	}
     void rescale_pk_globals();
 
-    void exp_params_rescale(double mfe);
+    void exp_params_rescale();
 
     void compute_energy(cand_pos_t i, cand_pos_t j);
     void compute_WMv_WMp(cand_pos_t i, cand_pos_t j);

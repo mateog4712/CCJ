@@ -147,7 +147,7 @@ private:
 
 class Matrix4D {
 public:
-    const energy_16t INTERN_INF = std::numeric_limits<energy_16t>::max();
+    const pf_t INTERN_INF = std::numeric_limits<energy_16t>::max();
 
     //! construct empty
     Matrix4D() {}
@@ -250,7 +250,6 @@ public:
 
     pf_t get_uc(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l) const {
         assert(!(i<=0 || l> n_));
-
         pf_t val = m_[index(i,j,k,l)];
         return val;
     }
