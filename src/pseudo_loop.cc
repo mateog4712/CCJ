@@ -9,8 +9,6 @@
 #include <algorithm>
 #include <cassert>
 
-#define debug 0
-
 pseudo_loop::pseudo_loop(std::string seq, s_energy_matrix *V, W_final *W, short *S, short *S1, vrna_param_t *params)
 {
 	this->seq = seq;
@@ -569,7 +567,6 @@ void pseudo_loop::Trace_PXmloop(const Index4D &x, MType type, energy_t e){
 	energy_t tmp = PXmloop00.get(xp.i(),xp.j(),xp.k(),xp.l())+ ap_penalty + bp_penalty;
 	if(e==tmp){
 		return Trace_PXmloop00(xp,type,PXmloop00.get(xp.i(),xp.j(),xp.k(),xp.l()));
-		return;
 	}
 	UNREACHABLE();
 }
@@ -718,6 +715,7 @@ void pseudo_loop::Trace_PX(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,
 			tmp = PfromX.get(xp) + penalty(xp, gamma2, type);
 			if(e==tmp){
 				Trace_PfromX(xp,type,PfromX.get(xp));
+				return;
 			}
 		}
 		tmp = calc_PXiloop(x, type);

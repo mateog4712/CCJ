@@ -7,6 +7,7 @@
 #include <string.h>
 #include "s_energy_matrix.hh"
 #include "matrices.hh"
+#define debug 0
 
 #ifdef NDEBUG
 	#define UNREACHABLE() \
