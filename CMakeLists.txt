@@ -25,6 +25,7 @@ SET(SOURCE
   src/part_func.cc
   src/dot_plot.cc
   src/stoch_backtrack.cc
+  src/centroid.cc
 )
 
 set(vienna_SOURCE

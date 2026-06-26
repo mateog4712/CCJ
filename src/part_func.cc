@@ -268,6 +268,15 @@ pf_t W_final_pf::ccj_pf(){
     return energy;
 }
 
+pf_t W_final_pf::ccj_centroid(){
+    pf_t dist = 0;
+    pf_t diversity = 0;
+    std::string centroid = compute_centroid(dist,diversity);
+    this->centroid_structure = centroid;
+    this->ensemble_diversity = diversity;
+    return dist;
+}
+
 pf_t W_final_pf::exp_Extloop(cand_pos_t i, cand_pos_t j) {
     pair_type tt = pair[S_[i]][S_[j]];
 

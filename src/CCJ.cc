@@ -188,10 +188,10 @@ std::string ccj_pf(std::string seq,double &energy,std::string &MFE_structure, do
     std::string structure = min_fold.structure;
     MEA_structure = std::string(n,'.');
     MEA = 0;
-    centroid_structure = std::string(n,'.');
-    distance = 0;
+    distance = min_fold.ccj_centroid();
+    centroid_structure = min_fold.centroid_structure;
     frequency = min_fold.frequency;
-    diversity = 0;
+    diversity = min_fold.ensemble_diversity;
     return structure;
 }
 

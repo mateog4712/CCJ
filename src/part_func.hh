@@ -53,6 +53,8 @@ class W_final_pf {
 
     pf_t ccj_pf();
 
+	pf_t ccj_centroid();
+
 	TriangleMatrixPF P; // the main loop for pseudoloops and bands
 
   private:
@@ -425,7 +427,8 @@ class W_final_pf {
 
 
 	// Structure Stuff
-	void fill_structure(std::vector<int> &pair, std::string &structure);
+	void fill_structure(std::vector<int> &fres, std::string &structure);
+	std::string compute_centroid(pf_t &dist, pf_t &diversity);
 	char bpp_symbol(pf_t *P);
 	void pairing_tendency();
 };
