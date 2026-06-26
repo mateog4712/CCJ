@@ -12,11 +12,15 @@
 #include "ViennaRNA/pair_mat.hh"
 #include "ViennaRNA/params/io.hh"
 
-#define UNREACHABLE() \
-    do { \
-        std::cerr << "Reached unreachable at line " << __LINE__ << " in File: " << __FILE__ << std::endl; \
-        abort(); \
-    } while(0)
+#ifdef NDEBUG
+	#define UNREACHABLE() \
+		do { \
+			std::cerr << "Reached unreachable at line " << __LINE__ << " in File: " << __FILE__ << std::endl; \
+			abort(); \
+		} while(0)
+#else
+    #define UNREACHABLE() __builtin_unreachable()
+#endif
 
 struct SzudzikHash {
     cand_pos_t operator()(const std::pair<cand_pos_t, cand_pos_t> pair) const {
@@ -36,13 +40,12 @@ class W_final_pf {
     std::string MEA_structure;
     std::string centroid_structure;
     int num_samples;
-    bool print_samples;
     pf_t frequency;
     pf_t ensemble_diversity;
     std::unordered_map<std::string, int> structures;
     double gamma;
 
-    W_final_pf(std::string &seq, std::string &MFE_structure, double MFE_energy, int dangle, int num_samples, bool PSplot);
+    W_final_pf(std::string &seq, std::string &MFE_structure, double MFE_energy, int dangle, int num_samples, bool print_samples, bool PSplot);
     // constructor for the restricted mfe case
 
     ~W_final_pf();
@@ -58,6 +61,7 @@ class W_final_pf {
 	double MFE;
 	cand_pos_t n;
 	vrna_exp_param_t *exp_params_;
+	bool print_samples;
     bool PSplot;
     std::vector<cand_pos_t> index;				// the array to keep the index of two dimensional arrays like WPP and WBP
 	index_offset_t index3D;
@@ -422,6 +426,8 @@ class W_final_pf {
 
 	// Structure Stuff
 	void fill_structure(std::vector<int> &pair, std::string &structure);
+	char bpp_symbol(pf_t *P);
+	void pairing_tendency();
 };
 
 

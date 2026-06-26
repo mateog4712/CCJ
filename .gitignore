@@ -34,3 +34,6 @@
 # build
 /build/
 bash.sh
+*.ps
+*.txt
+*.sh

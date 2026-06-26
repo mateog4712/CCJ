@@ -42,6 +42,7 @@ const char *args_info_help[] = {
   "  -P, --paramFile=STRING    Read energy parameters from paramfile, instead of\n                              using the default parameter set.",
   "  -s, --samples=INT         Give the number of samples for the stochastic\n                              backtracking (default: 1000)  (default=`1000')",
   "  -f, --fatgraph=INT        Give the number of fatgraphs outputted, along with\n                              their frequencies (default 1)  (default=`1')",
+  "  -O, --print-samples       Print the samples with their multiplicities\n                              (default=off)",
   "      --noConv              Do not convert DNA into RNA. This will use the\n                              Matthews 2004 parameters for DNA  (default=off)",
   "      --noGU                Turn off G-U and U-G (and G-T and T-G) base pairing\n                              (default=off)",
   "      --noPS                Don't create a Postscript drawing of the base pair\n                              probabilities  (default=off)",
@@ -79,6 +80,7 @@ void clear_given (struct args_info *args_info)
   args_info->paramFile_given = 0 ;
   args_info->samples_given = 0 ;
   args_info->fatgraph_given = 0 ;
+  args_info->print_samples_given = 0 ;
   args_info->noConv_given = 0 ;
   args_info->noGU_given = 0 ;
   args_info->noPS_given = 0 ;
@@ -100,6 +102,7 @@ void clear_args (struct args_info *args_info)
   args_info->samples_orig = NULL;
   args_info->fatgraph_arg = 1;
   args_info->fatgraph_orig = NULL;
+  args_info->print_samples_flag = 0;
   args_info->noConv_flag = 0;
   args_info->noGU_flag = 0;
   args_info->noPS_flag = 0;
@@ -119,9 +122,10 @@ void init_args_info(struct args_info *args_info)
   args_info->paramFile_help = args_info_help[5] ;
   args_info->samples_help = args_info_help[6] ;
   args_info->fatgraph_help = args_info_help[7] ;
-  args_info->noConv_help = args_info_help[8] ;
-  args_info->noGU_help = args_info_help[9] ;
-  args_info->noPS_help = args_info_help[10] ;
+  args_info->print_samples_help = args_info_help[8] ;
+  args_info->noConv_help = args_info_help[9] ;
+  args_info->noGU_help = args_info_help[10] ;
+  args_info->noPS_help = args_info_help[11] ;
   
 }
 
@@ -274,6 +278,8 @@ cmdline_parser_dump(FILE *outfile, struct args_info *args_info)
     write_into_file(outfile, "samples", args_info->samples_orig, 0);
   if (args_info->fatgraph_given)
     write_into_file(outfile, "fatgraph", args_info->fatgraph_orig, 0);
+  if (args_info->print_samples_given)
+    write_into_file(outfile, "print-samples", 0, 0 );
   if (args_info->noConv_given)
     write_into_file(outfile, "noConv", 0, 0 );
   if (args_info->noGU_given)
@@ -548,13 +554,14 @@ cmdline_parser_internal (
         { "paramFile",	1, NULL, 'P' },
         { "samples",	1, NULL, 's' },
         { "fatgraph",	1, NULL, 'f' },
+        { "print-samples",	0, NULL, 'O' },
         { "noConv",	0, NULL, 0 },
         { "noGU",	0, NULL, 0 },
         { "noPS",	0, NULL, 0 },
         { 0,  0, 0, 0 }
       };
 
-      c = getopt_long (argc, argv, "hVi:o:d:P:s:f:", long_options, &option_index);
+      c = getopt_long (argc, argv, "hVi:o:d:P:s:f:O", long_options, &option_index);
 
       if (c == -1) break;	/* Exit from `while (1)' loop.  */
 
@@ -638,6 +645,16 @@ cmdline_parser_internal (
               &(local_args_info.fatgraph_given), optarg, 0, "1", ARG_INT,
               check_ambiguity, override, 0, 0,
               "fatgraph", 'f',
+              additional_error))
+            goto failure;
+        
+          break;
+        case 'O':	/* Print the samples with their multiplicities.  */
+        
+        
+          if (update_arg((void *)&(args_info->print_samples_flag), 0, &(args_info->print_samples_given),
+              &(local_args_info.print_samples_given), optarg, 0, 0, ARG_FLAG,
+              check_ambiguity, override, 1, 0, "print-samples", 'O',
               additional_error))
             goto failure;
         

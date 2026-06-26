@@ -57,6 +57,8 @@ struct args_info
   int fatgraph_arg;	/**< @brief Give the number of fatgraphs outputted, along with their frequencies (default 1) (default='1').  */
   char * fatgraph_orig;	/**< @brief Give the number of fatgraphs outputted, along with their frequencies (default 1) original value given at command line.  */
   const char *fatgraph_help; /**< @brief Give the number of fatgraphs outputted, along with their frequencies (default 1) help description.  */
+  int print_samples_flag;	/**< @brief Print the samples with their multiplicities (default=off).  */
+  const char *print_samples_help; /**< @brief Print the samples with their multiplicities help description.  */
   int noConv_flag;	/**< @brief Do not convert DNA into RNA. This will use the Matthews 2004 parameters for DNA (default=off).  */
   const char *noConv_help; /**< @brief Do not convert DNA into RNA. This will use the Matthews 2004 parameters for DNA help description.  */
   int noGU_flag;	/**< @brief Turn off G-U and U-G (and G-T and T-G) base pairing (default=off).  */
@@ -72,6 +74,7 @@ struct args_info
   unsigned int paramFile_given ;	/**< @brief Whether paramFile was given.  */
   unsigned int samples_given ;	/**< @brief Whether samples was given.  */
   unsigned int fatgraph_given ;	/**< @brief Whether fatgraph was given.  */
+  unsigned int print_samples_given ;	/**< @brief Whether print-samples was given.  */
   unsigned int noConv_given ;	/**< @brief Whether noConv was given.  */
   unsigned int noGU_given ;	/**< @brief Whether noGU was given.  */
   unsigned int noPS_given ;	/**< @brief Whether noPS was given.  */

@@ -34,6 +34,10 @@ option "fatgraph" f
     "Give the number of fatgraphs outputted, along with their frequencies (default 1)"
     int default="1" optional
 
+option "print-samples" O
+    "Print the samples with their multiplicities"
+    flag off
+
 option "noConv" -
     "Do not convert DNA into RNA. This will use the Matthews 2004 parameters for DNA"
     flag off

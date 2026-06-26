@@ -8,11 +8,15 @@
 #include "s_energy_matrix.hh"
 #include "matrices.hh"
 
-#define UNREACHABLE() \
-    do { \
-        std::cerr << "Reached unreachable at line " << __LINE__ << " in File: " << __FILE__ << std::endl; \
-        abort(); \
-    } while(0)
+#ifdef NDEBUG
+	#define UNREACHABLE() \
+		do { \
+			std::cerr << "Reached unreachable at line " << __LINE__ << " in File: " << __FILE__ << std::endl; \
+			abort(); \
+		} while(0)
+#else
+    #define UNREACHABLE() __builtin_unreachable()
+#endif
 
 class W_final;
 class pseudo_loop{

@@ -29,8 +29,8 @@
  */
 #define RESCALE_BF(dG, dH, dT, kT) (exp(-TRUNC_MAYBE((double)RESCALE_dG((dG), (dH), (dT))) * 10. / kT))
 
-W_final_pf::W_final_pf(std::string &seq, std::string &MFE_structure, double MFE_energy, int dangle, int num_samples, bool PSplot)
-    : seq(seq), MFE_structure(MFE_structure), MFE(MFE_energy), exp_params_(vrna_exp_params(NULL)), PSplot(PSplot) {
+W_final_pf::W_final_pf(std::string &seq, std::string &MFE_structure, double MFE_energy, int dangle, int num_samples, bool print_samples, bool PSplot)
+    : seq(seq), MFE_structure(MFE_structure), MFE(MFE_energy), exp_params_(vrna_exp_params(NULL)), print_samples(print_samples), PSplot(PSplot) {
     this->n = seq.length();
     this->num_samples = num_samples;
 
@@ -248,9 +248,17 @@ pf_t W_final_pf::ccj_pf(){
         structures[sample_structure]++;
     }
 
-	// for (const auto &s : structures) {
-    //         std::cout << s.first << "\t" << s.second << std::endl;
-    // }
+	if (print_samples) {
+        std::vector<std::pair<std::string,int>> str_list;
+        for (const auto &s : structures) {
+            str_list.push_back(std::make_pair(s.first,s.second));
+        }
+        sort(str_list.begin(), str_list.end(),[](auto &x,auto &y) {return x.second>y.second;} );
+        for (const auto &s : str_list) {
+            std::cout << s.first << " " << s.second << std::endl;
+        }
+    }
+	pairing_tendency();
 	this->frequency = (pf_t)structures[MFE_structure] / num_samples;
 
 	if (PSplot) {
@@ -1253,7 +1261,7 @@ pf_t W_final_pf::get_e_intP(cand_pos_t i, cand_pos_t ip, cand_pos_t jp, cand_pos
 }
 
 void W_final_pf::fill_structure(std::vector<int> &fres, std::string &structure){
-    std::stack < brack_type > st;
+	std::stack < brack_type > st;
 
     st.push(brack_type('<','>'));
     st.push(brack_type('{','}'));
@@ -1304,3 +1312,117 @@ void W_final_pf::fill_structure(std::vector<int> &fres, std::string &structure){
         }
     }
 }
+
+char W_final_pf::bpp_symbol(pf_t *P) {
+    if (P[0] > 0.667) return '.';
+    if (P[0] > (P[1] + P[2] + P[3] + P[4])) return ',';
+
+    if (P[1] > 0.667) return '(';
+    if (P[2] > 0.667) return ')';
+    if (P[3] > 0.667) return '[';
+    if (P[4] > 0.667) return ']';
+    if(P[1]+P[2] > P[3]+P[4]){
+        if ((P[1] + P[2]) > P[0]) {
+            if ((P[1] / (P[1] + P[2])) > 0.667) return '{';
+
+            if ((P[2] / (P[1] + P[2])) > 0.667)
+                return '}';
+            else return '|';
+        }
+    } else{ 
+        if ((P[3] + P[4]) > P[0]) {
+            if ((P[3] / (P[3] + P[4])) > 0.667) return '/';
+
+            if ((P[4] / (P[3] + P[4])) > 0.667)
+                return '\\';
+            else return '|';
+        }
+    }
+    return ':';
+}
+void W_final_pf::pairing_tendency() {
+
+    for (cand_pos_t j = 1; j <= n; j++) {
+        pf_t P[5] = {1, 0, 0, 0, 0}; // unpaired, PK-free left, PK-free right, PK left, PK right
+        for (cand_pos_t i = 1; i < j; i++) {
+            // bool weakly_closed_ij = tree.weakly_closed(i, j);
+            std::pair<cand_pos_tu, cand_pos_tu> base_pair(i, j);
+            pf_t probability_ij = (pf_t)samples[base_pair] / num_samples;
+            // if(weakly_closed_ij) P[2] += probability_ij; else P[4] += probability_ij;
+			P[2] += probability_ij;
+            P[0] -= probability_ij;
+        }
+        for (cand_pos_t i = j + 1; i <= n; i++) {
+            // bool weakly_closed_ji = tree.weakly_closed(j, i);
+            std::pair<cand_pos_tu, cand_pos_tu> base_pair(j, i);
+            pf_t probability_ji = (pf_t)samples[base_pair] / num_samples;
+            // if(weakly_closed_ji) P[1] += probability_ji; else P[3] += probability_ji;
+			P[1] += probability_ji;
+            P[0] -= probability_ji;
+        }
+        structure[j - 1] = bpp_symbol(P);
+    }
+}
+
+// bool pair_is_pseudoknotted(cand_pos_t i, cand_pos_t j, const std::vector<std::tuple<cand_pos_t, cand_pos_t, pf_t>> &pairs)
+// {
+//     pf_t crossing_mass = 0;
+//     pf_t nesting_mass  = 0;
+
+//     for (auto &[c, d, prob_cd] : pairs) {
+//         if (c == i && d == j) continue;
+//         cand_pos_t k = std::min(c,d), l = std::max(c,d);
+
+//         bool crosses = (i < k && k < j && j < l) ||
+//                        (k < i && i < l && l < j);
+//         bool nested  = (i <= k && l <= j) || (k <= i && j <= l);
+
+//         if (crosses) crossing_mass += prob_cd;
+//         if (nested)  nesting_mass  += prob_cd;
+//     }
+//     // PK if more probability mass crosses it than nests with it
+//     return crossing_mass > nesting_mass;
+// }
+// void W_final_pf::pairing_tendency() {
+//     // Step 1: collect all base pairs with non-trivial probability
+//     const pf_t threshold = 0.01;
+    
+//     std::vector<std::tuple<cand_pos_t, cand_pos_t, pf_t>> pairs;
+//     for (auto &kv : samples) {
+//         pf_t prob = (pf_t)kv.second / num_samples;
+//         if (prob >= threshold) {
+//             pairs.emplace_back(kv.first.first, kv.first.second, prob);
+//         }
+//     }
+
+//     // Step 2: for each position j, determine PK status of each pair involving j
+//     for (cand_pos_t j = 1; j <= n; j++) {
+//         pf_t P[5] = {1, 0, 0, 0, 0};
+
+//         for (cand_pos_t i = 1; i < j; i++) {
+//             std::pair<cand_pos_tu, cand_pos_tu> bp(i, j);
+//             auto it = samples.find(bp);
+//             if (it == samples.end()) continue;
+
+//             pf_t prob_ij = (pf_t)it->second / num_samples;
+//             if (prob_ij == 0) continue;
+
+//             bool is_pk = pair_is_pseudoknotted(i, j, pairs);
+//             if (is_pk) P[4] += prob_ij; else P[2] += prob_ij;
+//             P[0] -= prob_ij;
+//         }
+//         for (cand_pos_t i = j + 1; i <= n; i++) {
+//             std::pair<cand_pos_tu, cand_pos_tu> bp(j, i);
+//             auto it = samples.find(bp);
+//             if (it == samples.end()) continue;
+
+//             pf_t prob_ji = (pf_t)it->second / num_samples;
+//             if (prob_ji == 0) continue;
+
+//             bool is_pk = pair_is_pseudoknotted(j, i, pairs);
+//             if (is_pk) P[3] += prob_ji; else P[1] += prob_ji;
+//             P[0] -= prob_ji;
+//         }
+//         structure[j - 1] = bpp_symbol(P);
+//     }
+// }
