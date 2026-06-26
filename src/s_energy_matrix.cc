@@ -1,6 +1,6 @@
 #include "constants.hh"
 #include "h_struct.hh"
-#include "h_externs.hh"
+#include "h_globals.hh"
 
 #include <stdio.h>
 #include <string.h>

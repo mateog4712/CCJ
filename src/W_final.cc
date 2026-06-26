@@ -1,6 +1,6 @@
 #include "W_final.hh"
 #include "h_struct.hh"
-#include "h_externs.hh"
+#include "h_globals.hh"
 
 #include <stdio.h>
 #include <math.h>
@@ -393,16 +393,12 @@ void W_final::Trace_WMp(cand_pos_t i, cand_pos_t j, energy_t e){
 	__builtin_unreachable();
 }
 
-void W_final::fill_structure()
-{
+void W_final::fill_structure(){
     std::stack < brack_type > st;
 
     st.push(brack_type('<','>'));
-
     st.push(brack_type('{','}'));
-
     st.push(brack_type('[',']'));
-
     st.push(brack_type('(',')'));
 
     cand_pos_t isInABand=0;

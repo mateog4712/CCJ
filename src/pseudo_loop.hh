@@ -8,6 +8,12 @@
 #include "s_energy_matrix.hh"
 #include "matrices.hh"
 
+#define UNREACHABLE() \
+    do { \
+        std::cerr << "Reached unreachable at line " << __LINE__ << " in File: " << __FILE__ << std::endl; \
+        abort(); \
+    } while(0)
+
 class W_final;
 class pseudo_loop{
 

@@ -1,5 +1,5 @@
 #include "pseudo_loop.hh"
-#include "h_externs.hh"
+#include "h_globals.hh"
 #include "W_final.hh"
 #include <stdio.h>
 #include <string>
@@ -573,7 +573,7 @@ void pseudo_loop::Trace_WB(cand_pos_t i, cand_pos_t l, energy_t e){
 	if(e==WBP.get(i,l)){
 		Trace_WBP(i,l,WBP.get(i,l));
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_WBP(cand_pos_t i, cand_pos_t l, energy_t e){
 	if (debug) printf("WBP at %d and %d with %d\n", i, l, e);
@@ -596,7 +596,7 @@ void pseudo_loop::Trace_WBP(cand_pos_t i, cand_pos_t l, energy_t e){
 			return;
 		}
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_WP(cand_pos_t i, cand_pos_t l, energy_t e){
 	if (debug) printf("WP at %d and %d with %d\n", i, l, e);
@@ -605,7 +605,7 @@ void pseudo_loop::Trace_WP(cand_pos_t i, cand_pos_t l, energy_t e){
 	if(e==WPP.get(i,l)){
 		Trace_WBP(i,l,WPP.get(i,l));
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_WPP(cand_pos_t i, cand_pos_t l, energy_t e){
 	if (debug) printf("WPP at %d and %d with %d\n", i, l, e);
@@ -628,7 +628,7 @@ void pseudo_loop::Trace_WPP(cand_pos_t i, cand_pos_t l, energy_t e){
 			return;
 		}
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 
 void pseudo_loop::Trace_P(cand_pos_t i, cand_pos_t l, energy_t e){
@@ -770,7 +770,7 @@ void pseudo_loop::Trace_P(cand_pos_t i, cand_pos_t l, energy_t e){
 			}
 		}
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 
 void pseudo_loop::Trace_PLiloop(const Index4D &x, MType type, energy_t e){
@@ -798,7 +798,7 @@ void pseudo_loop::Trace_PLiloop(const Index4D &x, MType type, energy_t e){
 			}
 		}
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_PMiloop(const Index4D &x, MType type, energy_t e){
 	if (debug) std::cout << "PMiloop at " << x.i() << " and " << x.j() << " and " << x.k() << " and " << x.l() << " with type: " << type << " and en: " << e << std::endl;
@@ -825,7 +825,7 @@ void pseudo_loop::Trace_PMiloop(const Index4D &x, MType type, energy_t e){
 			}
 		}
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_PRiloop(const Index4D &x, MType type, energy_t e){
 	if (debug) std::cout << "PRiloop at " << x.i() << " and " << x.j() << " and " << x.k() << " and " << x.l() << " with type: " << type << " and en: " << e << std::endl;
@@ -852,7 +852,7 @@ void pseudo_loop::Trace_PRiloop(const Index4D &x, MType type, energy_t e){
 			}
 		}
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_POiloop(const Index4D &x, MType type, energy_t e){
 	if (debug) std::cout << "POiloop at " << x.i() << " and " << x.j() << " and " << x.k() << " and " << x.l() << " with type: " << type << " and en: " << e << std::endl;
@@ -879,7 +879,7 @@ void pseudo_loop::Trace_POiloop(const Index4D &x, MType type, energy_t e){
 			}
 		}
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 /**
  * 
@@ -897,7 +897,7 @@ void pseudo_loop::Trace_PfromL(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_
 			return;
 		}
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_PfromM(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e){
 	Matrix4D &PfromXprime = PfromXprime_by_mtype(type);
@@ -909,7 +909,7 @@ void pseudo_loop::Trace_PfromM(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_
 			return;
 		}
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_PfromR(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e){
 	Matrix4D &PfromXprime = PfromXprime_by_mtype(type);
@@ -921,7 +921,7 @@ void pseudo_loop::Trace_PfromR(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_
 			return;
 		}
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_PfromO(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e){
 	Matrix4D &PfromXprime = PfromXprime_by_mtype(type);
@@ -933,7 +933,7 @@ void pseudo_loop::Trace_PfromO(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_
 			return;
 		}
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 /**
  * 
@@ -950,7 +950,7 @@ void pseudo_loop::Trace_PfromLprime(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand
 			return;
 		}
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_PfromMprime(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e){
 	for(cand_pos_t d=k+1; d<=l; ++d){
@@ -961,7 +961,7 @@ void pseudo_loop::Trace_PfromMprime(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand
 			return;
 		}
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_PfromRprime(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e){
 	for(cand_pos_t d=k; d<l; ++d){
@@ -972,7 +972,7 @@ void pseudo_loop::Trace_PfromRprime(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand
 			return;
 		}
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_PfromOprime(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e){
 	for(cand_pos_t d=k; d<l; ++d){
@@ -983,7 +983,7 @@ void pseudo_loop::Trace_PfromOprime(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand
 			return;
 		}
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 
 
@@ -1018,7 +1018,7 @@ void pseudo_loop::Trace_PLmloop00(const Index4D &x, MType type, energy_t e){
 			return;
 		}
     }
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_PMmloop00(const Index4D &x, MType type, energy_t e){
 	assert(!impossible_case(x));
@@ -1045,7 +1045,7 @@ void pseudo_loop::Trace_PMmloop00(const Index4D &x, MType type, energy_t e){
 			return;
 		} 
     }
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_PRmloop00(const Index4D &x, MType type, energy_t e){
 	assert(!impossible_case(x));
@@ -1072,7 +1072,7 @@ void pseudo_loop::Trace_PRmloop00(const Index4D &x, MType type, energy_t e){
 			return;
 		} 
     }
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_POmloop00(const Index4D &x, MType type, energy_t e){
 	assert(!impossible_case(x));
@@ -1099,7 +1099,7 @@ void pseudo_loop::Trace_POmloop00(const Index4D &x, MType type, energy_t e){
 			return;
 		} 
     }
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 /**
  * 
@@ -1120,7 +1120,7 @@ void pseudo_loop::Trace_PLmloop10(const Index4D &x, MType type, energy_t e){
 			return;
 		}
     }
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_PMmloop10(const Index4D &x, MType type, energy_t e){
 	assert(!impossible_case(x));
@@ -1136,7 +1136,7 @@ void pseudo_loop::Trace_PMmloop10(const Index4D &x, MType type, energy_t e){
 			return;
 		}
     }
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_PRmloop10(const Index4D &x, MType type, energy_t e){
 	assert(!impossible_case(x));
@@ -1152,7 +1152,7 @@ void pseudo_loop::Trace_PRmloop10(const Index4D &x, MType type, energy_t e){
 			return;
 		}
     }
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_POmloop10(const Index4D &x, MType type, energy_t e){
 	assert(!impossible_case(x));
@@ -1168,7 +1168,7 @@ void pseudo_loop::Trace_POmloop10(const Index4D &x, MType type, energy_t e){
 			return;
 		}
     }
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 /**
  * 
@@ -1188,7 +1188,7 @@ void pseudo_loop::Trace_PLmloop01(const Index4D &x, MType type, energy_t e){
 			return;
 		}
     }
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_PMmloop01(const Index4D &x, MType type, energy_t e){
 	assert(!impossible_case(x));
@@ -1203,7 +1203,7 @@ void pseudo_loop::Trace_PMmloop01(const Index4D &x, MType type, energy_t e){
 			return;
 		}
     }
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_PRmloop01(const Index4D &x, MType type, energy_t e){
 	assert(!impossible_case(x));
@@ -1218,7 +1218,7 @@ void pseudo_loop::Trace_PRmloop01(const Index4D &x, MType type, energy_t e){
 			return;
 		}
     }
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_POmloop01(const Index4D &x, MType type, energy_t e){
 	assert(!impossible_case(x));
@@ -1233,7 +1233,7 @@ void pseudo_loop::Trace_POmloop01(const Index4D &x, MType type, energy_t e){
 			return;
 		}
     }
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 /**
  * 
@@ -1242,7 +1242,7 @@ void pseudo_loop::Trace_POmloop01(const Index4D &x, MType type, energy_t e){
  * 
  */
 void pseudo_loop::Trace_PfromLdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e){
-	__builtin_unreachable();
+	UNREACHABLE();
 	energy_t tmp = PR.get(i,j,k,l) + gamma2(l,k) + PB_penalty;
 	if(e==tmp){
 		Trace_PX(i,j,k,l,MType::R,PR.get(i,j,k,l));
@@ -1259,7 +1259,7 @@ void pseudo_loop::Trace_PfromLdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t 
 	if(e==tmp){
 		Trace_PX(i,j,k,l,MType::Om,POm.get(i,j,k,l));
 	}
-
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_PfromMdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e){
 	energy_t tmp = PL.get(i,j,k,l) + gamma2(j,i) + PB_penalty;
@@ -1274,7 +1274,7 @@ void pseudo_loop::Trace_PfromMdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t 
 	if(e==tmp){
 		Trace_PX(i,j,k,l,MType::Om,POm.get(i,j,k,l));
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_PfromRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e){
 	energy_t tmp = PM.get(i,j,k,l) + gamma2(j,k) + PB_penalty;
@@ -1289,7 +1289,7 @@ void pseudo_loop::Trace_PfromRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t 
 	if(e==tmp){
 		Trace_PX(i,j,k,l,MType::Om,POm.get(i,j,k,l));
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_PfromOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e){
 	energy_t tmp = PL.get(i,j,k,l) + gamma2(j,i) + PB_penalty;
@@ -1300,7 +1300,7 @@ void pseudo_loop::Trace_PfromOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t 
 	if(e==tmp){
 		Trace_PX(i,j,k,l,MType::R,PR.get(i,j,k,l));
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_PfromLreOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e){
 	energy_t tmp = PMreO.get(i,j,k,l) + gamma2(j,k) + PB_penalty;
@@ -1315,7 +1315,7 @@ void pseudo_loop::Trace_PfromLreOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos
 	if(e==tmp){
 		Trace_PX(i,j,k,l,MType::Om,POm.get(i,j,k,l));
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_PfromLreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e){
 	energy_t tmp = PMreR.get(i,j,k,l) + gamma2(j,k) + PB_penalty;
@@ -1326,7 +1326,7 @@ void pseudo_loop::Trace_PfromLreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos
 	if(e==tmp){
 		Trace_PX(i,j,k,l,MType::R,PR.get(i,j,k,l));
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_PfromMreOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e){
 	energy_t tmp = PLreO.get(i,j,k,l) + gamma2(j,i) + PB_penalty;
@@ -1341,7 +1341,7 @@ void pseudo_loop::Trace_PfromMreOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos
 	if(e==tmp){
 		Trace_PX(i,j,k,l,MType::Om,POm.get(i,j,k,l));
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_PfromMreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e){
 	energy_t tmp = PLreR.get(i,j,k,l) + gamma2(j,i) + PB_penalty;
@@ -1352,14 +1352,14 @@ void pseudo_loop::Trace_PfromMreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos
 	if(e==tmp){
 		Trace_PX(i,j,k,l,MType::R,PR.get(i,j,k,l));
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_PfromLMreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e){
 	energy_t tmp = PMreR.get(i,j,k,l) + gamma2(j,k) + PB_penalty;
 	if(e==tmp){
 		Trace_PX(i,j,k,l,MType::MreR,PMreR.get(i,j,k,l));
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_PfromLMorOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e){
 	energy_t tmp = PM.get(i,j,k,l) + gamma2(j,k) + PB_penalty;
@@ -1374,5 +1374,5 @@ void pseudo_loop::Trace_PfromLMorOdoubleprime(cand_pos_t i,cand_pos_t j, cand_po
 	if(e==tmp){
 		Trace_PX(i,j,k,l,MType::Om,POm.get(i,j,k,l));
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }

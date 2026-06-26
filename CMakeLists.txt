@@ -24,7 +24,7 @@ SET(SOURCE
   src/s_energy_matrix.cc
   src/part_func.cc
   src/dot_plot.cc
-#   src/stoch_backtrack.cc
+  src/stoch_backtrack.cc
 )
 
 set(vienna_SOURCE

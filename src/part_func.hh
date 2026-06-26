@@ -2,6 +2,7 @@
 #define PART_FUNC
 #include "base_types.hh"
 #include "matrices.hh"
+#include "h_struct.hh"
 #include <cstring>
 #include <string>
 #include <unordered_map>
@@ -10,6 +11,12 @@
 #include "ViennaRNA/loops.hh"
 #include "ViennaRNA/pair_mat.hh"
 #include "ViennaRNA/params/io.hh"
+
+#define UNREACHABLE() \
+    do { \
+        std::cerr << "Reached unreachable at line " << __LINE__ << " in File: " << __FILE__ << std::endl; \
+        abort(); \
+    } while(0)
 
 struct SzudzikHash {
     cand_pos_t operator()(const std::pair<cand_pos_t, cand_pos_t> pair) const {
@@ -26,8 +33,14 @@ class W_final_pf {
 
   public:
     std::string structure;
+    std::string MEA_structure;
+    std::string centroid_structure;
     int num_samples;
+    bool print_samples;
+    pf_t frequency;
+    pf_t ensemble_diversity;
     std::unordered_map<std::string, int> structures;
+    double gamma;
 
     W_final_pf(std::string &seq, std::string &MFE_structure, double MFE_energy, int dangle, int num_samples, bool PSplot);
     // constructor for the restricted mfe case
@@ -278,11 +291,26 @@ class W_final_pf {
 		return 1.0;
 	}
 
-	template<class Penalty> energy_t penalty(const Index4D &x, Penalty p, MType type);
 	pf_t calc_PXiloop(const Index4D &x, MType type);
 	pf_t calc_PXmloop(const Index4D &x, MType type);
 	inline bool impossible_case(const Index4D &x) const {
     	return !x.is_valid(n);
+	}
+	template<class Penalty> pf_t penalty(const Index4D &x, Penalty p, MType type) {
+		switch(type) {
+		case MType::L: return p(x.j(),x.i());
+		case MType::M: return p(x.j(),x.k());
+		case MType::R: return p(x.l(),x.k());
+		case MType::Om: return p(x.l(),x.i());
+		case MType::Os: return p(x.l(),x.i());
+		case MType::LreO: return p(x.j(),x.i());
+		case MType::LreR: return p(x.j(),x.i());
+		case MType::MreO: return p(x.j(),x.k());
+		case MType::MreR: return p(x.j(),x.k());
+		case MType::LMreR: return p(x.j(),x.i());
+		case MType::LMorO: return p(x.j(),x.i());
+		}
+		__builtin_unreachable();
 	}
 	inline Matrix4DPF& PX_by_mtype(MType type) {
 		static std::array<Matrix4DPF*,11> matrices{&PL, &PM, &PR, &POm, &POs, &PLreO, &PLreR, &PMreO, &PMreR, &PLMreR, &PLMorO};
@@ -325,13 +353,75 @@ class W_final_pf {
 
 
 	// Stochastic Backtracking/ Sampling
-	// void Sample_W(cand_pos_t start, cand_pos_t end, std::string &structure, std::unordered_map<std::pair<cand_pos_t, cand_pos_t>, cand_pos_t, SzudzikHash> &samples);
-	// void Sample_V(cand_pos_t i, cand_pos_t j, std::string &structure, std::unordered_map<std::pair<cand_pos_t, cand_pos_t>, cand_pos_t, SzudzikHash> &samples);
-	// void Sample_VM(cand_pos_t i, cand_pos_t j, std::string &structure, std::unordered_map<std::pair<cand_pos_t, cand_pos_t>, cand_pos_t, SzudzikHash> &samples);
-	// void Sample_WM(cand_pos_t i, cand_pos_t j, std::string &structure, std::unordered_map<std::pair<cand_pos_t, cand_pos_t>, cand_pos_t, SzudzikHash> &samples);
-	// void Sample_WMv(cand_pos_t i, cand_pos_t j, std::string &structure, std::unordered_map<std::pair<cand_pos_t, cand_pos_t>, cand_pos_t, SzudzikHash> &samples);
-	// void Sample_WMp(cand_pos_t i, cand_pos_t j, std::string &structure, std::unordered_map<std::pair<cand_pos_t, cand_pos_t>, cand_pos_t, SzudzikHash> &samples);
-	// void Sample_P(cand_pos_t i, cand_pos_t j, std::string &structure, std::unordered_map<std::pair<cand_pos_t, cand_pos_t>, cand_pos_t, SzudzikHash> &samples);
+	void Sample_W(cand_pos_t start, cand_pos_t end, std::vector<int> &fres);
+	void Sample_V(cand_pos_t i, cand_pos_t j, std::vector<int> &fres);
+	void Sample_VM(cand_pos_t i, cand_pos_t j, std::vector<int> &fres);
+	void Sample_WM(cand_pos_t i, cand_pos_t j, std::vector<int> &fres);
+	void Sample_WMv(cand_pos_t i, cand_pos_t j, std::vector<int> &fres);
+	void Sample_WMp(cand_pos_t i, cand_pos_t j, std::vector<int> &fres);
+	// Util
+	void Sample_WP(cand_pos_t i, cand_pos_t l, std::vector<int> &fres);
+	void Sample_WPP(cand_pos_t i, cand_pos_t l, std::vector<int> &fres);
+	void Sample_WB(cand_pos_t i, cand_pos_t l, std::vector<int> &fres);
+	void Sample_WBP(cand_pos_t i, cand_pos_t l, std::vector<int> &fres);
+	// Main
+	void Sample_P(cand_pos_t i, cand_pos_t l, std::vector<int> &fres);
+	void Sample_PK1X(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, MType type, std::vector<int> &fres);
+	void Sample_PK2X(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, MType type, std::vector<int> &fres);
+	void Sample_PX(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, MType type, std::vector<int> &fres);
+	void Sample_PXmloop(const Index4D &x, MType type,std::vector<int> &fres);
+	void Sample_PXiloop(const Index4D &x, MType type,std::vector<int> &fres);
+	void Sample_PfromX(const Index4D &x, MType type,std::vector<int> &fres);
+	void Sample_PfromXprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, MType type,std::vector<int> &fres);
+	void Sample_PfromXdoubleprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, MType type,std::vector<int> &fres);
+	void Sample_PXmloop00(const Index4D &x, MType type,std::vector<int> &fres);
+	void Sample_PXmloop10(const Index4D &x, MType type,std::vector<int> &fres);
+	void Sample_PXmloop01(const Index4D &x, MType type,std::vector<int> &fres);
+
+	void Sample_PLiloop(const Index4D &x, MType type,std::vector<int> &fres);
+	void Sample_PMiloop(const Index4D &x, MType type,std::vector<int> &fres);
+	void Sample_PRiloop(const Index4D &x, MType type,std::vector<int> &fres);
+	void Sample_POiloop(const Index4D &x, MType type,std::vector<int> &fres);
+
+	void Sample_PfromL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, MType type,std::vector<int> &fres);
+	void Sample_PfromM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, MType type,std::vector<int> &fres);
+	void Sample_PfromR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, MType type,std::vector<int> &fres);
+	void Sample_PfromO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, MType type,std::vector<int> &fres);
+
+	void Sample_PfromLprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, MType type,std::vector<int> &fres);
+	void Sample_PfromMprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, MType type,std::vector<int> &fres);
+	void Sample_PfromRprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, MType type,std::vector<int> &fres);
+	void Sample_PfromOprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, MType type,std::vector<int> &fres);
+
+	void Sample_PfromLdoubleprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l,std::vector<int> &fres);
+	void Sample_PfromMdoubleprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l,std::vector<int> &fres);
+	void Sample_PfromRdoubleprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l,std::vector<int> &fres);
+	void Sample_PfromOdoubleprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l,std::vector<int> &fres);
+	void Sample_PfromLreOdoubleprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l,std::vector<int> &fres);
+	void Sample_PfromLreRdoubleprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l,std::vector<int> &fres);
+	void Sample_PfromMreOdoubleprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l,std::vector<int> &fres);
+	void Sample_PfromMreRdoubleprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l,std::vector<int> &fres);
+	void Sample_PfromLMreRdoubleprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l,std::vector<int> &fres);
+	void Sample_PfromLMorOdoubleprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l,std::vector<int> &fres);
+
+	void Sample_PLmloop00(const Index4D &x, MType type,std::vector<int> &fres);
+	void Sample_PMmloop00(const Index4D &x, MType type,std::vector<int> &fres);
+	void Sample_PRmloop00(const Index4D &x, MType type,std::vector<int> &fres);
+	void Sample_POmloop00(const Index4D &x, MType type,std::vector<int> &fres);
+
+	void Sample_PLmloop10(const Index4D &x, MType type,std::vector<int> &fres);
+	void Sample_PMmloop10(const Index4D &x, MType type,std::vector<int> &fres);
+	void Sample_PRmloop10(const Index4D &x, MType type,std::vector<int> &fres);
+	void Sample_POmloop10(const Index4D &x, MType type,std::vector<int> &fres);
+
+	void Sample_PLmloop01(const Index4D &x, MType type,std::vector<int> &fres);
+	void Sample_PMmloop01(const Index4D &x, MType type,std::vector<int> &fres);
+	void Sample_PRmloop01(const Index4D &x, MType type,std::vector<int> &fres);
+	void Sample_POmloop01(const Index4D &x, MType type,std::vector<int> &fres);
+
+
+	// Structure Stuff
+	void fill_structure(std::vector<int> &pair, std::string &structure);
 };
 
 

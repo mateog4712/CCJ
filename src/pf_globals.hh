@@ -3,21 +3,19 @@
 
 // #include "pf_externs.hh"
 
-double expPS_penalty;
-double expPSM_penalty;
-double expPSP_penalty;
-double expPB_penalty;
-double expPUP_penalty;
-double expPPS_penalty;
+inline double expPS_penalty = 0;
+inline double expPSM_penalty = 0;
+inline double expPSP_penalty = 0;
+inline double expPB_penalty = 0;
+inline double expPUP_penalty = 0;
+inline double expPPS_penalty = 0;
+inline double expa_penalty = 0;
+inline double expb_penalty = 0;
+inline double expc_penalty = 0;
+inline double expap_penalty = 0;
+inline double expbp_penalty = 0;
+inline double expcp_penalty = 0;
 
-double expa_penalty;
-double expb_penalty;
-double expc_penalty;
-
-double expap_penalty;
-double expbp_penalty;
-double expcp_penalty;
-
-double expstart_hybrid_penalty;
+inline double expstart_hybrid_penalty = 0;
 
 #endif

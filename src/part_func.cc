@@ -1,6 +1,6 @@
 #include "part_func.hh"
-// #include "dot_plot.hh"
-#include "h_externs.hh"
+#include "dot_plot.hh"
+#include "h_globals.hh"
 #include "pf_globals.hh"
 
 #include <algorithm>
@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <string>
 #include <cassert>
+#include <list>
 
 #define debug 0
 /*
@@ -239,6 +240,22 @@ pf_t W_final_pf::ccj_pf(){
     pf_t energy = to_Energy(W[n], n);
 
     structure = std::string(n, '.');
+	for (cand_pos_t i = 0; i < num_samples; ++i) {
+		std::string sample_structure(n,'.');
+		std::vector<int> fres(n,-2);
+        Sample_W(1, n, fres);
+		fill_structure(fres,sample_structure);
+        structures[sample_structure]++;
+    }
+
+	// for (const auto &s : structures) {
+    //         std::cout << s.first << "\t" << s.second << std::endl;
+    // }
+	this->frequency = (pf_t)structures[MFE_structure] / num_samples;
+
+	if (PSplot) {
+        create_dot_plot(seq, MFE_structure, samples, num_samples);
+    }
 
     return energy;
 }
@@ -527,23 +544,6 @@ void W_final_pf::compute_P(cand_pos_t i, cand_pos_t l){
 	}
 	P.set(i,l) = contributions;
 }
-
-template<class Penalty> energy_t W_final_pf::penalty(const Index4D &x, Penalty p, MType type) {
-    switch(type) {
-    case MType::L: return p(x.j(),x.i());
-    case MType::M: return p(x.j(),x.k());
-    case MType::R: return p(x.l(),x.k());
-    case MType::Om: return p(x.l(),x.i());
-	case MType::Os: return p(x.l(),x.i());
-	case MType::LreO: return p(x.j(),x.i());
-	case MType::LreR: return p(x.j(),x.i());
-	case MType::MreO: return p(x.j(),x.k());
-	case MType::MreR: return p(x.j(),x.k());
-	case MType::LMreR: return p(x.j(),x.i());
-	case MType::LMorO: return p(x.j(),x.i());
-    }
-    __builtin_unreachable();
-}
 /**
  * This always chops from the interior with every single recurrence which means the code is the same and can be made generic
  */
@@ -600,7 +600,7 @@ pf_t W_final_pf::calc_PXiloop(const Index4D &x, MType type){
 	case MType::LMreR: return calc_PLiloop(x,type);
 	case MType::LMorO: return calc_PLiloop(x,type);
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 void W_final_pf::compute_PfromX(const Index4D &x, MType type){
     switch(type) {
@@ -616,7 +616,7 @@ void W_final_pf::compute_PfromX(const Index4D &x, MType type){
 	case MType::LMreR: return compute_PfromL(x,type);
 	case MType::LMorO: return compute_PfromL(x,type);
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 void W_final_pf::compute_PfromXprime(const Index4D &x, MType type){
     switch(type) {
@@ -632,7 +632,7 @@ void W_final_pf::compute_PfromXprime(const Index4D &x, MType type){
 	case MType::LMreR: return compute_PfromLprime(x,type);
 	case MType::LMorO: return compute_PfromLprime(x,type);
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 pf_t W_final_pf::calc_PfromXdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, MType type){
     switch(type) {
@@ -648,7 +648,7 @@ pf_t W_final_pf::calc_PfromXdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k,
 	case MType::LMreR: return calc_PfromLMreRdoubleprime(i,j,k,l);
 	case MType::LMorO: return calc_PfromLMorOdoubleprime(i,j,k,l);
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 void W_final_pf::compute_PXmloop00(const Index4D &x, MType type){
     switch(type) {
@@ -664,7 +664,7 @@ void W_final_pf::compute_PXmloop00(const Index4D &x, MType type){
 	case MType::LMreR: return compute_PLmloop00(x,type);
 	case MType::LMorO: return compute_PLmloop00(x,type);
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 void W_final_pf::compute_PXmloop01(const Index4D &x, MType type){
     switch(type) {
@@ -680,7 +680,7 @@ void W_final_pf::compute_PXmloop01(const Index4D &x, MType type){
 	case MType::LMreR: return compute_PLmloop01(x,type);
 	case MType::LMorO: return compute_PLmloop01(x,type);
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 void W_final_pf::compute_PXmloop10(const Index4D &x, MType type){
     switch(type) {
@@ -696,7 +696,7 @@ void W_final_pf::compute_PXmloop10(const Index4D &x, MType type){
 	case MType::LMreR: return compute_PLmloop10(x,type);
 	case MType::LMorO: return compute_PLmloop10(x,type);
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 /**
  * As this just calls the other functions, we can reduce it to just a PX.
@@ -1250,4 +1250,57 @@ pf_t W_final_pf::get_e_intP(cand_pos_t i, cand_pos_t ip, cand_pos_t jp, cand_pos
     pf_t e_int = compute_int(i, j, ip, jp);
 
     return pow(e_int, e_intP_penalty);
+}
+
+void W_final_pf::fill_structure(std::vector<int> &fres, std::string &structure){
+    std::stack < brack_type > st;
+
+    st.push(brack_type('<','>'));
+    st.push(brack_type('{','}'));
+    st.push(brack_type('[',']'));
+    st.push(brack_type('(',')'));
+
+    cand_pos_t isInABand=0;
+    // cand_pos_t num_crossing_bands=0;
+
+    std::list <band_elem > bands;
+    bands.push_back(band_elem('|','|',0,0,0,0));
+
+    for (cand_pos_t i = 0; i < n; i++){
+        cand_pos_t j = fres[i];
+        if (j == -1){ // i is unpaired
+            structure[i]='.';
+        }else if (i < j){
+            isInABand=0;
+            //			for (band_elem *p = head; p != NULL;  p = p->next){
+            for (std::list<band_elem > ::iterator it = bands.begin(); it != bands.end(); it++){
+                if(i> (*it).inner_start && j < (*it).inner_end){ // i.e. i is paired and i.pair[i] is nested in the band
+                    (*it).inner_start = i;
+                    (*it).inner_end =j;
+                    structure[i] = (*it).open;
+                    structure[j] = (*it).close;
+                    isInABand=1;
+                    break;
+                }
+            }
+
+            if (!isInABand){
+                brack_type e = st.top();
+                st.pop();
+                // num_crossing_bands++;
+
+                bands.push_back(band_elem(e.open,e.close,i,j,i,j));
+                structure[i] = e.open;
+                structure[j] = e.close;
+            }
+
+        }else{ //having the closing base pair i>pair[i]
+            for(std::list<band_elem > ::iterator current = bands.begin(); current != bands.end(); current++){
+                if (i == (*current).outer_end){
+                    st.push(brack_type((*current).open,(*current).close));
+                    break;
+                }
+            }
+        }
+    }
 }

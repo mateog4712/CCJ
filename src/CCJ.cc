@@ -141,16 +141,30 @@ std::vector<RNAEntry> get_all_inputs(const std::string& fileI, const std::string
     return entries;
 }
 
-void print_results(std::string &fileO, std::string &sequence, std::string &structure, double MFE, std::string &structure_pf, double EE){
+void print_results(std::string &fileO, std::string &sequence, std::string &structure, pf_t MFE, std::string &structure_pf, double EE, std::string MEA_structure, pf_t MEA, std::string centroid_structure, pf_t distance,std::vector<std::pair<std::string,double>> fatgraphs, pf_t frequency, pf_t diversity){
     if (fileO != "") {
         std::ofstream out(fileO,std::fstream::app);
         out << sequence << std::endl;
         out << structure << " (" << MFE << ")" << std::endl;
         out << structure_pf << " (" << EE << ")" << std::endl;
+        out << MEA_structure << " (" << MEA << ")" << std::endl;
+        out << centroid_structure << " (" << distance << ")" << std::endl;
+        for(size_t j=0; j<fatgraphs.size();++j){
+               out << fatgraphs[j].first << "\t(" << fatgraphs[j].second << ")\t";
+        }
+        out << std::endl;
+        out << "frequency of MFE structure in ensemble: " << frequency << "; ensemble diversity " << diversity << std::endl;
     } else {
         std::cout << sequence << std::endl;
         std::cout << structure << " (" << MFE << ")" << std::endl;
         std::cout << structure_pf << " (" << EE << ")" << std::endl;
+        std::cout << MEA_structure << " (" << MEA << ")" << std::endl;
+        std::cout << centroid_structure << " (" << distance << ")" << std::endl;
+        for(size_t j=0; j<fatgraphs.size();++j){
+               std::cout << fatgraphs[j].first << "\t(" << fatgraphs[j].second << ")\t";
+        }
+        std::cout << std::endl;
+        std::cout << "frequency of MFE structure in ensemble: " << frequency << "; ensemble diversity " << diversity << std::endl;
     }   
 }
 
@@ -167,10 +181,17 @@ std::string ccj(std::string seq,double &energy, int dangle){
     return structure;
 }
 
-std::string ccj_pf(std::string seq,double &energy,std::string &MFE_structure, double MFE, int dangle, int num_samples, bool PSplot){
+std::string ccj_pf(std::string seq,double &energy,std::string &MFE_structure, double MFE, std::string &MEA_structure, pf_t &MEA, std::string &centroid_structure,pf_t &distance, std::vector<std::pair<std::string,double>> &fatgraphs, pf_t &frequency, pf_t &diversity, int dangle, int num_samples, bool PSplot){
 	W_final_pf min_fold(seq,MFE_structure,MFE,dangle,num_samples,PSplot);
+    cand_pos_t n = seq.length();
 	energy = min_fold.ccj_pf();
     std::string structure = min_fold.structure;
+    MEA_structure = std::string(n,'.');
+    MEA = 0;
+    centroid_structure = std::string(n,'.');
+    distance = 0;
+    frequency = min_fold.frequency;
+    diversity = 0;
     return structure;
 }
 
@@ -227,14 +248,12 @@ int main (int argc, char *argv[])
                 }
             }
         }
-        double energy = 0;
-        pf_t pf_energy = 0;
-        std::string structure = "";
-        std::string pf_structure = "";
-        structure = ccj(current.sequence,energy,args_info.dangles_arg);
-        pf_structure = ccj_pf(current.sequence,pf_energy,structure,energy,args_info.dangles_arg,num_samples,PSplot); // I am seeing this give nan sometimes with GGGGGGAAGGGGGGGGAACCCCCCACCCCCCCC currently
-
-        print_results(fileO,current.sequence,structure,energy,pf_structure,pf_energy);
+        pf_t energy,pf_energy,MEA,distance,frequency,diversity;
+        std::string MEA_structure,centroid_structure;
+        std::vector<std::pair<std::string,double>> fatgraphs(num_fatgraph);
+        std::string structure = ccj(current.sequence,energy,args_info.dangles_arg);
+        std::string pf_structure = ccj_pf(current.sequence,pf_energy,structure,energy,MEA_structure,MEA,centroid_structure,distance,fatgraphs,frequency,diversity,args_info.dangles_arg,num_samples,PSplot); // I am seeing this give nan sometimes with GGGGGGAAGGGGGGGGAACCCCCCACCCCCCCC currently
+        print_results(fileO,current.sequence,structure,energy,pf_structure,pf_energy,MEA_structure,MEA,centroid_structure,distance,fatgraphs,frequency,diversity);
     }
 
     cmdline_parser_free(&args_info);

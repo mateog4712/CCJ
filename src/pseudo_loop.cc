@@ -1,5 +1,5 @@
 #include "pseudo_loop.hh"
-#include "h_externs.hh"
+#include "h_globals.hh"
 #include "W_final.hh"
 #include <stdio.h>
 #include <string>
@@ -336,7 +336,7 @@ template<class Penalty> energy_t pseudo_loop::penalty(const Index4D &x, Penalty 
 	case MType::LMreR: return p(x.j(),x.i());
 	case MType::LMorO: return p(x.j(),x.i());
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 /**
  * This always chops from the interior with every single recurrence which means the code is the same and can be made generic
@@ -395,7 +395,7 @@ energy_t pseudo_loop::calc_PXiloop(const Index4D &x, MType type){
 	case MType::LMreR: return calc_PLiloop(x,type);
 	case MType::LMorO: return calc_PLiloop(x,type);
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 void pseudo_loop::compute_PfromX(const Index4D &x, MType type){
     switch(type) {
@@ -411,7 +411,7 @@ void pseudo_loop::compute_PfromX(const Index4D &x, MType type){
 	case MType::LMreR: return compute_PfromL(x,type);
 	case MType::LMorO: return compute_PfromL(x,type);
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 void pseudo_loop::compute_PfromXprime(const Index4D &x, MType type){
     switch(type) {
@@ -427,7 +427,7 @@ void pseudo_loop::compute_PfromXprime(const Index4D &x, MType type){
 	case MType::LMreR: return compute_PfromLprime(x,type);
 	case MType::LMorO: return compute_PfromLprime(x,type);
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 
 energy_t pseudo_loop::calc_PfromXdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, MType type){
@@ -444,7 +444,7 @@ energy_t pseudo_loop::calc_PfromXdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos
 	case MType::LMreR: return calc_PfromLMreRdoubleprime(i,j,k,l);
 	case MType::LMorO: return calc_PfromLMorOdoubleprime(i,j,k,l);
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 void pseudo_loop::compute_PXmloop00(const Index4D &x, MType type){
     switch(type) {
@@ -460,7 +460,7 @@ void pseudo_loop::compute_PXmloop00(const Index4D &x, MType type){
 	case MType::LMreR: return compute_PLmloop00(x,type);
 	case MType::LMorO: return compute_PLmloop00(x,type);
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 void pseudo_loop::compute_PXmloop01(const Index4D &x, MType type){
     switch(type) {
@@ -476,7 +476,7 @@ void pseudo_loop::compute_PXmloop01(const Index4D &x, MType type){
 	case MType::LMreR: return compute_PLmloop01(x,type);
 	case MType::LMorO: return compute_PLmloop01(x,type);
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 void pseudo_loop::compute_PXmloop10(const Index4D &x, MType type){
     switch(type) {
@@ -492,7 +492,7 @@ void pseudo_loop::compute_PXmloop10(const Index4D &x, MType type){
 	case MType::LMreR: return compute_PLmloop10(x,type);
 	case MType::LMorO: return compute_PLmloop10(x,type);
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 /**
  * As this just calls the other functions, we can reduce it to just a PX.
@@ -542,7 +542,7 @@ void pseudo_loop::Trace_PX1(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l
 			return;
 		}
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 void pseudo_loop::Trace_PX2(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l, MType type, energy_t e){
 	if (debug) std::cout << "PX2 at " << i << " and " << j << " and " << k << " and " << l << " with type: " << type << " and en: " << e << std::endl;
@@ -556,7 +556,7 @@ void pseudo_loop::Trace_PX2(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l
 			return;
 		}
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 
 void pseudo_loop::Trace_PXmloop(const Index4D &x, MType type, energy_t e){
@@ -571,7 +571,7 @@ void pseudo_loop::Trace_PXmloop(const Index4D &x, MType type, energy_t e){
 		return Trace_PXmloop00(xp,type,PXmloop00.get(xp.i(),xp.j(),xp.k(),xp.l()));
 		return;
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 
 void pseudo_loop::Trace_PXiloop(const Index4D &x, MType type, energy_t e){
@@ -589,7 +589,7 @@ void pseudo_loop::Trace_PXiloop(const Index4D &x, MType type, energy_t e){
 	case MType::LMreR: return Trace_PLiloop(x,type,e);
 	case MType::LMorO: return Trace_PLiloop(x,type,e);
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 
 void pseudo_loop::Trace_PfromX(const Index4D &x, MType type,energy_t e){
@@ -606,7 +606,7 @@ void pseudo_loop::Trace_PfromX(const Index4D &x, MType type,energy_t e){
 	case MType::LMreR: return Trace_PfromL(x.i(),x.j(),x.k(),x.l(),type,e);
 	case MType::LMorO: return Trace_PfromL(x.i(),x.j(),x.k(),x.l(),type,e);
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 
 void pseudo_loop::Trace_PfromXprime(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l, MType type,energy_t e){
@@ -623,7 +623,7 @@ void pseudo_loop::Trace_PfromXprime(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand
 	case MType::LMreR: return Trace_PfromLprime(i,j,k,l,type,e);
 	case MType::LMorO: return Trace_PfromLprime(i,j,k,l,type,e);
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 
 void pseudo_loop::Trace_PfromXdoubleprime(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l, MType type, energy_t e){
@@ -640,7 +640,7 @@ void pseudo_loop::Trace_PfromXdoubleprime(cand_pos_t i,cand_pos_t j,cand_pos_t k
 	case MType::LMreR: return Trace_PfromLMreRdoubleprime(i,j,k,l,e);
 	case MType::LMorO: return Trace_PfromLMorOdoubleprime(i,j,k,l,e);
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 
 void pseudo_loop::Trace_PXmloop00(const Index4D &x, MType type, energy_t e){
@@ -658,7 +658,7 @@ void pseudo_loop::Trace_PXmloop00(const Index4D &x, MType type, energy_t e){
 	case MType::LMreR: return Trace_PLmloop00(x,type,e);
 	case MType::LMorO: return Trace_PLmloop00(x,type,e);
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 void pseudo_loop::Trace_PXmloop10(const Index4D &x, MType type, energy_t e){
 	if (debug) std::cout << "PXmloop10 at " << x.i() << " and " << x.j() << " and " << x.k() << " and " << x.l() << " with type: " << type << " and en: " << e << std::endl;
@@ -675,7 +675,7 @@ void pseudo_loop::Trace_PXmloop10(const Index4D &x, MType type, energy_t e){
 	case MType::LMreR: return Trace_PLmloop10(x,type,e);
 	case MType::LMorO: return Trace_PLmloop10(x,type,e);
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 void pseudo_loop::Trace_PXmloop01(const Index4D &x, MType type, energy_t e){
 	if (debug) std::cout << "PXmloop01 at " << x.i() << " and " << x.j() << " and " << x.k() << " and " << x.l() << " with type: " << type << " and en: " << e << std::endl;
@@ -692,7 +692,7 @@ void pseudo_loop::Trace_PXmloop01(const Index4D &x, MType type, energy_t e){
 	case MType::LMreR: return Trace_PLmloop01(x,type,e);
 	case MType::LMorO: return Trace_PLmloop01(x,type,e);
     }
-    __builtin_unreachable();
+    UNREACHABLE();
 }
 void pseudo_loop::Trace_PX(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l, MType type, energy_t e){
 	if (debug) std::cout << "PX at " << i << " and " << j << " and " << k << " and " << l << " with type: " << type << " and en: " << e << std::endl;
@@ -726,7 +726,7 @@ void pseudo_loop::Trace_PX(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,
 			return;
 		}
 	}
-	__builtin_unreachable();
+	UNREACHABLE();
 }
 
 
