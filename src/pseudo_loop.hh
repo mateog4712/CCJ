@@ -7,7 +7,7 @@
 #include <string.h>
 #include "s_energy_matrix.hh"
 #include "matrices.hh"
-#define debug 0
+// #define debug 0
 
 #ifdef NDEBUG
 	#define UNREACHABLE() \
@@ -31,7 +31,7 @@ public:
 
     void compute_energies(cand_pos_t i, cand_pos_t j);
 
-	void set_fold(minimum_fold *f);
+	void set_fold(std::vector<int> &fres);
 	
 	energy_t get_energy(cand_pos_t i, cand_pos_t j){return P.get(i,j);}
 
@@ -47,7 +47,7 @@ private:
 	W_final *W;		        // the W object
 
 	std::string structure;
-	minimum_fold *f;
+	std::vector<int> *fres;
 	vrna_param_t *params_;
 
 	std::vector<cand_pos_t> index;				// the array to keep the index of two dimensional arrays like WPP and WBP
@@ -157,28 +157,6 @@ private:
 
 	Matrix4D PK1LMreR;
 	Matrix4D PK1LMorO;
-
-	std::vector<char> can_pair_;
-    void init_can_pair() {
-        can_pair_.resize((n+1)*(n+1));
-        for (cand_pos_t i=1; i<=n; i++) {
-            for (cand_pos_t j=i; j<=i+TURN && j<=n; j++) {
-                cand_pos_t ij = i*(n+1)+j;
-                can_pair_[ij] = false;
-            }
-            for (cand_pos_t j=i+TURN+1; j<=n; j++) {
-                cand_pos_t ij = i*(n+1)+j;
-                can_pair_[ij] = (pair[S_[i]][S_[j]]>0);
-            }
-        }
-    }
-
-	//! @brief check whether two positions can pair
-    //! checks for canonical base pairing *and* distance (TURN)
-    inline int can_pair(cand_pos_t i, cand_pos_t j) const {
-        assert(i<=j);
-        return can_pair_[i*(n+1)+j];
-    }
 
 	void compute_WBP(cand_pos_t i, cand_pos_t l);
 	void compute_WPP(cand_pos_t i, cand_pos_t l);

@@ -2,6 +2,7 @@
 #include "dot_plot.hh"
 #include "h_globals.hh"
 #include "pf_globals.hh"
+#include "h_struct.hh"
 
 #include <algorithm>
 #include <iostream>
@@ -10,6 +11,7 @@
 #include <string>
 #include <cassert>
 #include <list>
+#include <set>
 
 #define debug 0
 /*
@@ -46,7 +48,6 @@ W_final_pf::W_final_pf(std::string &seq, std::string &MFE_structure, double MFE_
     expPUP_pen.resize(n + 1);
 	TriangleMatrixPF::new_index(index,n+1);
 	Matrix4DPF::construct_index(index3D,n);
-	init_can_pair();
     // Allocate space
     V.init(n+1,index);
     VM.init(n+1,index);
@@ -238,13 +239,14 @@ pf_t W_final_pf::ccj_pf(){
 		W[j] = contributions;
 	}
     pf_t energy = to_Energy(W[n], n);
-
     structure = std::string(n, '.');
+
 	for (cand_pos_t i = 0; i < num_samples; ++i) {
-		std::string sample_structure(n,'.');
-		std::vector<int> fres(n,-2);
+		std::string sample_structure(n+1,'.');
+		std::vector<int> fres(n+1,-2);
         Sample_W(1, n, fres);
-		fill_structure(fres,sample_structure);
+		// fill_structure(fres,sample_structure);
+		sample_structure = sample_structure.substr(1,n);
         structures[sample_structure]++;
     }
 
@@ -258,7 +260,7 @@ pf_t W_final_pf::ccj_pf(){
             std::cout << s.first << " " << s.second << std::endl;
         }
     }
-	pairing_tendency();
+	// pairing_tendency();
 	this->frequency = (pf_t)structures[MFE_structure] / num_samples;
 
 	if (PSplot) {
@@ -750,7 +752,6 @@ void W_final_pf::compute_PX(const Index4D &x, MType type){
  */
 pf_t W_final_pf::calc_PLiloop(const Index4D &x, MType type){
 	if(impossible_case(x)) return 0;
-	if(!can_pair(x.lend(type),x.rend(type))) return 0;
 	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 
 	Matrix4DPF &PX = PX_by_mtype(type);
@@ -762,7 +763,7 @@ pf_t W_final_pf::calc_PLiloop(const Index4D &x, MType type){
 	for(cand_pos_t d= i+1; d<max_d; ++d){
 		cand_pos_t min_dp = std::max(d+TURN,j-MAXLOOP);
 		for(cand_pos_t dp = j-1; dp > min_dp; --dp){
-			if (!can_pair(d,dp)) continue;
+			if (!(pair[S_[d]][S_[dp]]>0)) continue;
 			contributions += get_e_intP(i,d,dp,j)*PX.get(d,dp,k,l);
 		}
 	}
@@ -770,7 +771,6 @@ pf_t W_final_pf::calc_PLiloop(const Index4D &x, MType type){
 }
 pf_t W_final_pf::calc_PMiloop(const Index4D &x, MType type){
 	if(impossible_case(x)) return 0;
-	if(!can_pair(x.lend(type),x.rend(type))) return 0;
 	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 
 	Matrix4DPF &PX = PX_by_mtype(type);
@@ -782,7 +782,7 @@ pf_t W_final_pf::calc_PMiloop(const Index4D &x, MType type){
 	for(cand_pos_t d= j-1; d>max_d; --d){
 		cand_pos_t min_dp = std::min(l,k+MAXLOOP); // could switch these here so that we are increasing in the first for like all the others
 		for (cand_pos_t dp=k+1; dp <min_dp; ++dp) {
-			if (!can_pair(d,dp)) continue;
+			if (!(pair[S_[d]][S_[dp]]>0)) continue;
 			contributions += get_e_intP(d,j,k,dp)*PX.get(i,d,dp,l);
 		}
 	}
@@ -790,7 +790,6 @@ pf_t W_final_pf::calc_PMiloop(const Index4D &x, MType type){
 }
 pf_t W_final_pf::calc_PRiloop(const Index4D &x, MType type){
 	if(impossible_case(x)) return 0;
-	if(!can_pair(x.lend(type),x.rend(type))) return 0;
 	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 
 	Matrix4DPF &PX = PX_by_mtype(type);
@@ -802,7 +801,7 @@ pf_t W_final_pf::calc_PRiloop(const Index4D &x, MType type){
 	for(cand_pos_t d= k+1; d<max_d; ++d){
 		cand_pos_t min_dp = std::max(d+TURN,l-MAXLOOP);
 		for(cand_pos_t dp=l-1; dp > min_dp; --dp){
-			if (!can_pair(d,dp)) continue;
+			if (!(pair[S_[d]][S_[dp]]>0)) continue;
 			contributions += get_e_intP(k,d,dp,l)*PX.get(i,j,d,dp);
 		}
 	}
@@ -810,7 +809,6 @@ pf_t W_final_pf::calc_PRiloop(const Index4D &x, MType type){
 }
 pf_t W_final_pf::calc_POiloop(const Index4D &x, MType type){
 	if(impossible_case(x)) return 0;
-	if(!can_pair(x.lend(type),x.rend(type))) return 0;
 	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 
 	Matrix4DPF &PX = PX_by_mtype(type);
@@ -822,7 +820,7 @@ pf_t W_final_pf::calc_POiloop(const Index4D &x, MType type){
 	for(cand_pos_t d= i+1; d<max_d; ++d){
 		cand_pos_t min_dp = std::max(l-MAXLOOP,k);
 		for (cand_pos_t dp=l-1; dp >min_dp; --dp) {
-			if (!can_pair(d,dp)) continue;
+			if (!(pair[S_[d]][S_[dp]]>0)) continue;
 			contributions += get_e_intP(i,d,dp,l)*PX.get(d,j,k,dp);
 		}
 	}
@@ -1269,58 +1267,58 @@ pf_t W_final_pf::get_e_intP(cand_pos_t i, cand_pos_t ip, cand_pos_t jp, cand_pos
     return pow(e_int, e_intP_penalty);
 }
 
-void W_final_pf::fill_structure(std::vector<int> &fres, std::string &structure){
-	std::stack < brack_type > st;
+// void W_final_pf::fill_structure(std::vector<int> &fres, std::string &structure){
+// 	std::stack < brack_type > st;
 
-    st.push(brack_type('<','>'));
-    st.push(brack_type('{','}'));
-    st.push(brack_type('[',']'));
-    st.push(brack_type('(',')'));
+//     st.push(brack_type('<','>'));
+//     st.push(brack_type('{','}'));
+//     st.push(brack_type('[',']'));
+//     st.push(brack_type('(',')'));
 
-    cand_pos_t isInABand=0;
-    // cand_pos_t num_crossing_bands=0;
+//     cand_pos_t isInABand=0;
+//     // cand_pos_t num_crossing_bands=0;
 
-    std::list <band_elem > bands;
-    bands.push_back(band_elem('|','|',0,0,0,0));
+//     std::list <band_elem > bands;
+//     bands.push_back(band_elem('|','|',0,0,0,0));
 
-    for (cand_pos_t i = 0; i < n; i++){
-        cand_pos_t j = fres[i];
-        if (j == -1){ // i is unpaired
-            structure[i]='.';
-        }else if (i < j){
-            isInABand=0;
-            //			for (band_elem *p = head; p != NULL;  p = p->next){
-            for (std::list<band_elem > ::iterator it = bands.begin(); it != bands.end(); it++){
-                if(i> (*it).inner_start && j < (*it).inner_end){ // i.e. i is paired and i.pair[i] is nested in the band
-                    (*it).inner_start = i;
-                    (*it).inner_end =j;
-                    structure[i] = (*it).open;
-                    structure[j] = (*it).close;
-                    isInABand=1;
-                    break;
-                }
-            }
+//     for (cand_pos_t i = 0; i < n; i++){
+//         cand_pos_t j = fres[i];
+//         if (j == -1){ // i is unpaired
+//             structure[i]='.';
+//         }else if (i < j){
+//             isInABand=0;
+//             //			for (band_elem *p = head; p != NULL;  p = p->next){
+//             for (std::list<band_elem > ::iterator it = bands.begin(); it != bands.end(); it++){
+//                 if(i> (*it).inner_start && j < (*it).inner_end){ // i.e. i is paired and i.pair[i] is nested in the band
+//                     (*it).inner_start = i;
+//                     (*it).inner_end =j;
+//                     structure[i] = (*it).open;
+//                     structure[j] = (*it).close;
+//                     isInABand=1;
+//                     break;
+//                 }
+//             }
 
-            if (!isInABand){
-                brack_type e = st.top();
-                st.pop();
-                // num_crossing_bands++;
+//             if (!isInABand){
+//                 brack_type e = st.top();
+//                 st.pop();
+//                 // num_crossing_bands++;
 
-                bands.push_back(band_elem(e.open,e.close,i,j,i,j));
-                structure[i] = e.open;
-                structure[j] = e.close;
-            }
+//                 bands.push_back(band_elem(e.open,e.close,i,j,i,j));
+//                 structure[i] = e.open;
+//                 structure[j] = e.close;
+//             }
 
-        }else{ //having the closing base pair i>pair[i]
-            for(std::list<band_elem > ::iterator current = bands.begin(); current != bands.end(); current++){
-                if (i == (*current).outer_end){
-                    st.push(brack_type((*current).open,(*current).close));
-                    break;
-                }
-            }
-        }
-    }
-}
+//         }else{ //having the closing base pair i>pair[i]
+//             for(std::list<band_elem > ::iterator current = bands.begin(); current != bands.end(); current++){
+//                 if (i == (*current).outer_end){
+//                     st.push(brack_type((*current).open,(*current).close));
+//                     break;
+//                 }
+//             }
+//         }
+//     }
+// }
 
 char W_final_pf::bpp_symbol(pf_t *P) {
     if (P[0] > 0.667) return '.';

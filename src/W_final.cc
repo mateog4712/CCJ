@@ -10,7 +10,6 @@
 #include <iostream>
 #include <stack>
 #include <list>
-#define debug 0
 
 // Hosna June 20th, 2007
 // calls the constructor for s_min_folding
@@ -34,7 +33,6 @@ W_final::~W_final()
 {
 	delete P;
 	delete V;
-	delete [] f;
 	free(params_);
 	free(S_);
 	free(S1_);
@@ -44,8 +42,7 @@ W_final::~W_final()
 // allocates space for WMB object and V_final
 void W_final::space_allocation(){
 
-	// From simfold
-	f = new minimum_fold [n+1];
+	fres.resize(n+1,-2);
 
     V = new s_energy_matrix (seq_, n,S_,S1_,params_);
 	structure = std::string (n+1,'.');
@@ -78,11 +75,11 @@ double W_final::ccj(){
 
     double energy = W[n]/100.0;
 
-	P->set_fold(f);
+	P->set_fold(fres);
 	// backtrack
 	backtrack();
 
-	fill_structure();
+	fill_structure(fres,structure);
 	this->structure = structure.substr(1,n);
     return energy;
 }
@@ -205,8 +202,8 @@ void W_final::Trace_W(cand_pos_t i, cand_pos_t j, energy_t e){
 }
 void W_final::Trace_V(cand_pos_t i, cand_pos_t j, energy_t e){
 	if (debug) printf("V at %d and %d with %d\n", i, j, e);
-	f[i].pair = j;
-	f[j].pair = i;
+	fres[i] = j;
+	fres[j] = i;
 	char type = V->get_type (i,j);
 
 	switch(type){
@@ -391,57 +388,4 @@ void W_final::Trace_WMp(cand_pos_t i, cand_pos_t j, energy_t e){
 		return;
 	}
 	__builtin_unreachable();
-}
-
-void W_final::fill_structure(){
-    std::stack < brack_type > st;
-
-    st.push(brack_type('<','>'));
-    st.push(brack_type('{','}'));
-    st.push(brack_type('[',']'));
-    st.push(brack_type('(',')'));
-
-    cand_pos_t isInABand=0;
-    // cand_pos_t num_crossing_bands=0;
-
-    std::list <band_elem > bands;
-    bands.push_back(band_elem('|','|',0,0,0,0));
-
-    for (cand_pos_t i = 1; i <= n; i++){
-        cand_pos_t j = f[i].pair;
-        if (j == -1){ // i is unpaired
-            structure[i]='.';
-        }else if (i < j){
-            isInABand=0;
-            //			for (band_elem *p = head; p != NULL;  p = p->next){
-            for (std::list<band_elem > ::iterator it = bands.begin(); it != bands.end(); it++){
-                if(i> (*it).inner_start && j < (*it).inner_end){ // i.e. i is paired and i.pair[i] is nested in the band
-                    (*it).inner_start = i;
-                    (*it).inner_end =j;
-                    structure[i] = (*it).open;
-                    structure[j] = (*it).close;
-                    isInABand=1;
-                    break;
-                }
-            }
-
-            if (!isInABand){
-                brack_type e = st.top();
-                st.pop();
-                // num_crossing_bands++;
-
-                bands.push_back(band_elem(e.open,e.close,i,j,i,j));
-                structure[i] = e.open;
-                structure[j] = e.close;
-            }
-
-        }else{ //having the closing base pair i>pair[i]
-            for(std::list<band_elem > ::iterator current = bands.begin(); current != bands.end(); current++){
-                if (i == (*current).outer_end){
-                    st.push(brack_type((*current).open,(*current).close));
-                    break;
-                }
-            }
-        }
-    }
 }

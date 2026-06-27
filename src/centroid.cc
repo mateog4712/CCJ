@@ -1,5 +1,6 @@
 #include "base_types.hh"
 #include "part_func.hh"
+#include "h_struct.hh"
 
 #include <string>
 #include <iostream>

@@ -5,91 +5,51 @@
 #include "base_types.hh"
 #include <vector>
 
-// the data structure stored in the V array
-typedef struct minimum_fold
-{
-    cand_pos_t pair;
-    char type;                  // type can be 'H', 'S', 'I', 'M'
-    minimum_fold()
-    {
-        pair = -1;
-        type = NONE;
-    }
-} minimum_fold;
+static constexpr std::array<std::pair<char,char>, 4> brackets = {{
+    {'(', ')'},
+    {'[', ']'},
+    {'{', '}'},
+    {'<', '>'},
+}};
 
-typedef struct brack_type
-	{
-		char open;
-		char close;
-		void copy(brack_type *other){
-			open = other->open;
-			close = other->close;
-		}
-        brack_type(char _open, char _close):
-        open(_open),
-        close(_close)
-        {
-            
-        }
-	}brack_type;
-
-typedef struct band_elem
-{	
-	band_elem *next;
-	char open;
-	char close;
-	int outer_start;
-	int outer_end;
-	int inner_start;
-	int inner_end;
-	void copy(band_elem *other){
-		other->outer_start = outer_start;
-		other->outer_end = outer_end;
-		other->inner_start = inner_start;
-		other->inner_end = inner_end;
-		other->open = open;
-		other->close = close;
+struct Band {
+    cand_pos_t i, j;
+    int  color;
+	Band(cand_pos_t i, cand_pos_t j, int color): i(i), j(j), color(color){
 	}
-    band_elem(char _open,char _close,int _outer_start, int _outer_end, int _inner_start, int _inner_end):
-    open(_open),
-    close(_close),
-    outer_start(_outer_start),
-    outer_end(_outer_end),
-    inner_start(_inner_start),
-    inner_end(_inner_end)
-    {
-        
-    }
-}band_elem;
-
-struct seq_interval
-{
-  cand_pos_t i;
-  cand_pos_t j;
-  energy_t energy;                        // it is used
-  char type;
-  seq_interval* next = nullptr;
-	// Hosna, Feb 15, 2014
-	// adding the following so that I can use stack_interval for backtracking the gapped region in CCJ also.
-	// I am defining the gapped region as [i,k]U[l,j] instead of [i,j]U[k,l] in the recurrences for compatibility with simfold's seq_interval
-	cand_pos_t k;
-	cand_pos_t l;
-	cand_pos_t asym;
-
-	void copy (seq_interval *other)
-	{
-		other->i = i;
-		other->j = j;
-		other->energy = energy;
-		other->type = type;
-		//Hosna Feb 15, 2014
-		// this part was added with similar reasoning as follows
-		other ->k = k;
-		other ->l = l;
-		other -> asym = asym;
-	}
-
 };
+
+inline bool crosses(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l) {
+    return (i < k && k < j && j < l) || (k < i && i < l && l < j);
+}
+
+// This is a graph coloring problem in essence
+inline void fill_structure(std::vector<int> &fres,std::string &structure) {
+	cand_pos_t n = structure.length();
+    std::vector<Band> bands;
+	for (cand_pos_t i = 0; i < n; ++i) {
+        if (fres[i] != -2 && i < fres[i]){
+			bands.emplace_back(i, fres[i], -1);
+		}
+    }
+	for(cand_pos_t i = 0; i<(cand_pos_t) bands.size();++i){
+		std::vector<int> cross = {0,0,0};
+		for(cand_pos_t j=0; j<i;++j){
+			if(crosses(bands[i].i,bands[i].j,bands[j].i,bands[j].j)){
+				cross[bands[j].color] = 1; // Can just reassign 1 if it crosses. Better than an if else as branches can be expensive
+			}
+		}
+		// The order here should ensure that it picks correctly. cross[color] ensures we stop at the first 0 in the cross array
+		int color = 0;
+        while (color < (int)cross.size() && cross[color]) color++;
+        bands[i].color = color;
+	}
+    for (cand_pos_t i = 0; i < (cand_pos_t) bands.size(); ++i) {
+		auto [open, close] = brackets[bands[i].color];
+		structure[bands[i].i] = open;
+		structure[bands[i].j] = close;
+    }
+}
 
 struct free_energy_node
 {

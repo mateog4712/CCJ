@@ -21,8 +21,8 @@ pseudo_loop::pseudo_loop(std::string seq, s_energy_matrix *V, W_final *W, short 
     allocate_space();
 }
 
-void pseudo_loop::set_fold(minimum_fold *f){
-		this->f = f;
+void pseudo_loop::set_fold(std::vector<int> &fres){
+		this->fres = &fres;
 	}
 
 void pseudo_loop::allocate_space()
@@ -31,7 +31,6 @@ void pseudo_loop::allocate_space()
 
 	TriangleMatrix::new_index(index,n+1);
 	Matrix4D::construct_index(index3D,n);
-	init_can_pair();
 
     WBP.init(n+1,index);
 	WPP.init(n+1,index);
@@ -694,9 +693,9 @@ void pseudo_loop::Trace_PXmloop01(const Index4D &x, MType type, energy_t e){
 void pseudo_loop::Trace_PX(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l, MType type, energy_t e){
 	if (debug) std::cout << "PX at " << i << " and " << j << " and " << k << " and " << l << " with type: " << type << " and en: " << e << std::endl;
 	const Index4D x(i,j,k,l);
-	const int ptype_closing = can_pair(x.lend(type),x.rend(type));//pair[S_[x.lend(type)]][S_[x.rend(type)]];
-	f[x.lend(type)].pair = x.rend(type);
-	f[x.rend(type)].pair = x.lend(type);
+	const int ptype_closing = pair[S_[x.lend(type)]][S_[x.rend(type)]];
+	(*fres)[x.lend(type)] = x.rend(type);
+	(*fres)[x.rend(type)] = x.lend(type);
 
 	if (ptype_closing>0){
 		energy_t tmp = calc_PXmloop(x,type);

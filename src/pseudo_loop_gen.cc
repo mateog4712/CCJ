@@ -15,7 +15,6 @@
  */
 energy_t pseudo_loop::calc_PLiloop(const Index4D &x, MType type){
 	if(impossible_case(x)) return INF;
-	if(!can_pair(x.lend(type),x.rend(type))) return INF;
 	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 
 	Matrix4D &PX = PX_by_mtype(type);
@@ -27,7 +26,7 @@ energy_t pseudo_loop::calc_PLiloop(const Index4D &x, MType type){
 	for(cand_pos_t d= i+1; d<max_d; ++d){
 		cand_pos_t min_dp = std::max(d+TURN,j-MAXLOOP);
 		for(cand_pos_t dp = j-1; dp > min_dp; --dp){
-			if (!can_pair(d,dp)) continue;
+			if (!(pair[S_[d]][S_[dp]]>0)) continue;
 			min_energy = std::min(min_energy,get_e_intP(i,d,dp,j) + PX.get(d,dp,k,l));
 		}
 	}
@@ -35,7 +34,6 @@ energy_t pseudo_loop::calc_PLiloop(const Index4D &x, MType type){
 }
 energy_t pseudo_loop::calc_PMiloop(const Index4D &x, MType type){
 	if(impossible_case(x)) return INF;
-	if(!can_pair(x.lend(type),x.rend(type))) return INF;
 	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 
 	Matrix4D &PX = PX_by_mtype(type);
@@ -47,7 +45,7 @@ energy_t pseudo_loop::calc_PMiloop(const Index4D &x, MType type){
 	for(cand_pos_t d= j-1; d>max_d; --d){
 		cand_pos_t min_dp = std::min(l,k+MAXLOOP); // could switch these here so that we are increasing in the first for like all the others
 		for (cand_pos_t dp=k+1; dp <min_dp; ++dp) {
-			if (!can_pair(d,dp)) continue;
+			if (!(pair[S_[d]][S_[dp]]>0)) continue;
 			min_energy = std::min(min_energy,get_e_intP(d,j,k,dp) + PX.get(i,d,dp,l));
 		}
 	}
@@ -55,7 +53,6 @@ energy_t pseudo_loop::calc_PMiloop(const Index4D &x, MType type){
 }
 energy_t pseudo_loop::calc_PRiloop(const Index4D &x, MType type){
 	if(impossible_case(x)) return INF;
-	if(!can_pair(x.lend(type),x.rend(type))) return INF;
 	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 
 	Matrix4D &PX = PX_by_mtype(type);
@@ -67,7 +64,7 @@ energy_t pseudo_loop::calc_PRiloop(const Index4D &x, MType type){
 	for(cand_pos_t d= k+1; d<max_d; ++d){
 		cand_pos_t min_dp = std::max(d+TURN,l-MAXLOOP);
 		for(cand_pos_t dp=l-1; dp > min_dp; --dp){
-			if (!can_pair(d,dp)) continue;
+			if (!(pair[S_[d]][S_[dp]]>0)) continue;
 			min_energy = std::min(min_energy,get_e_intP(k,d,dp,l) + PX.get(i,j,d,dp));
 		}
 	}
@@ -75,7 +72,6 @@ energy_t pseudo_loop::calc_PRiloop(const Index4D &x, MType type){
 }
 energy_t pseudo_loop::calc_POiloop(const Index4D &x, MType type){
 	if(impossible_case(x)) return INF;
-	if(!can_pair(x.lend(type),x.rend(type))) return INF;
 	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 
 	Matrix4D &PX = PX_by_mtype(type);
@@ -87,7 +83,7 @@ energy_t pseudo_loop::calc_POiloop(const Index4D &x, MType type){
 	for(cand_pos_t d= i+1; d<max_d; ++d){
 		cand_pos_t min_dp = std::max(l-MAXLOOP,k);
 		for (cand_pos_t dp=l-1; dp >min_dp; --dp) {
-			if (!can_pair(d,dp)) continue;
+			if (!(pair[S_[d]][S_[dp]]>0)) continue;
 			min_energy = std::min(min_energy,get_e_intP(i,d,dp,l) + PX.get(d,j,k,dp));
 		}
 	}
@@ -791,7 +787,7 @@ void pseudo_loop::Trace_PLiloop(const Index4D &x, MType type, energy_t e){
 	for(cand_pos_t d= i+1; d<max_d; ++d){
 		cand_pos_t min_dp = std::max(d+TURN,j-MAXLOOP);
 		for(cand_pos_t dp = j-1; dp > min_dp; --dp){
-			if (!can_pair(d,dp)) continue;
+			if (!(pair[S_[d]][S_[dp]]>0)) continue;
 			tmp = get_e_intP(i,d,dp,j) + PX.get(d,dp,k,l);
 			if(e==tmp){
 				Trace_PX(d,dp,k,l,type,PX.get(d,dp,k,l));
@@ -818,7 +814,7 @@ void pseudo_loop::Trace_PMiloop(const Index4D &x, MType type, energy_t e){
 	for(cand_pos_t d= j-1; d>max_d; --d){
 		cand_pos_t min_dp = std::min(l,k+MAXLOOP); // could switch these here so that we are increasing in the first for like all the others
 		for (cand_pos_t dp=k+1; dp <min_dp; ++dp) {
-			if (!can_pair(d,dp)) continue;
+			if (!(pair[S_[d]][S_[dp]]>0)) continue;
 			tmp = get_e_intP(d,j,k,dp) + PX.get(i,d,dp,l);
 			if(e==tmp){
 				Trace_PX(i,d,dp,l,type,PX.get(i,d,dp,l));
@@ -845,7 +841,7 @@ void pseudo_loop::Trace_PRiloop(const Index4D &x, MType type, energy_t e){
 	for(cand_pos_t d= k+1; d<max_d; ++d){
 		cand_pos_t min_dp = std::max(d+TURN,l-MAXLOOP);
 		for(cand_pos_t dp=l-1; dp > min_dp; --dp){
-			if (!can_pair(d,dp)) continue;
+			if (!(pair[S_[d]][S_[dp]]>0)) continue;
 			tmp = get_e_intP(k,d,dp,l) + PX.get(i,j,d,dp);
 			if(e==tmp){
 				Trace_PX(i,j,d,dp,type,PX.get(i,j,d,dp));
@@ -872,7 +868,7 @@ void pseudo_loop::Trace_POiloop(const Index4D &x, MType type, energy_t e){
 	for(cand_pos_t d= i+1; d<max_d; ++d){
 		cand_pos_t min_dp = std::max(l-MAXLOOP,k);
 		for (cand_pos_t dp=l-1; dp >min_dp; --dp) {
-			if (!can_pair(d,dp)) continue;
+			if (!(pair[S_[d]][S_[dp]]>0)) continue;
 			tmp = get_e_intP(i,d,dp,l) + PX.get(d,j,k,dp);
 			if(e==tmp){
 				Trace_PX(d,j,k,dp,type,PX.get(d,j,k,dp));

@@ -88,8 +88,8 @@ void W_final_pf::Sample_V(cand_pos_t i, cand_pos_t j, std::vector<int> &fres) {
 
     cand_pos_t k = i;
     cand_pos_t l = j;
-    fres[i-1] = j-1;
-    fres[j-1] = i-1; 
+    fres[i] = j;
+    fres[j] = i; 
 
     pf_t qbr = V.get(i,j);
     pf_t V_temp = 0;
@@ -706,14 +706,14 @@ void W_final_pf::Sample_PXmloop01(const Index4D &x, MType type,std::vector<int> 
 }
 
 void W_final_pf::Sample_PX(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l, MType type, std::vector<int> &fres){
-    if (debug) std::cout << "PX at " << i << " and " << j << " and " << k << " and " << l << " with type: " << type << std::endl;
+     Matrix4DPF &PX = PX_by_mtype(type);
+    if (debug) std::cout << "PX at " << i << " and " << j << " and " << k << " and " << l << " with type: " << type << " and val: " << PX.get(i,j,k,l) << std::endl;
     const Index4D x(i,j,k,l);
     pf_t qt = 0;
-    Matrix4DPF &PX = PX_by_mtype(type);
     pf_t r = vrna_urn() * PX.get(i,j,k,l);
-    const int ptype_closing = can_pair(x.lend(type),x.rend(type));
-    fres[x.lend(type)-1] = x.rend(type)-1;
-    fres[x.rend(type)-1] = x.lend(type)-1;
+    const int ptype_closing = pair[S_[x.lend(type)]][S_[x.rend(type)]];
+    fres[x.lend(type)] = x.rend(type);
+    fres[x.rend(type)] = x.lend(type);
     std::pair<cand_pos_tu, cand_pos_tu> base_pair(x.lend(type), x.rend(type));
     std::pair<cand_pos_tu, cand_pos_tu> base_pair_reversed(x.rend(type), x.lend(type));
     ++samples[base_pair]; // Increments the base pair found in V
@@ -764,7 +764,7 @@ void W_final_pf::Sample_PLiloop(const Index4D &x, MType type,std::vector<int> &f
 	for(cand_pos_t d= i+1; d<max_d; ++d){
 		cand_pos_t min_dp = std::max(d+TURN,j-MAXLOOP);
 		for(cand_pos_t dp = j-1; dp > min_dp; --dp){
-			if (!can_pair(d,dp)) continue;
+			if (!(pair[S_[d]][S_[dp]]>0)) continue;
 			qt += get_e_intP(i,d,dp,j)*PX.get(d,dp,k,l);
             if(qt>r){
                 Sample_PX(d,dp,k,l,type,fres);
@@ -791,10 +791,10 @@ void W_final_pf::Sample_PMiloop(const Index4D &x, MType type,std::vector<int> &f
 	for(cand_pos_t d= j-1; d>max_d; --d){
 		cand_pos_t min_dp = std::min(l,k+MAXLOOP); // could switch these here so that we are increasing in the first for like all the others
 		for (cand_pos_t dp=k+1; dp <min_dp; ++dp) {
-			if (!can_pair(d,dp)) continue;
+			if (!(pair[S_[d]][S_[dp]]>0)) continue;
 			qt += get_e_intP(d,j,k,dp)*PX.get(i,d,dp,l);
             if(qt>r){
-                Sample_PX(d,j,k,dp,type,fres);
+                Sample_PX(i,d,dp,l,type,fres);
                 return;
             }
 		}
@@ -818,7 +818,7 @@ void W_final_pf::Sample_PRiloop(const Index4D &x, MType type,std::vector<int> &f
 	for(cand_pos_t d= k+1; d<max_d; ++d){
 		cand_pos_t min_dp = std::max(d+TURN,l-MAXLOOP);
 		for(cand_pos_t dp=l-1; dp > min_dp; --dp){
-			if (!can_pair(d,dp)) continue;
+			if (!(pair[S_[d]][S_[dp]]>0)) continue;
 			qt += get_e_intP(k,d,dp,l)*PX.get(i,j,d,dp);
             if(qt>r){
                 Sample_PX(i,j,d,dp,type,fres);
@@ -845,7 +845,7 @@ void W_final_pf::Sample_POiloop(const Index4D &x, MType type,std::vector<int> &f
 	for(cand_pos_t d= i+1; d<max_d; ++d){
 		cand_pos_t min_dp = std::max(l-MAXLOOP,k);
 		for (cand_pos_t dp=l-1; dp >min_dp; --dp) {
-			if (!can_pair(d,dp)) continue;
+			if (!(pair[S_[d]][S_[dp]]>0)) continue;
 			qt += get_e_intP(i,d,dp,l)*PX.get(d,j,k,dp);
             if(qt>r){
                 Sample_PX(d,j,k,dp,type,fres);

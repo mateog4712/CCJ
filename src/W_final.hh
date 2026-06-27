@@ -12,7 +12,7 @@
 #include "ViennaRNA/loops.hh"
 #include "ViennaRNA/pair_mat.hh"
 #include "ViennaRNA/params/io.hh"
-
+#define debug 0
 
 class W_final{
 	public:
@@ -45,8 +45,7 @@ class W_final{
         std::vector<energy_t> W; // size n+1 so left as non-Trianglematrix
         // PARAMTYPE *W;                 // the W exterior loop array
         cand_pos_t n;     // sequence length (number of nucleotides)
-        seq_interval *stack_interval;  // used for backtracking
-        minimum_fold *f;        // the minimum folding, see structs.h
+        std::vector<int> fres;
         std::string seq_;
         short *S_;
 	    short *S1_;
@@ -62,8 +61,6 @@ class W_final{
         void backtrack();
 
         energy_t E_ext_Stem(const energy_t& vij,const energy_t& vi1j,const energy_t& vij1,const energy_t& vi1j1,const short* S, vrna_param_t* params, const cand_pos_t i,const cand_pos_t j, cand_pos_t n);
-
-        void fill_structure();
 };
 
 #endif /*W_FINAL_H_*/
