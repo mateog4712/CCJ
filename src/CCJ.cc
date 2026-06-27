@@ -181,7 +181,7 @@ std::string ccj(std::string seq,double &energy, int dangle){
     return structure;
 }
 
-std::string ccj_pf(std::string seq,double &energy,std::string &MFE_structure, double MFE, std::string &MEA_structure, pf_t &MEA, std::string &centroid_structure,pf_t &distance, std::vector<std::pair<std::string,double>> &fatgraphs, pf_t &frequency, pf_t &diversity, int dangle, int num_samples, bool print_samples, bool PSplot){
+std::string ccj_pf(std::string seq,double &energy,std::string &MFE_structure, double MFE, std::string &MEA_structure, pf_t &MEA, std::string &centroid_structure,pf_t &distance, std::vector<std::pair<std::string,double>> &fatgraphs, pf_t &frequency, pf_t &diversity, int dangle, int num_samples, int num_fatgraphs, bool print_samples, bool PSplot){
 	W_final_pf min_fold(seq,MFE_structure,MFE,dangle,num_samples,print_samples,PSplot);
     cand_pos_t n = seq.length();
 	energy = min_fold.ccj_pf();
@@ -192,6 +192,7 @@ std::string ccj_pf(std::string seq,double &energy,std::string &MFE_structure, do
     centroid_structure = min_fold.centroid_structure;
     frequency = min_fold.frequency;
     diversity = min_fold.ensemble_diversity;
+    min_fold.ccj_fatgraph(fatgraphs,num_fatgraphs);
     return structure;
 }
 
@@ -252,7 +253,7 @@ int main (int argc, char *argv[])
         std::string MEA_structure,centroid_structure;
         std::vector<std::pair<std::string,double>> fatgraphs(num_fatgraph);
         std::string structure = ccj(current.sequence,energy,args_info.dangles_arg);
-        std::string pf_structure = ccj_pf(current.sequence,pf_energy,structure,energy,MEA_structure,MEA,centroid_structure,distance,fatgraphs,frequency,diversity,args_info.dangles_arg,num_samples,args_info.print_samples_flag,PSplot); // I am seeing this give nan sometimes with GGGGGGAAGGGGGGGGAACCCCCCACCCCCCCC currently
+        std::string pf_structure = ccj_pf(current.sequence,pf_energy,structure,energy,MEA_structure,MEA,centroid_structure,distance,fatgraphs,frequency,diversity,args_info.dangles_arg,num_samples,num_fatgraph,args_info.print_samples_flag,PSplot); // I am seeing this give nan sometimes with GGGGGGAAGGGGGGGGAACCCCCCACCCCCCCC currently
         print_results(fileO,current.sequence,structure,energy,pf_structure,pf_energy,MEA_structure,MEA,centroid_structure,distance,fatgraphs,frequency,diversity);
     }
 

@@ -54,6 +54,8 @@ class W_final_pf {
 
 	pf_t ccj_centroid();
 
+	void ccj_fatgraph(std::vector<std::pair<std::string,double>> &fatgraphs, int &num_fatgraphs);
+
 	TriangleMatrixPF P; // the main loop for pseudoloops and bands
 
   private:
@@ -407,6 +409,7 @@ class W_final_pf {
 
 	// Structure Stuff
 	std::string compute_centroid(pf_t &dist, pf_t &diversity);
+	std::string get_fatgraph(std::string structure);
 	char bpp_symbol(pf_t *P);
 	void pairing_tendency();
 };

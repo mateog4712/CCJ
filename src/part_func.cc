@@ -245,7 +245,7 @@ pf_t W_final_pf::ccj_pf(){
 		std::string sample_structure(n+1,'.');
 		std::vector<int> fres(n+1,-2);
         Sample_W(1, n, fres);
-		// fill_structure(fres,sample_structure);
+		fill_structure(fres,sample_structure);
 		sample_structure = sample_structure.substr(1,n);
         structures[sample_structure]++;
     }
@@ -277,6 +277,23 @@ pf_t W_final_pf::ccj_centroid(){
     this->centroid_structure = centroid;
     this->ensemble_diversity = diversity;
     return dist;
+}
+
+void W_final_pf::ccj_fatgraph(std::vector<std::pair<std::string,double>> &fatgraphs, int &num_fatgraphs){
+    std::unordered_map<std::string, int> fatgraphs_map;
+    for(auto it: structures){
+        std::string fatgraph = get_fatgraph(it.first);
+        fatgraphs_map[fatgraph]+=it.second;
+    }
+    std::string fatgraph;
+    int fatgraph_frequency = 0;
+    for(auto it: fatgraphs_map){
+        fatgraph_frequency = it.second;
+        fatgraph = it.first;
+        fatgraphs.push_back(std::make_pair(fatgraph,(double)fatgraph_frequency/num_samples));
+    }
+    std::sort(fatgraphs.begin(), fatgraphs.end(),[](std::pair<std::string,double> a, std::pair<std::string,double> b){ return a.second > b.second;});
+    fatgraphs.resize(std::min(num_fatgraphs,(int)fatgraphs.size()));
 }
 
 pf_t W_final_pf::exp_Extloop(cand_pos_t i, cand_pos_t j) {
