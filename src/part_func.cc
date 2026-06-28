@@ -31,8 +31,8 @@
  */
 #define RESCALE_BF(dG, dH, dT, kT) (exp(-TRUNC_MAYBE((double)RESCALE_dG((dG), (dH), (dT))) * 10. / kT))
 
-W_final_pf::W_final_pf(std::string &seq, std::string &MFE_structure, double MFE_energy, int dangle, int num_samples, bool print_samples, bool PSplot)
-    : seq(seq), MFE_structure(MFE_structure), MFE(MFE_energy), exp_params_(vrna_exp_params(NULL)), print_samples(print_samples), PSplot(PSplot) {
+W_final_pf::W_final_pf(std::string &seq, std::string &MFE_structure, int dangle, int num_samples, bool print_samples, bool PSplot)
+    : seq(seq), MFE_structure(MFE_structure), exp_params_(vrna_exp_params(NULL)), print_samples(print_samples), PSplot(PSplot) {
     this->n = seq.length();
     this->num_samples = num_samples;
 
@@ -171,12 +171,6 @@ void W_final_pf::exp_params_rescale() {
     double e_per_nt, kT;
     kT = exp_params_->kT;
 
-    e_per_nt = MFE * 1000. / this->n;
-
-    exp_params_->pf_scale = exp(-(exp_params_->model_details.sfact * e_per_nt) / kT);
-
-    if (exp_params_->pf_scale < 1.) exp_params_->pf_scale = 1.;
-
     exp_params_->pf_scale = 1.; // I don't think it even needs scaling for the lengths it can do
 
     this->scale[0] = 1.;
@@ -253,7 +247,7 @@ pf_t W_final_pf::ccj_pf(){
 	if (print_samples) {
         std::vector<std::pair<std::string,int>> str_list;
         for (const auto &s : structures) {
-            str_list.push_back(std::make_pair(s.first,s.second));
+            str_list.emplace_back(s.first, s.second);
         }
         sort(str_list.begin(), str_list.end(),[](auto &x,auto &y) {return x.second>y.second;} );
         for (const auto &s : str_list) {
@@ -281,16 +275,16 @@ pf_t W_final_pf::ccj_centroid(){
 
 void W_final_pf::ccj_fatgraph(std::vector<std::pair<std::string,double>> &fatgraphs, int &num_fatgraphs){
     std::unordered_map<std::string, int> fatgraphs_map;
-    for(auto it: structures){
+    for(const auto &it: structures){
         std::string fatgraph = get_fatgraph(it.first);
         fatgraphs_map[fatgraph]+=it.second;
     }
     std::string fatgraph;
     int fatgraph_frequency = 0;
-    for(auto it: fatgraphs_map){
+    for(const auto &it: fatgraphs_map){
         fatgraph_frequency = it.second;
         fatgraph = it.first;
-        fatgraphs.push_back(std::make_pair(fatgraph,(double)fatgraph_frequency/num_samples));
+        fatgraphs.emplace_back(fatgraph,(double)fatgraph_frequency/num_samples);
     }
     std::sort(fatgraphs.begin(), fatgraphs.end(),[](std::pair<std::string,double> a, std::pair<std::string,double> b){ return a.second > b.second;});
     fatgraphs.resize(std::min(num_fatgraphs,(int)fatgraphs.size()));
@@ -334,7 +328,6 @@ pf_t W_final_pf::HairpinE(cand_pos_t i, cand_pos_t j) {
     const int ptype_closing = pair[S_[i]][S_[j]];
     if (ptype_closing == 0) return 0;
     pf_t e_h = static_cast<pf_t>(exp_E_Hairpin(j - i - 1, ptype_closing, S1_[i + 1], S1_[j - 1], &seq.c_str()[i - 1], exp_params_));
-    e_h *= scale[j-i+1];
     return e_h;
 }
 
@@ -350,7 +343,6 @@ pf_t W_final_pf::compute_internal(cand_pos_t i, cand_pos_t j) {
                                                 S1_[k - 1], S1_[l + 1], exp_params_);
             cand_pos_t u1 = k - i - 1;
             cand_pos_t u2 = j - l - 1;
-            v_iloop_kl *= scale[u1 + u2 + 2];
             v_iloop += v_iloop_kl;
         }
     }
@@ -401,7 +393,6 @@ pf_t W_final_pf::compute_energy_VM(cand_pos_t i, cand_pos_t j) {
         contributions += (expMLbase[k - i - 1] * WMp.get(k,j-1) * exp_Mbloop(i, j) * exp_params_->expMLclosing);
     }
 
-    contributions *= scale[2];
     VM[ij] = contributions;
     return contributions;
 }
@@ -1037,8 +1028,8 @@ void W_final_pf::compute_PMmloop10(const Index4D &x, MType type){
 	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 
 	Matrix4DPF &PX = PX_by_mtype(type);
-    for(cand_pos_t d = i+1; d <=j; ++d){
-        contributions += PX.get(i,d,k,l)*calc_WB(d+1,j);
+    for(cand_pos_t d = k+1; d <= l; ++d){
+        contributions += PX.get(i,j,d,l)*calc_WB(k,d-1);
     }
 	Matrix4DPF &PXmloop10 = PXmloop10_by_mtype(type);
 	PXmloop10.set(i,j,k,l,contributions);
@@ -1059,7 +1050,7 @@ void W_final_pf::compute_POmloop10(const Index4D &x, MType type){
 	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 
 	Matrix4DPF &PX = PX_by_mtype(type);
-	for(cand_pos_t d=i+1; d<=j;++d){
+	for(cand_pos_t d=k+1; d<=l;++d){
         contributions += PX.get(i,j,k,d)*calc_WB(d+1,l);
     }
 	Matrix4DPF &PXmloop10 = PXmloop10_by_mtype(type);
@@ -1087,8 +1078,8 @@ void W_final_pf::compute_PMmloop01(const Index4D &x, MType type){
 	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 
 	Matrix4DPF &PX = PX_by_mtype(type);
-	for(cand_pos_t d = k; d < l; ++d){
-        contributions += expcp_pen[d-k]*PX.get(i,j,d,l);
+	for(cand_pos_t d = i; d < j; ++d){
+        contributions += expcp_pen[j-d]*PX.get(i,d,k,l);
     }
 
 	Matrix4DPF &PXmloop01 = PXmloop01_by_mtype(type);
@@ -1284,59 +1275,6 @@ pf_t W_final_pf::get_e_intP(cand_pos_t i, cand_pos_t ip, cand_pos_t jp, cand_pos
     return pow(e_int, e_intP_penalty);
 }
 
-// void W_final_pf::fill_structure(std::vector<int> &fres, std::string &structure){
-// 	std::stack < brack_type > st;
-
-//     st.push(brack_type('<','>'));
-//     st.push(brack_type('{','}'));
-//     st.push(brack_type('[',']'));
-//     st.push(brack_type('(',')'));
-
-//     cand_pos_t isInABand=0;
-//     // cand_pos_t num_crossing_bands=0;
-
-//     std::list <band_elem > bands;
-//     bands.push_back(band_elem('|','|',0,0,0,0));
-
-//     for (cand_pos_t i = 0; i < n; i++){
-//         cand_pos_t j = fres[i];
-//         if (j == -1){ // i is unpaired
-//             structure[i]='.';
-//         }else if (i < j){
-//             isInABand=0;
-//             //			for (band_elem *p = head; p != NULL;  p = p->next){
-//             for (std::list<band_elem > ::iterator it = bands.begin(); it != bands.end(); it++){
-//                 if(i> (*it).inner_start && j < (*it).inner_end){ // i.e. i is paired and i.pair[i] is nested in the band
-//                     (*it).inner_start = i;
-//                     (*it).inner_end =j;
-//                     structure[i] = (*it).open;
-//                     structure[j] = (*it).close;
-//                     isInABand=1;
-//                     break;
-//                 }
-//             }
-
-//             if (!isInABand){
-//                 brack_type e = st.top();
-//                 st.pop();
-//                 // num_crossing_bands++;
-
-//                 bands.push_back(band_elem(e.open,e.close,i,j,i,j));
-//                 structure[i] = e.open;
-//                 structure[j] = e.close;
-//             }
-
-//         }else{ //having the closing base pair i>pair[i]
-//             for(std::list<band_elem > ::iterator current = bands.begin(); current != bands.end(); current++){
-//                 if (i == (*current).outer_end){
-//                     st.push(brack_type((*current).open,(*current).close));
-//                     break;
-//                 }
-//             }
-//         }
-//     }
-// }
-
 char W_final_pf::bpp_symbol(pf_t *P) {
     if (P[0] > 0.667) return '.';
     if (P[0] > (P[1] + P[2] + P[3] + P[4])) return ',';
@@ -1371,7 +1309,7 @@ void W_final_pf::pairing_tendency() {
         for (cand_pos_t i = 1; i < j; i++) {
             // bool weakly_closed_ij = tree.weakly_closed(i, j);
             std::pair<cand_pos_tu, cand_pos_tu> base_pair(i, j);
-            pf_t probability_ij = (pf_t)samples[base_pair] / num_samples;
+            pf_t probability_ij = (pf_t)samples[base_pair] / num_samples; // Doing accession like this makes zero entries when the key is missing; might not be best
             // if(weakly_closed_ij) P[2] += probability_ij; else P[4] += probability_ij;
 			P[2] += probability_ij;
             P[0] -= probability_ij;

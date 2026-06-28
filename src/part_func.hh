@@ -44,7 +44,7 @@ class W_final_pf {
     std::unordered_map<std::string, int> structures;
     double gamma;
 
-    W_final_pf(std::string &seq, std::string &MFE_structure, double MFE_energy, int dangle, int num_samples, bool print_samples, bool PSplot);
+    W_final_pf(std::string &seq, std::string &MFE_structure, int dangle, int num_samples, bool print_samples, bool PSplot);
     // constructor for the restricted mfe case
 
     ~W_final_pf();

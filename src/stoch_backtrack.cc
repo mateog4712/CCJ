@@ -25,9 +25,9 @@ std::vector<cand_pos_t> boustrophedon(cand_pos_t start, cand_pos_t end) {
     std::vector<cand_pos_t> seq;
 
     if (end >= start) {
-        seq.push_back(end - start + 1);
+        seq.emplace_back(end - start + 1);
         for (cand_pos_t pos = 1; pos <= end - start + 1; pos++)
-            seq.push_back(boustrophedon_at(start, end, pos));
+            seq.emplace_back(boustrophedon_at(start, end, pos));
     }
 
     return seq;
@@ -1001,8 +1001,8 @@ void W_final_pf::Sample_PMmloop10(const Index4D &x, MType type,std::vector<int> 
     Matrix4DPF &PXmloop10 = PXmloop10_by_mtype(type);
     Matrix4DPF &PX = PX_by_mtype(type);
     pf_t r = vrna_urn()*PXmloop10.get(i,j,k,l);
-    for(cand_pos_t d = i+1; d <=j; ++d){
-        qt += PX.get(i,d,k,l)*calc_WB(d+1,j);
+    for(cand_pos_t d = k+1; d <= l; ++d){
+        qt += PX.get(i,j,d,l)*calc_WB(k,d-1);
         if(qt>r){
             Sample_PX(i,d,k,l,type,fres);
             Sample_WB(d+1,j,fres);
@@ -1035,7 +1035,7 @@ void W_final_pf::Sample_POmloop10(const Index4D &x, MType type,std::vector<int> 
     Matrix4DPF &PXmloop10 = PXmloop10_by_mtype(type);
     Matrix4DPF &PX = PX_by_mtype(type);
     pf_t r = vrna_urn()*PXmloop10.get(i,j,k,l);
-    for(cand_pos_t d=i+1; d<=j;++d){
+    for(cand_pos_t d=k+1; d<=l;++d){
         qt += PX.get(i,j,k,d)*calc_WB(d+1,l);
         if(qt>r){
             Sample_PX(i,j,k,d,type,fres);
@@ -1073,10 +1073,10 @@ void W_final_pf::Sample_PMmloop01(const Index4D &x, MType type,std::vector<int> 
     Matrix4DPF &PXmloop01 = PXmloop01_by_mtype(type);
     Matrix4DPF &PX = PX_by_mtype(type);
     pf_t r = vrna_urn()*PXmloop01.get(i,j,k,l);
-    for(cand_pos_t d = k; d < l; ++d){
-        qt += expcp_pen[d-k]*PX.get(i,j,d,l);
+    for(cand_pos_t d = i; d < j; ++d){
+        qt += expcp_pen[j-d]*PX.get(i,d,k,l);
         if(qt>r){
-            Sample_PX(i,j,d,l,type,fres);
+            Sample_PX(i,d,k,l,type,fres);
             return;
         }
     }

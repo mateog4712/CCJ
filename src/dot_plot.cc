@@ -64,14 +64,14 @@ void create_PS_data(std::ofstream &out, std::unordered_map<std::pair<cand_pos_t,
     cand_pos_t j;
     std::vector<cand_pos_t> pairs;
     std::vector<cand_pos_t> PKpairs;
-    PKpairs.push_back(n);
-    pairs.push_back(n);
+    PKpairs.emplace_back(n);
+    pairs.emplace_back(n);
     for (cand_pos_t i = n - 1; i >= 0; --i) {
         if (MFE_structure[i] == ')') {
-            pairs.push_back(i);
+            pairs.emplace_back(i);
         }
         if (MFE_structure[i] == ']') {
-            PKpairs.push_back(i);
+            PKpairs.emplace_back(i);
         }
         if (pairs.size() != 0) {
             if (MFE_structure[i] == '(') {

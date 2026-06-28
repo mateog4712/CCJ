@@ -327,8 +327,8 @@ void pseudo_loop::compute_PMmloop10(const Index4D &x, MType type){
 	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 
 	Matrix4D &PX = PX_by_mtype(type);
-    for(cand_pos_t d = i+1; d <=j; ++d){
-        tmp = PX.get(i,d,k,l) + calc_WB(d+1,j);
+    for(cand_pos_t d = k+1; d <= l; ++d){
+        tmp = PX.get(i,j,d,l) + calc_WB(k,d-1);
         min_energy = std::min(min_energy,tmp);
     }
 
@@ -356,7 +356,7 @@ void pseudo_loop::compute_POmloop10(const Index4D &x, MType type){
 	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 
 	Matrix4D &PX = PX_by_mtype(type);
-	for(cand_pos_t d=i+1; d<=j;++d){
+	for(cand_pos_t d=k+1; d<=l;++d){
         tmp=PX.get(i,j,k,d) + calc_WB(d+1,l);
         min_energy = std::min(min_energy,tmp);
     }
@@ -390,8 +390,8 @@ void pseudo_loop::compute_PMmloop01(const Index4D &x, MType type){
 	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 
 	Matrix4D &PX = PX_by_mtype(type);
-	for(cand_pos_t d = k; d < l; ++d){
-        tmp = cp_penalty*(d-k) + PX.get(i,j,d,l);
+	for(cand_pos_t d = i; d < j; ++d){
+        tmp = cp_penalty*(j-d) + PX.get(i,d,k,l);
         min_energy = std::min(min_energy,tmp);
     }
 
@@ -1136,8 +1136,8 @@ void pseudo_loop::Trace_PMmloop10(const Index4D &x, MType type, energy_t e){
 
 	energy_t tmp = INF;
 	Matrix4D &PX = PX_by_mtype(type);
-    for(cand_pos_t d = i+1; d <=j; ++d){
-        tmp = PX.get(i,d,k,l) + calc_WB(d+1,j);
+    for(cand_pos_t d = k+1; d <= l; ++d){
+        tmp = PX.get(i,j,d,l) + calc_WB(k,d-1);
         if(e==tmp){
 			Trace_PX(i,d,k,l,type,PX.get(i,d,k,l));
 			Trace_WB(d+1,j,calc_WB(d+1,j));
@@ -1170,7 +1170,7 @@ void pseudo_loop::Trace_POmloop10(const Index4D &x, MType type, energy_t e){
 
 	energy_t tmp = INF;
 	Matrix4D &PX = PX_by_mtype(type);
-	for(cand_pos_t d=i+1; d<=j;++d){
+	for(cand_pos_t d=k+1; d<=l;++d){
         tmp=PX.get(i,j,k,d) + calc_WB(d+1,l);
         if(e==tmp){
 			Trace_PX(i,j,k,d,type,PX.get(i,j,k,d));
@@ -1208,10 +1208,10 @@ void pseudo_loop::Trace_PMmloop01(const Index4D &x, MType type, energy_t e){
 
 	energy_t tmp = INF;
 	Matrix4D &PX = PX_by_mtype(type);
-	for(cand_pos_t d = k; d < l; ++d){
-        tmp = cp_penalty*(d-k) + PX.get(i,j,d,l);
+	for(cand_pos_t d = i; d < j; ++d){
+        tmp = cp_penalty*(j-d) + PX.get(i,d,k,l);
         if(e==tmp){
-			Trace_PX(i,j,d,l,type,PX.get(i,j,d,l));
+			Trace_PX(i,d,k,l,type,PX.get(i,d,k,l));
 			return;
 		}
     }
