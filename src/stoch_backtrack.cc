@@ -1004,8 +1004,8 @@ void W_final_pf::Sample_PMmloop10(const Index4D &x, MType type,std::vector<int> 
     for(cand_pos_t d = k+1; d <= l; ++d){
         qt += PX.get(i,j,d,l)*calc_WB(k,d-1);
         if(qt>r){
-            Sample_PX(i,d,k,l,type,fres);
-            Sample_WB(d+1,j,fres);
+            Sample_PX(i,j,d,l,type,fres);
+            Sample_WB(k,d-1,fres);
             return;
         }
     }
