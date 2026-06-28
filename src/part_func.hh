@@ -12,13 +12,13 @@
 #include "ViennaRNA/params/io.hh"
 
 #ifdef NDEBUG
+	#define UNREACHABLE() __builtin_unreachable()
+#else
 	#define UNREACHABLE() \
 		do { \
 			std::cerr << "Reached unreachable at line " << __LINE__ << " in File: " << __FILE__ << std::endl; \
 			abort(); \
 		} while(0)
-#else
-    #define UNREACHABLE() __builtin_unreachable()
 #endif
 
 struct SzudzikHash {

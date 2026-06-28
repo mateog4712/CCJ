@@ -43,7 +43,7 @@ inline void fill_structure(std::vector<int> &fres,std::string &structure) {
 		}
 		// The order here should ensure that it picks correctly. cross[color] ensures we stop at the first 0 in the cross array
 		int color = 0;
-        while (color < (int)cross.size() && cross[color]) color++;
+        while (color < (int)cross.size() && cross[color]) ++color;
         bands[i].color = color;
 	}
     for (cand_pos_t i = 0; i < (cand_pos_t) bands.size(); ++i) {
