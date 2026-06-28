@@ -53,6 +53,7 @@ std::string W_final_pf::compute_centroid(pf_t &dist, pf_t &diversity){
 void generate_pt(std::string &structure, std::vector<int> &fres, std::vector<int> &up, int n){
    std::vector<int> paren;
    std::vector<int> sb;
+   std::vector<int> cb;
    int count = 0;
    for(int j = 0;j<n;++j){
       if(structure[j] == '('){
@@ -60,6 +61,10 @@ void generate_pt(std::string &structure, std::vector<int> &fres, std::vector<int
           count = 0;
       }
       else if(structure[j] == '['){
+          sb.push_back(j);
+          count = 0;
+      }
+      else if(structure[j] == '{'){
           sb.push_back(j);
           count = 0;
       }
@@ -77,13 +82,20 @@ void generate_pt(std::string &structure, std::vector<int> &fres, std::vector<int
           sb.pop_back();
           count = 0;
       }
+      else if(structure[j] == '}'){
+          int i = sb.back();
+          fres[i] = j;
+          fres[j] = i;
+          sb.pop_back();
+          count = 0;
+      }
       else{
         ++count;
         up[j] = count;
       }
    }
    if(!paren.empty() && !sb.empty()){
-       std::cout << "Error: stacks aren't empty" << std::endl;
+       std::cerr << "Error: stacks aren't empty: " << structure << std::endl;
        exit(0);
    }
 }
@@ -129,6 +141,7 @@ std::string generate_fatgraph(std::string &structure,const std::vector<int> &fre
    for(cand_pos_t j = 0;j<n;++j){
     process_bracket(structure,fatgraph,fatgraph_full,j,fres,up,paren,'(',')');
     process_bracket(structure,fatgraph,fatgraph_full,j,fres,up,sb,'[',']');
+    process_bracket(structure,fatgraph,fatgraph_full,j,fres,up,sb,'{','}');
    }
    return fatgraph;
 }

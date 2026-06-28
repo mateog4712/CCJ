@@ -364,7 +364,7 @@ void W_final_pf::Sample_WB(cand_pos_t i, cand_pos_t l, std::vector<int> &fres) {
     pf_t qt = 0;
     pf_t r = vrna_urn() * calc_WB(i,l);
     qt+=expcp_pen[l-i+1];
-    if(qt>r) return; // If just unpaired bases, stop
+    if(qt>=r) return; // If just unpaired bases, stop. > or >=?
     Sample_WBP(i,l,fres);
 }
 void W_final_pf::Sample_WBP(cand_pos_t i, cand_pos_t l, std::vector<int> &fres) {
@@ -1004,8 +1004,8 @@ void W_final_pf::Sample_PMmloop10(const Index4D &x, MType type,std::vector<int> 
     for(cand_pos_t d = k+1; d <= l; ++d){
         qt += PX.get(i,j,d,l)*calc_WB(k,d-1);
         if(qt>r){
-            Sample_PX(i,d,k,l,type,fres);
-            Sample_WB(d+1,j,fres);
+            Sample_PX(i,j,d,l,type,fres);
+            Sample_WB(k,d-1,fres);
             return;
         }
     }
