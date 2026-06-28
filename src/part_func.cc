@@ -467,17 +467,6 @@ void W_final_pf::compute_pk_energies(cand_pos_t i, cand_pos_t l) {
 			compute_PX(x,MType::LMreR);
 			compute_PX(x,MType::LMorO);
 
-			compute_PfromX(x,MType::L);
-			compute_PfromX(x,MType::M);
-			compute_PfromX(x,MType::R);
-			compute_PfromX(x,MType::Om);
-			compute_PfromX(x,MType::LreO);
-			compute_PfromX(x,MType::LreR);
-			compute_PfromX(x,MType::MreO);
-			compute_PfromX(x,MType::MreR);
-			compute_PfromX(x,MType::LMreR);
-			compute_PfromX(x,MType::LMorO);
-
 			compute_PfromXprime(x,MType::L);
 			compute_PfromXprime(x,MType::R);
 			compute_PfromXprime(x,MType::M);
@@ -488,6 +477,17 @@ void W_final_pf::compute_pk_energies(cand_pos_t i, cand_pos_t l) {
 			compute_PfromXprime(x,MType::MreR);
 			compute_PfromXprime(x,MType::LMreR);
 			compute_PfromXprime(x,MType::LMorO);
+
+			compute_PfromX(x,MType::L);
+			compute_PfromX(x,MType::M);
+			compute_PfromX(x,MType::R);
+			compute_PfromX(x,MType::Om);
+			compute_PfromX(x,MType::LreO);
+			compute_PfromX(x,MType::LreR);
+			compute_PfromX(x,MType::MreO);
+			compute_PfromX(x,MType::MreR);
+			compute_PfromX(x,MType::LMreR);
+			compute_PfromX(x,MType::LMorO);
 
 			compute_PK1X(x,MType::Om);
 			compute_PK1X(x,MType::Os);
@@ -840,7 +840,7 @@ void W_final_pf::compute_PfromL(const Index4D &x, MType type){
 	pf_t contributions = 0;
 
 	Matrix4DPF &PfromXprime = PfromXprime_by_mtype(type);
-	for(cand_pos_t d=i+1; d<=j; ++d){
+	for(cand_pos_t d=i; d<=j; ++d){
 		contributions += calc_WP(i,d-1)*PfromXprime.get(d,j,k,l);
 	}
 
@@ -853,7 +853,7 @@ void W_final_pf::compute_PfromM(const Index4D &x, MType type){
 	pf_t contributions = 0;
 
 	Matrix4DPF &PfromXprime = PfromXprime_by_mtype(type);
-	for(cand_pos_t d=i; d<j; ++d){
+	for(cand_pos_t d=i; d<=j; ++d){
 		contributions += PfromXprime.get(i,d,k,l)*calc_WP(d+1,j);
 	}
 
@@ -866,7 +866,7 @@ void W_final_pf::compute_PfromR(const Index4D &x, MType type){
 	pf_t contributions = 0;
 
 	Matrix4DPF &PfromXprime = PfromXprime_by_mtype(type);
-	for(cand_pos_t d=k+1; d<=l; ++d){
+	for(cand_pos_t d=k; d<=l; ++d){
 		contributions += calc_WP(k,d-1)*PfromXprime.get(i,j,d,l);
 	}
 
@@ -879,7 +879,7 @@ void W_final_pf::compute_PfromO(const Index4D &x, MType type){
 	pf_t contributions = 0;
 
 	Matrix4DPF &PfromXprime = PfromXprime_by_mtype(type);
-	for(cand_pos_t d=i+1; d<=j; ++d){
+	for(cand_pos_t d=i; d<=j; ++d){
 		contributions += calc_WP(i,d-1)*PfromXprime.get(d,j,k,l);
 	}
 
@@ -895,7 +895,7 @@ void W_final_pf::compute_PfromLprime(const Index4D &x, MType type){
 	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 	pf_t contributions = 0;
 
-	for(cand_pos_t d=i; d<j; ++d){
+	for(cand_pos_t d=i; d<=j; ++d){
 		contributions += calc_PfromXdoubleprime(i,d,k,l,type)*calc_WP(d+1,j);
 	}
 	
@@ -907,7 +907,7 @@ void W_final_pf::compute_PfromMprime(const Index4D &x, MType type){
 	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 	pf_t contributions = 0;
 
-	for(cand_pos_t d=k+1; d<=l; ++d){
+	for(cand_pos_t d=k; d<=l; ++d){
 		contributions += calc_WP(k,d-1)*calc_PfromXdoubleprime(i,j,d,l,type);
 	}
 	
@@ -919,7 +919,7 @@ void W_final_pf::compute_PfromRprime(const Index4D &x, MType type){
 	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 	pf_t contributions = 0;
 
-	for(cand_pos_t d=k; d<l; ++d){
+	for(cand_pos_t d=k; d<=l; ++d){
 		contributions += calc_PfromXdoubleprime(i,j,k,d,type)*calc_WP(d+1,l);
 	}
 	
@@ -931,7 +931,7 @@ void W_final_pf::compute_PfromOprime(const Index4D &x, MType type){
 	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 	pf_t contributions = 0;
 
-	for(cand_pos_t d=k; d<l; ++d){
+	for(cand_pos_t d=k; d<=l; ++d){
 		contributions += calc_PfromXdoubleprime(i,j,k,d,type)*calc_WP(d+1,l);
 	}
 	

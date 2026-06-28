@@ -1125,7 +1125,7 @@ void W_final_pf::Sample_PfromL(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_po
     Matrix4DPF &PfromX = PfromX_by_mtype(type);
     Matrix4DPF &PfromXprime = PfromXprime_by_mtype(type);
     pf_t r = vrna_urn()*PfromX.get(i,j,k,l);
-    for(cand_pos_t d=i+1; d<=j; ++d){
+    for(cand_pos_t d=i; d<=j; ++d){
 		qt += calc_WP(i,d-1)*PfromXprime.get(d,j,k,l);
         if(qt>r){
             Sample_WP(i,d-1,fres);
@@ -1141,7 +1141,7 @@ void W_final_pf::Sample_PfromM(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_po
     Matrix4DPF &PfromX = PfromX_by_mtype(type);
     Matrix4DPF &PfromXprime = PfromXprime_by_mtype(type);
     pf_t r = vrna_urn()*PfromX.get(i,j,k,l);
-    for(cand_pos_t d=i; d<j; ++d){
+    for(cand_pos_t d=i; d<=j; ++d){
 		qt += PfromXprime.get(i,d,k,l)*calc_WP(d+1,j);
         if(qt>r){
             Sample_PfromXprime(i,d,k,l,type,fres);
@@ -1157,7 +1157,7 @@ void W_final_pf::Sample_PfromR(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_po
     Matrix4DPF &PfromX = PfromX_by_mtype(type);
     Matrix4DPF &PfromXprime = PfromXprime_by_mtype(type);
     pf_t r = vrna_urn()*PfromX.get(i,j,k,l);
-    for(cand_pos_t d=k+1; d<=l; ++d){
+    for(cand_pos_t d=k; d<=l; ++d){
 		qt += calc_WP(k,d-1)*PfromXprime.get(i,j,d,l);
         if(qt>r){
             Sample_WP(k,d-1,fres);
@@ -1173,7 +1173,7 @@ void W_final_pf::Sample_PfromO(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_po
     Matrix4DPF &PfromX = PfromX_by_mtype(type);
     Matrix4DPF &PfromXprime = PfromXprime_by_mtype(type);
     pf_t r = vrna_urn()*PfromX.get(i,j,k,l);
-    for(cand_pos_t d=i+1; d<=j; ++d){
+    for(cand_pos_t d=i; d<=j; ++d){
 		qt += calc_WP(i,d-1)*PfromXprime.get(d,j,k,l);
         if(qt>r){
             Sample_WP(i,d-1,fres);
@@ -1193,7 +1193,7 @@ void W_final_pf::Sample_PfromLprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, ca
     pf_t qt = 0;
     Matrix4DPF &PfromXprime = PfromXprime_by_mtype(type);
     pf_t r = vrna_urn()*PfromXprime.get(i,j,k,l);
-    for(cand_pos_t d=i; d<j; ++d){
+    for(cand_pos_t d=i; d<=j; ++d){
 		qt += calc_PfromXdoubleprime(i,d,k,l,type)*calc_WP(d+1,j);
         if(qt>r){
             Sample_PfromXdoubleprime(i,d,k,l,type,fres);
@@ -1208,7 +1208,7 @@ void W_final_pf::Sample_PfromMprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, ca
     pf_t qt = 0;
     Matrix4DPF &PfromXprime = PfromXprime_by_mtype(type);
     pf_t r = vrna_urn()*PfromXprime.get(i,j,k,l);
-    for(cand_pos_t d=k+1; d<=l; ++d){
+    for(cand_pos_t d=k; d<=l; ++d){
 		qt += calc_WP(k,d-1)*calc_PfromXdoubleprime(i,j,d,l,type);
         if(qt>r){
             Sample_WP(k,d-1,fres);
@@ -1223,7 +1223,7 @@ void W_final_pf::Sample_PfromRprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, ca
     pf_t qt = 0;
     Matrix4DPF &PfromXprime = PfromXprime_by_mtype(type);
     pf_t r = vrna_urn()*PfromXprime.get(i,j,k,l);
-    for(cand_pos_t d=k; d<l; ++d){
+    for(cand_pos_t d=k; d<=l; ++d){
 		qt += calc_PfromXdoubleprime(i,j,k,d,type)*calc_WP(d+1,l);
         if(qt>r){
             Sample_PfromXdoubleprime(i,j,k,d,type,fres);
@@ -1238,7 +1238,7 @@ void W_final_pf::Sample_PfromOprime(cand_pos_t i, cand_pos_t j, cand_pos_t k, ca
     pf_t qt = 0;
     Matrix4DPF &PfromXprime = PfromXprime_by_mtype(type);
     pf_t r = vrna_urn()*PfromXprime.get(i,j,k,l);
-    for(cand_pos_t d=k; d<l; ++d){
+    for(cand_pos_t d=k; d<=l; ++d){
 		qt += calc_PfromXdoubleprime(i,j,k,d,type)*calc_WP(d+1,l);
         if(qt>r){
             Sample_PfromXdoubleprime(i,j,k,d,type,fres);

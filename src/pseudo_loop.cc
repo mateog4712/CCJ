@@ -204,17 +204,6 @@ void pseudo_loop::compute_energies(cand_pos_t i, cand_pos_t l)
 			compute_PX(x,MType::LMreR);
 			compute_PX(x,MType::LMorO);
 
-			compute_PfromX(x,MType::L);
-			compute_PfromX(x,MType::M);
-			compute_PfromX(x,MType::R);
-			compute_PfromX(x,MType::Om);
-			compute_PfromX(x,MType::LreO);
-			compute_PfromX(x,MType::LreR);
-			compute_PfromX(x,MType::MreO);
-			compute_PfromX(x,MType::MreR);
-			compute_PfromX(x,MType::LMreR);
-			compute_PfromX(x,MType::LMorO);
-
 			compute_PfromXprime(x,MType::L);
 			compute_PfromXprime(x,MType::R);
 			compute_PfromXprime(x,MType::M);
@@ -225,6 +214,17 @@ void pseudo_loop::compute_energies(cand_pos_t i, cand_pos_t l)
 			compute_PfromXprime(x,MType::MreR);
 			compute_PfromXprime(x,MType::LMreR);
 			compute_PfromXprime(x,MType::LMorO);
+
+			compute_PfromX(x,MType::L);
+			compute_PfromX(x,MType::M);
+			compute_PfromX(x,MType::R);
+			compute_PfromX(x,MType::Om);
+			compute_PfromX(x,MType::LreO);
+			compute_PfromX(x,MType::LreR);
+			compute_PfromX(x,MType::MreO);
+			compute_PfromX(x,MType::MreR);
+			compute_PfromX(x,MType::LMreR);
+			compute_PfromX(x,MType::LMorO);
 
 			compute_PK1X(x,MType::Om);
 			compute_PK1X(x,MType::Os);

@@ -99,7 +99,7 @@ void pseudo_loop::compute_PfromL(const Index4D &x, MType type){
 	energy_t min_energy = INF;
 
 	Matrix4D &PfromXprime = PfromXprime_by_mtype(type);
-	for(cand_pos_t d=i+1; d<=j; ++d){
+	for(cand_pos_t d=i; d<=j; ++d){
 		energy_t tmp = calc_WP(i,d-1) + PfromXprime.get(d,j,k,l);
 		min_energy = std::min(min_energy,tmp);
 	}
@@ -115,7 +115,7 @@ void pseudo_loop::compute_PfromM(const Index4D &x, MType type){
 	energy_t min_energy = INF;
 
 	Matrix4D &PfromXprime = PfromXprime_by_mtype(type);
-	for(cand_pos_t d=i; d<j; ++d){
+	for(cand_pos_t d=i; d<=j; ++d){
 		energy_t tmp = PfromXprime.get(i,d,k,l) + calc_WP(d+1,j);
 		min_energy = std::min(min_energy,tmp);
 	}
@@ -131,11 +131,10 @@ void pseudo_loop::compute_PfromR(const Index4D &x, MType type){
 	energy_t min_energy = INF;
 
 	Matrix4D &PfromXprime = PfromXprime_by_mtype(type);
-	for(cand_pos_t d=k+1; d<=l; ++d){
+	for(cand_pos_t d=k; d<=l; ++d){
 		energy_t tmp = calc_WP(k,d-1) + PfromXprime.get(i,j,d,l);
 		min_energy = std::min(min_energy,tmp);
 	}
-
 	if (min_energy < INF/2){
 		Matrix4D &PfromX = PfromX_by_mtype(type);
 		PfromX.set(i,j,k,l,min_energy);
@@ -147,7 +146,7 @@ void pseudo_loop::compute_PfromO(const Index4D &x, MType type){
 	energy_t min_energy = INF;
 
 	Matrix4D &PfromXprime = PfromXprime_by_mtype(type);
-	for(cand_pos_t d=i+1; d<=j; ++d){
+	for(cand_pos_t d=i; d<=j; ++d){
 		energy_t tmp = calc_WP(i,d-1) + PfromXprime.get(d,j,k,l);
 		min_energy = std::min(min_energy,tmp);
 	}
@@ -166,7 +165,7 @@ void pseudo_loop::compute_PfromLprime(const Index4D &x, MType type){
 	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 	energy_t min_energy = INF;
 
-	for(cand_pos_t d=i; d<j; ++d){
+	for(cand_pos_t d=i; d<=j; ++d){
 		energy_t tmp = calc_PfromXdoubleprime(i,d,k,l,type) + calc_WP(d+1,j);
 		min_energy = std::min(min_energy,tmp);
 	}
@@ -181,7 +180,7 @@ void pseudo_loop::compute_PfromMprime(const Index4D &x, MType type){
 	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 	energy_t min_energy = INF;
 
-	for(cand_pos_t d=k+1; d<=l; ++d){
+	for(cand_pos_t d=k; d<=l; ++d){
 		energy_t tmp= calc_WP(k,d-1) + calc_PfromXdoubleprime(i,j,d,l,type);
 		min_energy = std::min(min_energy,tmp);
 	}
@@ -196,7 +195,7 @@ void pseudo_loop::compute_PfromRprime(const Index4D &x, MType type){
 	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 	energy_t min_energy = INF;
 
-	for(cand_pos_t d=k; d<l; ++d){
+	for(cand_pos_t d=k; d<=l; ++d){
 		energy_t tmp = calc_PfromXdoubleprime(i,j,k,d,type) + calc_WP(d+1,l);
 		min_energy = std::min(min_energy,tmp);
 	}
@@ -211,7 +210,7 @@ void pseudo_loop::compute_PfromOprime(const Index4D &x, MType type){
 	const cand_pos_t i = x.i(), j = x.j(), k = x.k(), l = x.l();
 	energy_t min_energy = INF;
 
-	for(cand_pos_t d=k; d<l; ++d){
+	for(cand_pos_t d=k; d<=l; ++d){
 		energy_t tmp = calc_PfromXdoubleprime(i,j,k,d,type) + calc_WP(d+1,l);
 		min_energy = std::min(min_energy,tmp);
 	}
@@ -887,7 +886,7 @@ void pseudo_loop::Trace_POiloop(const Index4D &x, MType type, energy_t e){
 void pseudo_loop::Trace_PfromL(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e){
 	if (debug) std::cout << "PfromL at " << i << " and " << j << " and " << k << " and " << l << " with type: " << type << std::endl;
 	Matrix4D &PfromXprime = PfromXprime_by_mtype(type);
-	for(cand_pos_t d=i+1; d<=j; ++d){
+	for(cand_pos_t d=i; d<=j; ++d){
 		energy_t tmp = calc_WP(i,d-1) + PfromXprime.get(d,j,k,l);
 		if(e==tmp){
 			Trace_WP(i,d-1,calc_WP(i,d-1));
@@ -900,7 +899,7 @@ void pseudo_loop::Trace_PfromL(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_
 void pseudo_loop::Trace_PfromM(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e){
 	if (debug) std::cout << "PfromM at " << i << " and " << j << " and " << k << " and " << l << " with type: " << type << std::endl;
 	Matrix4D &PfromXprime = PfromXprime_by_mtype(type);
-	for(cand_pos_t d=i; d<j; ++d){
+	for(cand_pos_t d=i; d<=j; ++d){
 		energy_t tmp = PfromXprime.get(i,d,k,l) + calc_WP(d+1,j);
 		if(e==tmp){
 			Trace_PfromXprime(i,d,k,l,type,PfromXprime.get(i,d,k,l));
@@ -913,7 +912,7 @@ void pseudo_loop::Trace_PfromM(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_
 void pseudo_loop::Trace_PfromR(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e){
 	if (debug) std::cout << "PfromR at " << i << " and " << j << " and " << k << " and " << l << " with type: " << type << std::endl;
 	Matrix4D &PfromXprime = PfromXprime_by_mtype(type);
-	for(cand_pos_t d=k+1; d<=l; ++d){
+	for(cand_pos_t d=k; d<=l; ++d){
 		energy_t tmp = calc_WP(k,d-1) + PfromXprime.get(i,j,d,l);
 		if(e==tmp){
 			Trace_WP(k,d-1,calc_WP(k,d-1));
@@ -926,7 +925,7 @@ void pseudo_loop::Trace_PfromR(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_
 void pseudo_loop::Trace_PfromO(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e){
 	if (debug) std::cout << "PfromO at " << i << " and " << j << " and " << k << " and " << l << " with type: " << type << std::endl;
 	Matrix4D &PfromXprime = PfromXprime_by_mtype(type);
-	for(cand_pos_t d=i+1; d<=j; ++d){
+	for(cand_pos_t d=i; d<=j; ++d){
 		energy_t tmp = calc_WP(i,d-1) + PfromXprime.get(d,j,k,l);
 		if(e==tmp){
 			Trace_WP(i,d-1,calc_WP(i,d-1));
@@ -944,7 +943,7 @@ void pseudo_loop::Trace_PfromO(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_
  */
 void pseudo_loop::Trace_PfromLprime(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e){
 	if (debug) std::cout << "PfromLprime at " << i << " and " << j << " and " << k << " and " << l << " with type: " << type << std::endl;
-	for(cand_pos_t d=i; d<j; ++d){
+	for(cand_pos_t d=i; d<=j; ++d){
 		energy_t tmp = calc_PfromXdoubleprime(i,d,k,l,type) + calc_WP(d+1,j);
 		if(e==tmp){
 			Trace_PfromXdoubleprime(i,d,k,l,type,calc_PfromXdoubleprime(i,d,k,l,type));
@@ -956,7 +955,7 @@ void pseudo_loop::Trace_PfromLprime(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand
 }
 void pseudo_loop::Trace_PfromMprime(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e){
 	if (debug) std::cout << "PfromMprime at " << i << " and " << j << " and " << k << " and " << l << " with type: " << type << std::endl;
-	for(cand_pos_t d=k+1; d<=l; ++d){
+	for(cand_pos_t d=k; d<=l; ++d){
 		energy_t tmp= calc_WP(k,d-1) + calc_PfromXdoubleprime(i,j,d,l,type);
 		if(e==tmp){
 			Trace_WP(k,d-1,calc_WP(k,d-1));
@@ -968,7 +967,7 @@ void pseudo_loop::Trace_PfromMprime(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand
 }
 void pseudo_loop::Trace_PfromRprime(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e){
 	if (debug) std::cout << "PfromRprime at " << i << " and " << j << " and " << k << " and " << l << " with type: " << type << std::endl;
-	for(cand_pos_t d=k; d<l; ++d){
+	for(cand_pos_t d=k; d<=l; ++d){
 		energy_t tmp = calc_PfromXdoubleprime(i,j,k,d,type) + calc_WP(d+1,l);
 		if(e==tmp){
 			Trace_PfromXdoubleprime(i,j,k,d,type,calc_PfromXdoubleprime(i,j,k,d,type));
@@ -980,7 +979,7 @@ void pseudo_loop::Trace_PfromRprime(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand
 }
 void pseudo_loop::Trace_PfromOprime(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,MType type, energy_t e){
 	if (debug) std::cout << "PfromOprime at " << i << " and " << j << " and " << k << " and " << l << " with type: " << type << std::endl;
-	for(cand_pos_t d=k; d<l; ++d){
+	for(cand_pos_t d=k; d<=l; ++d){
 		energy_t tmp = calc_PfromXdoubleprime(i,j,k,d,type) + calc_WP(d+1,l);
 		if(e==tmp){
 			Trace_PfromXdoubleprime(i,j,k,d,type,calc_PfromXdoubleprime(i,j,k,d,type));
