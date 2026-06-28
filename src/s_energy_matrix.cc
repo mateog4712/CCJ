@@ -147,9 +147,7 @@ energy_t s_energy_matrix::E_MbLoop(const energy_t WM2ij, const energy_t WM2ip1j,
 			e = WM2ij;
 
 			if (e != INF) {
-
 				e += E_MLstem(tt, -1, -1, params) + params->MLclosing;
-
 			}
       		/** 
 			* ML pair 5
@@ -161,8 +159,7 @@ energy_t s_energy_matrix::E_MbLoop(const energy_t WM2ij, const energy_t WM2ip1j,
 
 				base_type si1 =  S[i+1];
 
-				en += E_MLstem(tt, -1, si1, params) + params->MLclosing + params->MLbase;
-	
+				en += E_MLstem(tt, -1, si1, params) + params->MLclosing + params->MLbase;	
 			}
       		e   = std::min(e, en);
 			
@@ -175,7 +172,7 @@ energy_t s_energy_matrix::E_MbLoop(const energy_t WM2ij, const energy_t WM2ip1j,
 			if (en != INF) {
 				base_type sj1 = S[j-1];
 
-				en += E_MLstem(tt, sj1, -1, params) + params->MLclosing + params->MLbase; 
+				en += E_MLstem(tt, sj1, -1, params) + params->MLclosing + params->MLbase;
 			}
 			e   = std::min(e, en);
 			/** 

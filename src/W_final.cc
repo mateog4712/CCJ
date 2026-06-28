@@ -201,10 +201,10 @@ void W_final::Trace_W(cand_pos_t i, cand_pos_t j, energy_t e){
 	__builtin_unreachable();
 }
 void W_final::Trace_V(cand_pos_t i, cand_pos_t j, energy_t e){
-	if (debug) printf("V at %d and %d with %d\n", i, j, e);
+	if (debug) printf("V at %d and %d as type: %c with %d\n", i, j,V->get_type(i,j), e);
 	fres[i] = j;
 	fres[j] = i;
-	char type = V->get_type (i,j);
+	char type = V->get_type(i,j);
 
 	switch(type){
 		case HAIRP:{
@@ -225,79 +225,92 @@ void W_final::Trace_V(cand_pos_t i, cand_pos_t j, energy_t e){
 				}
 				
 			}
-			break;
 		}
+		break;
 		case MULTI: {
 			energy_t tmp = INF;
 			for (cand_pos_t k = i+1; k <= j-1; k++){
-				tmp = V->get_energy_WM(i+1,k-1) + std::min(V->get_energy_WMv(k,j-1),V->get_energy_WMp(k,j-1)) + E_MLstem(pair[S_[j]][S_[i]],-1,-1,params_) + params_->MLclosing;
+				tmp = V->get_energy_WM(i+1,k-1) + std::min(V->get_energy_WMv(k,j-1),V->get_energy_WMp(k,j-1)) + params_->MLclosing;
+				if(params_->model_details.dangles == 2){
+					tmp += E_MLstem(pair[S_[j]][S_[i]],S_[j-1],S_[i+1],params_);
+				} else {
+					tmp += E_MLstem(pair[S_[j]][S_[i]],-1,-1,params_);
+				}
 				if (e==tmp){
+					tmp -= params_->MLclosing;
+					tmp -= (params_->model_details.dangles == 2 ? E_MLstem(pair[S_[j]][S_[i]],S_[j-1],S_[i+1],params_) : E_MLstem(pair[S_[j]][S_[i]],-1,-1,params_));
 					Trace_WM(i+1,k-1,V->get_energy_WM(i+1,k-1));
 					if(tmp == V->get_energy_WM(i+1,k-1) + V->get_energy_WMv(k,j-1)){
 						Trace_WMv(k,j-1,V->get_energy_WMv(k, j-1));
 					} else {
-						Trace_WMp(k,j-1,V->get_energy_WMv(k, j-1));
+						Trace_WMp(k,j-1,V->get_energy_WMp(k, j-1));
 					}
 					return;
 				}
-				tmp = V->get_energy_WM(i+2,k-1) + std::min(V->get_energy_WMv(k,j-1),V->get_energy_WMp(k,j-1)) + E_MLstem(pair[S_[j]][S_[i]],-1,S_[i+1],params_) + params_->MLclosing + params_->MLbase;
-				if (e==tmp)
-				{
-					Trace_WM(i+2,k-1,V->get_energy_WM (i+2,k-1));
-					if(tmp == V->get_energy_WM(i+2,k-1) + V->get_energy_WMv(k,j-1)){
-						Trace_WMv(k,j-1,V->get_energy_WMv(k, j-1));
-					} else {
-						Trace_WMp(k,j-1,V->get_energy_WMv(k, j-1));
-					}
-					return;
-				}
-				tmp = V->get_energy_WM (i+1,k-1) + std::min(V->get_energy_WMv(k,j-2),V->get_energy_WMp(k,j-2)) + E_MLstem(pair[S_[j]][S_[i]],S_[j-1],-1,params_) + params_->MLclosing + params_->MLbase;
-				if (e==tmp)
-				{
-					Trace_WM(i+1,k-1,V->get_energy_WM (i+1,k-1));
-					if(tmp == V->get_energy_WM(i+1,k-1) + V->get_energy_WMv(k,j-2)){
-						Trace_WMv(k,j-2,V->get_energy_WMv(k, j-2));
-					} else {
-						Trace_WMp(k,j-2,V->get_energy_WMv(k, j-2));
-					}
-					return;
-				}
-				tmp = V->get_energy_WM (i+2,k-1) + std::min(V->get_energy_WMv(k,j-2),V->get_energy_WMp(k,j-2)) + E_MLstem(pair[S_[j]][S_[i]],S_[j-1],S_[i+1],params_) + params_->MLclosing + 2*params_->MLbase;
-				if (e==tmp)
-				{
-					Trace_WM(i+2,k-1,V->get_energy_WM (i+2,k-1));
-					if(tmp == V->get_energy_WM(i+2,k-1) + V->get_energy_WMv(k,j-2)){
-						Trace_WMv(k,j-2,V->get_energy_WMv(k, j-2));
-					} else {
-						Trace_WMp(k,j-2,V->get_energy_WMv(k, j-2));
-					}
-					return;
-				}
+
 				tmp = static_cast<energy_t>((k-i-1)*params_->MLbase + V->get_energy_WMp(k,j-1))+ E_MLstem(pair[S_[j]][S_[i]],-1,-1,params_) + params_->MLclosing;
 				if (e==tmp){
 					Trace_WMp(k,j-1,V->get_energy_WMp(k,j-1));
 					return;
 				}
+				if(params_->model_details.dangles ==1){
+					tmp = V->get_energy_WM(i+2,k-1) + std::min(V->get_energy_WMv(k,j-1),V->get_energy_WMp(k,j-1)) + E_MLstem(pair[S_[j]][S_[i]],-1,S_[i+1],params_) + params_->MLclosing + params_->MLbase;
+					if (e==tmp)
+					{
+						tmp -= (params_->MLclosing + E_MLstem(pair[S_[j]][S_[i]],-1,S_[i+1],params_) + params_->MLbase);
+						Trace_WM(i+2,k-1,V->get_energy_WM (i+2,k-1));
+						if(tmp == V->get_energy_WM(i+2,k-1) + V->get_energy_WMv(k,j-1)){
+							Trace_WMv(k,j-1,V->get_energy_WMv(k, j-1));
+						} else {
+							Trace_WMp(k,j-1,V->get_energy_WMv(k, j-1));
+						}
+						return;
+					}
+					tmp = V->get_energy_WM (i+1,k-1) + std::min(V->get_energy_WMv(k,j-2),V->get_energy_WMp(k,j-2)) + E_MLstem(pair[S_[j]][S_[i]],S_[j-1],-1,params_) + params_->MLclosing + params_->MLbase;
+					if (e==tmp)
+					{
+						tmp -= (params_->MLclosing + E_MLstem(pair[S_[j]][S_[i]],S_[j-1],-1,params_) + params_->MLbase);
+						Trace_WM(i+1,k-1,V->get_energy_WM (i+1,k-1));
+						if(tmp == V->get_energy_WM(i+1,k-1) + V->get_energy_WMv(k,j-2)){
+							Trace_WMv(k,j-2,V->get_energy_WMv(k, j-2));
+						} else {
+							Trace_WMp(k,j-2,V->get_energy_WMv(k, j-2));
+						}
+						return;
+					}
+					tmp = V->get_energy_WM (i+2,k-1) + std::min(V->get_energy_WMv(k,j-2),V->get_energy_WMp(k,j-2)) + E_MLstem(pair[S_[j]][S_[i]],S_[j-1],S_[i+1],params_) + params_->MLclosing + 2*params_->MLbase;
+					if (e==tmp)
+					{
+						tmp -= (params_->MLclosing + E_MLstem(pair[S_[j]][S_[i]],S_[j-1],S_[i+1],params_) + 2*params_->MLbase);
+						Trace_WM(i+2,k-1,V->get_energy_WM (i+2,k-1));
+						if(tmp == V->get_energy_WM(i+2,k-1) + V->get_energy_WMv(k,j-2)){
+							Trace_WMv(k,j-2,V->get_energy_WMv(k, j-2));
+						} else {
+							Trace_WMp(k,j-2,V->get_energy_WMv(k, j-2));
+						}
+						return;
+					}
 
-				if((k-(i+1)-1) >=0) tmp = static_cast<energy_t>((k-(i+1)-1)*params_->MLbase) + V->get_energy_WMp(k,j-1) + E_MLstem(pair[S_[j]][S_[i]],-1,S_[i+1],params_) + params_->MLclosing + params_->MLbase;
-				if (e==tmp){
-					Trace_WMp(k,j-1,V->get_energy_WMp(k, j-1));
-					return;
-				}
-				tmp = static_cast<energy_t>((k-i-1)*params_->MLbase) + V->get_energy_WMp(k,j-2) + E_MLstem(pair[S_[j]][S_[i]],S_[j-1],-1,params_) + params_->MLclosing + params_->MLbase;
-				if (e==tmp){
-					Trace_WMp(k,j-2,V->get_energy_WMp(k, j-2));
-					return;
-				}
-				
-				if((k-(i+1)-1) >=0) tmp = static_cast<energy_t>((k-(i+1)-1)*params_->MLbase) + V->get_energy_WMp(k,j-2) + E_MLstem(pair[S_[j]][S_[i]],S_[j-1],S_[i+1],params_) + params_->MLclosing + 2*params_->MLbase;
-				if (e==tmp){
-					Trace_WMp(k,j-2,V->get_energy_WMp(k, j-2));
-					return;
-				}					
+					if((k-(i+1)-1) >=0) tmp = static_cast<energy_t>((k-(i+1)-1)*params_->MLbase) + V->get_energy_WMp(k,j-1) + E_MLstem(pair[S_[j]][S_[i]],-1,S_[i+1],params_) + params_->MLclosing + params_->MLbase;
+					if (e==tmp){
+						Trace_WMp(k,j-1,V->get_energy_WMp(k, j-1));
+						return;
+					}
+					tmp = static_cast<energy_t>((k-i-1)*params_->MLbase) + V->get_energy_WMp(k,j-2) + E_MLstem(pair[S_[j]][S_[i]],S_[j-1],-1,params_) + params_->MLclosing + params_->MLbase;
+					if (e==tmp){
+						Trace_WMp(k,j-2,V->get_energy_WMp(k, j-2));
+						return;
+					}
+					
+					if((k-(i+1)-1) >=0) tmp = static_cast<energy_t>((k-(i+1)-1)*params_->MLbase) + V->get_energy_WMp(k,j-2) + E_MLstem(pair[S_[j]][S_[i]],S_[j-1],S_[i+1],params_) + params_->MLclosing + 2*params_->MLbase;
+					if (e==tmp){
+						Trace_WMp(k,j-2,V->get_energy_WMp(k, j-2));
+						return;
+					}	
+				}				
 			}
-			break;
 		}
+		break;
 	}
 	__builtin_unreachable();
 }
