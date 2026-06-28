@@ -1,10 +1,10 @@
 # CCJ
 
 ### Description
-Contains three software implementations of CCJ.
-CCJ is a MFE (minimum free energy) based method for predicting the psuedoknotted secondary structures of RNA sequences.      
+Contains the software implementation for CCJ-PF.
+CCJ-PF is a partition function based method for predicting the psuedoknotted secondary structures of RNA sequences.      
 
-CCJ should work on most Linux or Mac machines.       
+CCJ-PF should work on most Linux or Mac machines.       
 
 ### Installation:  
 Requirements: A compiler that supports C++11 standard (tested with g++ version 4.7.2 or higher)  and CMake version 3.1 or greater.    
@@ -53,10 +53,10 @@ cmake --build build
 ```   
 
 ### Licence    
-CCJ is copyrighted under GNU General Public Licence.
+CCJ-PF is copyrighted under GNU General Public Licence.
 
 ### Disclaimer
-Although the authors have made every effort to ensure that CCJ correctly implements the underlying models and fullfills the functions described in the documentation, neither the authors nor the University of Alberta guarantee its correctness, fitness for a particular purpose, or future availability.
+Although the authors have made every effort to ensure that CCJ-PF correctly implements the underlying models and fullfills the functions described in the documentation, neither the authors nor the University of Alberta guarantee its correctness, fitness for a particular purpose, or future availability.
 
 ### Contact  
 If you have any issues or feature requests, please contact Mateo Gray: mateo2@ualberta.ca

@@ -318,23 +318,6 @@ void pseudo_loop::compute_P(cand_pos_t i, cand_pos_t l){
 		P.set(i,l) = min_energy;
 	}
 }
-
-template<class Penalty> energy_t pseudo_loop::penalty(const Index4D &x, Penalty p, MType type) {
-    switch(type) {
-    case MType::L: return p(x.j(),x.i());
-    case MType::M: return p(x.j(),x.k());
-    case MType::R: return p(x.l(),x.k());
-    case MType::Om: return p(x.l(),x.i());
-	case MType::Os: return p(x.l(),x.i());
-	case MType::LreO: return p(x.j(),x.i());
-	case MType::LreR: return p(x.j(),x.i());
-	case MType::MreO: return p(x.j(),x.k());
-	case MType::MreR: return p(x.j(),x.k());
-	case MType::LMreR: return p(x.j(),x.i());
-	case MType::LMorO: return p(x.j(),x.i());
-    }
-    UNREACHABLE();
-}
 /**
  * This always chops from the interior with every single recurrence which means the code is the same and can be made generic
  */

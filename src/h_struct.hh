@@ -4,6 +4,8 @@
 #include "constants.hh"
 #include "base_types.hh"
 #include <vector>
+#include <array>
+#include <string>
 
 static constexpr std::array<std::pair<char,char>, 4> brackets = {{
     {'(', ')'},

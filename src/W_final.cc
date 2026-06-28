@@ -225,6 +225,7 @@ void W_final::Trace_V(cand_pos_t i, cand_pos_t j, energy_t e){
 				}
 				
 			}
+			break;
 		}
 		case MULTI: {
 			energy_t tmp = INF;
@@ -295,6 +296,7 @@ void W_final::Trace_V(cand_pos_t i, cand_pos_t j, energy_t e){
 					return;
 				}					
 			}
+			break;
 		}
 	}
 	__builtin_unreachable();

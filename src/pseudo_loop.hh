@@ -286,7 +286,22 @@ private:
 	static constexpr energy_t gamma2(cand_pos_t i, cand_pos_t l){
 		return 0;
 	}
-	template<class Penalty> energy_t penalty(const Index4D &x, Penalty p, MType type);
+	template<class Penalty> energy_t penalty(const Index4D &x, Penalty p, MType type) {
+    switch(type) {
+    case MType::L: return p(x.j(),x.i());
+    case MType::M: return p(x.j(),x.k());
+    case MType::R: return p(x.l(),x.k());
+    case MType::Om: return p(x.l(),x.i());
+	case MType::Os: return p(x.l(),x.i());
+	case MType::LreO: return p(x.j(),x.i());
+	case MType::LreR: return p(x.j(),x.i());
+	case MType::MreO: return p(x.j(),x.k());
+	case MType::MreR: return p(x.j(),x.k());
+	case MType::LMreR: return p(x.j(),x.i());
+	case MType::LMorO: return p(x.j(),x.i());
+    }
+    UNREACHABLE();
+}
 	energy_t calc_PXiloop(const Index4D &x, MType type);
 	energy_t calc_PXmloop(const Index4D &x, MType type);
 	inline bool impossible_case(const Index4D &x) const {
