@@ -45,18 +45,18 @@ struct args_info
   char * output_file_arg;	/**< @brief Give a path to an output file which will the sequence, and its structure and energy.  */
   char * output_file_orig;	/**< @brief Give a path to an output file which will the sequence, and its structure and energy original value given at command line.  */
   const char *output_file_help; /**< @brief Give a path to an output file which will the sequence, and its structure and energy help description.  */
-  int dangles_arg;	/**< @brief Specify the dangle model to be used (base is 2) (default='2').  */
-  char * dangles_orig;	/**< @brief Specify the dangle model to be used (base is 2) original value given at command line.  */
-  const char *dangles_help; /**< @brief Specify the dangle model to be used (base is 2) help description.  */
+  int dangles_arg;	/**< @brief Specify the dangle model to be used (default='2').  */
+  char * dangles_orig;	/**< @brief Specify the dangle model to be used original value given at command line.  */
+  const char *dangles_help; /**< @brief Specify the dangle model to be used help description.  */
   char * paramFile_arg;	/**< @brief Read energy parameters from paramfile, instead of using the default parameter set..  */
   char * paramFile_orig;	/**< @brief Read energy parameters from paramfile, instead of using the default parameter set. original value given at command line.  */
   const char *paramFile_help; /**< @brief Read energy parameters from paramfile, instead of using the default parameter set. help description.  */
-  int samples_arg;	/**< @brief Give the number of samples for the stochastic backtracking (default: 1000) (default='1000').  */
-  char * samples_orig;	/**< @brief Give the number of samples for the stochastic backtracking (default: 1000) original value given at command line.  */
-  const char *samples_help; /**< @brief Give the number of samples for the stochastic backtracking (default: 1000) help description.  */
-  int fatgraph_arg;	/**< @brief Give the number of fatgraphs outputted, along with their frequencies (default 1) (default='1').  */
-  char * fatgraph_orig;	/**< @brief Give the number of fatgraphs outputted, along with their frequencies (default 1) original value given at command line.  */
-  const char *fatgraph_help; /**< @brief Give the number of fatgraphs outputted, along with their frequencies (default 1) help description.  */
+  int samples_arg;	/**< @brief Give the number of samples for the stochastic backtracking (default='1000').  */
+  char * samples_orig;	/**< @brief Give the number of samples for the stochastic backtracking original value given at command line.  */
+  const char *samples_help; /**< @brief Give the number of samples for the stochastic backtracking help description.  */
+  int fatgraph_arg;	/**< @brief Give the number of fatgraphs outputted, along with their frequencies (default='1').  */
+  char * fatgraph_orig;	/**< @brief Give the number of fatgraphs outputted, along with their frequencies original value given at command line.  */
+  const char *fatgraph_help; /**< @brief Give the number of fatgraphs outputted, along with their frequencies help description.  */
   int print_samples_flag;	/**< @brief Print the samples with their multiplicities (default=off).  */
   const char *print_samples_help; /**< @brief Print the samples with their multiplicities help description.  */
   int noConv_flag;	/**< @brief Do not convert DNA into RNA. This will use the Matthews 2004 parameters for DNA (default=off).  */

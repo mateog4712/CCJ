@@ -19,7 +19,7 @@ option "output-file" o
     string optional
 
 option "dangles" d
-    "Specify the dangle model to be used (base is 2)"
+    "Specify the dangle model to be used"
     int default="2" optional
 
 option "paramFile" P
@@ -27,11 +27,11 @@ option "paramFile" P
     string optional
 
 option "samples" s
-    "Give the number of samples for the stochastic backtracking (default: 1000)"
+    "Give the number of samples for the stochastic backtracking"
     int default="1000" optional
 
 option "fatgraph" f
-    "Give the number of fatgraphs outputted, along with their frequencies (default 1)"
+    "Give the number of fatgraphs outputted, along with their frequencies"
     int default="1" optional
 
 option "print-samples" O

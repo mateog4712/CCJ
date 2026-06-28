@@ -38,10 +38,10 @@ const char *args_info_help[] = {
   "  -V, --version             Print version and exit",
   "  -i, --input-file=STRING   Give a path to an input file containing the\n                              sequence (and input structure if known)",
   "  -o, --output-file=STRING  Give a path to an output file which will the\n                              sequence, and its structure and energy",
-  "  -d, --dangles=INT         Specify the dangle model to be used (base is 2)\n                              (default=`2')",
+  "  -d, --dangles=INT         Specify the dangle model to be used  (default=`2')",
   "  -P, --paramFile=STRING    Read energy parameters from paramfile, instead of\n                              using the default parameter set.",
-  "  -s, --samples=INT         Give the number of samples for the stochastic\n                              backtracking (default: 1000)  (default=`1000')",
-  "  -f, --fatgraph=INT        Give the number of fatgraphs outputted, along with\n                              their frequencies (default 1)  (default=`1')",
+  "  -s, --samples=INT         Give the number of samples for the stochastic\n                              backtracking  (default=`1000')",
+  "  -f, --fatgraph=INT        Give the number of fatgraphs outputted, along with\n                              their frequencies  (default=`1')",
   "  -O, --print-samples       Print the samples with their multiplicities\n                              (default=off)",
   "      --noConv              Do not convert DNA into RNA. This will use the\n                              Matthews 2004 parameters for DNA  (default=off)",
   "      --noGU                Turn off G-U and U-G (and G-T and T-G) base pairing\n                              (default=off)",
@@ -601,7 +601,7 @@ cmdline_parser_internal (
             goto failure;
         
           break;
-        case 'd':	/* Specify the dangle model to be used (base is 2).  */
+        case 'd':	/* Specify the dangle model to be used.  */
         
         
           if (update_arg( (void *)&(args_info->dangles_arg), 
@@ -625,7 +625,7 @@ cmdline_parser_internal (
             goto failure;
         
           break;
-        case 's':	/* Give the number of samples for the stochastic backtracking (default: 1000).  */
+        case 's':	/* Give the number of samples for the stochastic backtracking.  */
         
         
           if (update_arg( (void *)&(args_info->samples_arg), 
@@ -637,7 +637,7 @@ cmdline_parser_internal (
             goto failure;
         
           break;
-        case 'f':	/* Give the number of fatgraphs outputted, along with their frequencies (default 1).  */
+        case 'f':	/* Give the number of fatgraphs outputted, along with their frequencies.  */
         
         
           if (update_arg( (void *)&(args_info->fatgraph_arg), 
