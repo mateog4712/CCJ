@@ -599,7 +599,7 @@ void pseudo_loop::Trace_WP(cand_pos_t i, cand_pos_t l, energy_t e){
 	if (i>l) return;
 	if(e==PUP_penalty*(l-i+1)) return;
 	if(e==WPP.get(i,l)){
-		Trace_WBP(i,l,WPP.get(i,l));
+		Trace_WPP(i,l,WPP.get(i,l));
 		return;
 	}
 	UNREACHABLE();
