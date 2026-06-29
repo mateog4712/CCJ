@@ -37,7 +37,7 @@ void create_PS_title(std::ofstream &out) {
 
 void create_PS_sequence(std::ofstream &out, std::string &seq) {
     out << "/sequence { (\\" << std::endl;
-    out << seq << std::endl;
+    out << seq <<"\\"<< std::endl;
     out << ") } def" << std::endl;
     out << "/len { sequence length } bind def" << std::endl;
     out << std::endl;
