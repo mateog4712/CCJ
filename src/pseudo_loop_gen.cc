@@ -1,6 +1,5 @@
 #include "pseudo_loop.hh"
 #include "h_globals.hh"
-#include "W_final.hh"
 #include <stdio.h>
 #include <string>
 #include <stdlib.h>
@@ -559,6 +558,264 @@ energy_t pseudo_loop::calc_WP(cand_pos_t i, cand_pos_t l){
 	return (std::min(PUP_penalty*(l-i+1),WPP.get(i,l)));
 }
 ////////////////////////// Traceback ////////////////////////////////
+void pseudo_loop::Trace_W(cand_pos_t i, cand_pos_t j, energy_t e){
+	if (debug) printf("W at %d and %d with %d\n", i, j, e);
+	if (j<=i) return;
+
+	energy_t acc = INF;
+
+	// this case is for j unpaired, so I have to check that.
+	energy_t tmp = W[j-1];
+	if (e==tmp){
+		Trace_W(i,j-1,W[j-1]);
+		return;
+	}
+	for (cand_pos_t i=1; i<=j-1; i++){
+		acc = (i>1) ? W[i-1] : 0;
+		base_type si1 = i>1 ? S_[i-1] : -1;
+		base_type sj1 = j<n ? S_[j+1] : -1;
+		tmp = acc + get_energy(i,j) + ((params_->model_details.dangles == 2) ? E_ExtLoop(pair[S_[i]][S_[j]],si1,sj1,params_) : E_ExtLoop(pair[S_[i]][S_[j]],-1,-1,params_));
+		if(e==tmp){
+			Trace_W(1,i-1,W[i-1]);
+			Trace_V(i,j,get_energy(i,j));
+			return;
+		}
+		if(params_->model_details.dangles ==1){
+			tmp = acc + get_energy(i+1,j) + E_ExtLoop(pair[S_[i+1]][S_[j]],S_[i],-1,params_);
+			if(e==tmp){
+				Trace_W(1,i-1,W[i-1]);
+				Trace_V(i+1,j,get_energy(i+1,j));
+				return;
+			}
+			tmp = acc + get_energy(i,j-1) + E_ExtLoop(pair[S_[i]][S_[j-1]],-1,S_[j],params_);
+			if(e==tmp){
+				Trace_W(1,i-1,W[i-1]);
+				Trace_V(i,j-1,get_energy(i,j-1));
+				return;
+			}
+			tmp = acc + get_energy(i+1,j-1) + E_ExtLoop(pair[S_[i+1]][S_[j-1]],S_[i],S_[j],params_);
+			if(e==tmp){
+				Trace_W(1,i-1,W[i-1]);
+				Trace_V(i+1,j-1,get_energy(i+1,j-1));
+				return;
+			}
+		}
+	}
+	for (cand_pos_t i=1; i<=j-1; i++){
+		acc = (i-1>0) ? W[i-1]: 0;
+		tmp = acc + P.get(i,j)+ PS_penalty;
+		if(e==tmp){
+			Trace_W(1,i-1,W[i-1]);
+			Trace_P(i,j,P.get(i,j));
+			return;
+		}
+	}
+	__builtin_unreachable();
+}
+void pseudo_loop::Trace_V(cand_pos_t i, cand_pos_t j, energy_t e){
+	if (debug) printf("V at %d and %d as type: %c with %d\n", i, j,get_type(i,j), e);
+	fres[i] = j;
+	fres[j] = i;
+	char type = get_type(i,j);
+
+	switch(type){
+		case HAIRP:{
+			return;
+		}
+		case INTER:{
+			cand_pos_t max_k = std::min(j-TURN-2,i+MAXLOOP+1);
+			for (cand_pos_t k = i+1; k <= max_k; ++k){
+				cand_pos_t min_l=std::max(k+TURN+1 + MAXLOOP+2, k+j-i) - MAXLOOP-2;
+				for (cand_pos_t l = j-1; l >= min_l; --l)
+				{
+					energy_t tmp = compute_int(i,j,k,l) + get_energy(k,l);
+					if (e == tmp)
+					{
+						Trace_V(k,l,get_energy(k,l));
+						return;
+					}
+				}
+				
+			}
+		}
+		break;
+		case MULTI: {
+			energy_t tmp = INF;
+			for (cand_pos_t k = i+1; k <= j-1; k++){
+				tmp = WM.get(i+1,k-1) + std::min(WMv.get(k,j-1),WMp.get(k,j-1)) + params_->MLclosing;
+				if(params_->model_details.dangles == 2){
+					tmp += E_MLstem(pair[S_[j]][S_[i]],S_[j-1],S_[i+1],params_);
+				} else {
+					tmp += E_MLstem(pair[S_[j]][S_[i]],-1,-1,params_);
+				}
+				if (e==tmp){
+					tmp -= params_->MLclosing;
+					tmp -= (params_->model_details.dangles == 2 ? E_MLstem(pair[S_[j]][S_[i]],S_[j-1],S_[i+1],params_) : E_MLstem(pair[S_[j]][S_[i]],-1,-1,params_));
+					Trace_WM(i+1,k-1,WM.get(i+1,k-1));
+					if(tmp == WM.get(i+1,k-1) + WMv.get(k,j-1)){
+						Trace_WMv(k,j-1,WMv.get(k, j-1));
+					} else {
+						Trace_WMp(k,j-1,WMp.get(k, j-1));
+					}
+					return;
+				}
+
+				tmp = static_cast<energy_t>((k-i-1)*params_->MLbase + WMp.get(k,j-1))+ E_MLstem(pair[S_[j]][S_[i]],-1,-1,params_) + params_->MLclosing;
+				if (e==tmp){
+					Trace_WMp(k,j-1,WMp.get(k,j-1));
+					return;
+				}
+				if(params_->model_details.dangles ==1){
+					tmp = WM.get(i+2,k-1) + std::min(WMv.get(k,j-1),WMp.get(k,j-1)) + E_MLstem(pair[S_[j]][S_[i]],-1,S_[i+1],params_) + params_->MLclosing + params_->MLbase;
+					if (e==tmp)
+					{
+						tmp -= (params_->MLclosing + E_MLstem(pair[S_[j]][S_[i]],-1,S_[i+1],params_) + params_->MLbase);
+						Trace_WM(i+2,k-1,WM.get(i+2,k-1));
+						if(tmp == WM.get(i+2,k-1) + WMv.get(k,j-1)){
+							Trace_WMv(k,j-1,WMv.get(k, j-1));
+						} else {
+							Trace_WMp(k,j-1,WMv.get(k, j-1));
+						}
+						return;
+					}
+					tmp = WM.get(i+1,k-1) + std::min(WMv.get(k,j-2),WMp.get(k,j-2)) + E_MLstem(pair[S_[j]][S_[i]],S_[j-1],-1,params_) + params_->MLclosing + params_->MLbase;
+					if (e==tmp)
+					{
+						tmp -= (params_->MLclosing + E_MLstem(pair[S_[j]][S_[i]],S_[j-1],-1,params_) + params_->MLbase);
+						Trace_WM(i+1,k-1,WM.get(i+1,k-1));
+						if(tmp == WM.get(i+1,k-1) + WMv.get(k,j-2)){
+							Trace_WMv(k,j-2,WMv.get(k, j-2));
+						} else {
+							Trace_WMp(k,j-2,WMv.get(k, j-2));
+						}
+						return;
+					}
+					tmp = WM.get(i+2,k-1) + std::min(WMv.get(k,j-2),WMp.get(k,j-2)) + E_MLstem(pair[S_[j]][S_[i]],S_[j-1],S_[i+1],params_) + params_->MLclosing + 2*params_->MLbase;
+					if (e==tmp)
+					{
+						tmp -= (params_->MLclosing + E_MLstem(pair[S_[j]][S_[i]],S_[j-1],S_[i+1],params_) + 2*params_->MLbase);
+						Trace_WM(i+2,k-1,WM.get(i+2,k-1));
+						if(tmp == WM.get(i+2,k-1) + WMv.get(k,j-2)){
+							Trace_WMv(k,j-2,WMv.get(k, j-2));
+						} else {
+							Trace_WMp(k,j-2,WMv.get(k, j-2));
+						}
+						return;
+					}
+
+					if((k-(i+1)-1) >=0) tmp = static_cast<energy_t>((k-(i+1)-1)*params_->MLbase) + WMp.get(k,j-1) + E_MLstem(pair[S_[j]][S_[i]],-1,S_[i+1],params_) + params_->MLclosing + params_->MLbase;
+					if (e==tmp){
+						Trace_WMp(k,j-1,WMp.get(k, j-1));
+						return;
+					}
+					tmp = static_cast<energy_t>((k-i-1)*params_->MLbase) + WMp.get(k,j-2) + E_MLstem(pair[S_[j]][S_[i]],S_[j-1],-1,params_) + params_->MLclosing + params_->MLbase;
+					if (e==tmp){
+						Trace_WMp(k,j-2,WMp.get(k, j-2));
+						return;
+					}
+					
+					if((k-(i+1)-1) >=0) tmp = static_cast<energy_t>((k-(i+1)-1)*params_->MLbase) + WMp.get(k,j-2) + E_MLstem(pair[S_[j]][S_[i]],S_[j-1],S_[i+1],params_) + params_->MLclosing + 2*params_->MLbase;
+					if (e==tmp){
+						Trace_WMp(k,j-2,WMp.get(k, j-2));
+						return;
+					}	
+				}				
+			}
+		}
+		break;
+	}
+	__builtin_unreachable();
+}
+void pseudo_loop::Trace_WM(cand_pos_t i, cand_pos_t j, energy_t e){
+	if (debug) printf("WM at %d and %d with %d\n", i, j, e);
+	energy_t tmp = INF;
+
+	tmp = WM.get(i,j-1)+params_->MLbase;
+	if(e==tmp){
+		Trace_WM(i,j-1,WM.get(i,j-1));
+		return;
+	}
+	for (cand_pos_t k=i; k <= j-TURN-1; k++){	
+		tmp = static_cast<energy_t>((k-i)*params_->MLbase) + WMv.get(k,j);
+		if(e==tmp){
+			Trace_WMv(k,j,WMv.get(k,j));
+			return;
+		}
+		tmp = static_cast<energy_t>((k-i)*params_->MLbase) + WMp.get(k,j);
+		if(e==tmp){
+			Trace_WMp(k,j,WMp.get(k,j));
+			return;
+		}
+		tmp = WM.get(i,k-1) + WMv.get(k,j);
+		if(e==tmp){
+			Trace_WM(i,k-1,WM.get(i, k-1));
+			Trace_WMv(k,j,WMv.get(k,j));
+			return;
+		}
+		tmp = WM.get(i,k-1) + WMp.get(k,j);
+		if(e==tmp){
+			Trace_WM(i,k-1,WM.get(i, k-1));
+			Trace_WMp(k,j,WMp.get(k,j));
+			return;
+		}
+	}
+	__builtin_unreachable();
+}
+void pseudo_loop::Trace_WMv(cand_pos_t i, cand_pos_t j, energy_t e){
+	if (debug) printf("WMv at %d and %d with %d\n", i, j, e);
+	cand_pos_t si = S_[i];
+	cand_pos_t sj = S_[j];
+	cand_pos_t si1 = (i>1) ? S_[i-1] : -1;
+	cand_pos_t sj1 = (j<n) ? S_[j+1] : -1;
+	pair_type tt = pair[S_[i]][S_[j]];
+	energy_t tmp = get_energy(i,j) + ((params_->model_details.dangles == 2) ? E_MLstem(tt,si1,sj1,params_) : E_MLstem(tt,-1,-1,params_));
+	if(e==tmp){
+		Trace_V(i,j,get_energy(i,j));
+		return;
+	}
+
+	if(params_->model_details.dangles == 1){
+		tt = pair[S_[i+1]][S_[j]];
+		energy_t tmp = get_energy(i+1,j) + E_MLstem(tt,si,-1,params_) + params_->MLbase;
+		if(e==tmp){
+			Trace_V(i+1,j,get_energy(i+1,j));
+			return;
+		}
+		tt = pair[S_[i]][S_[j-1]];
+		tmp = get_energy(i,j-1) + E_MLstem(tt,-1,sj,params_) + params_->MLbase;
+		if(e==tmp){
+			Trace_V(i,j-1,get_energy(i,j-1));
+			return;
+		}
+		tt = pair[S_[i+1]][S_[j-1]];
+		tmp = get_energy(i+1,j-1) + E_MLstem(tt,si,sj,params_) + 2*params_->MLbase;
+		if(e==tmp){
+			Trace_V(i+1,j-1,get_energy(i+1,j-1));
+			return;
+		}
+	}
+
+	tmp = WMv.get(i,j-1) + params_->MLbase;
+	if(e==tmp){
+		Trace_WMv(i,j-1,WMv.get(i,j-1));
+		return;
+	}
+	__builtin_unreachable();
+}
+void pseudo_loop::Trace_WMp(cand_pos_t i, cand_pos_t j, energy_t e){
+	if (debug) printf("WMp at %d and %d with %d\n", i, j, e);
+	energy_t tmp = P.get(i,j) + PSM_penalty + b_penalty;
+	if(e==tmp){
+		Trace_P(i,j,WMp.get(i,j));
+		return;
+	}
+	tmp = WMp.get(i,j-1) + params_->MLbase;
+	if(e==tmp){
+		Trace_WMp(i,j-1,WMp.get(i,j-1));
+		return;
+	}
+	__builtin_unreachable();
+}
 
 void pseudo_loop::Trace_WB(cand_pos_t i, cand_pos_t l, energy_t e){
 	if (debug) printf("WB at %d and %d with %d\n", i, l, e);
@@ -578,10 +835,10 @@ void pseudo_loop::Trace_WBP(cand_pos_t i, cand_pos_t l, energy_t e){
 		return;
 	}
 	for(cand_pos_t d=i; d< l; ++d){
-		tmp = calc_WB(i,d-1) + V->get_energy(d,l) + bp_penalty + PPS_penalty;
+		tmp = calc_WB(i,d-1) + get_energy(d,l) + bp_penalty + PPS_penalty;
 		if(e==tmp){
 			Trace_WB(i,d-1,calc_WB(i,d-1));
-			W->Trace_V(d,l,V->get_energy(d,l));
+			Trace_V(d,l,get_energy(d,l));
 			return;
 		}
 		tmp = calc_WB(i,d-1) + P.get(d,l) + PSM_penalty + PPS_penalty;
@@ -593,6 +850,9 @@ void pseudo_loop::Trace_WBP(cand_pos_t i, cand_pos_t l, energy_t e){
 	}
 	UNREACHABLE();
 }
+
+// PK portion
+
 void pseudo_loop::Trace_WP(cand_pos_t i, cand_pos_t l, energy_t e){
 	if (debug) printf("WP at %d and %d with %d\n", i, l, e);
 	if (i>l) return;
@@ -611,10 +871,10 @@ void pseudo_loop::Trace_WPP(cand_pos_t i, cand_pos_t l, energy_t e){
 		return;
 	}
 	for(cand_pos_t d=i; d<l; ++d){
-		tmp = calc_WP(i,d-1) + V->get_energy(d,l) + gamma2(l,d) + PPS_penalty;
+		tmp = calc_WP(i,d-1) + get_energy(d,l) + gamma2(l,d) + PPS_penalty;
 		if(e==tmp){
 			Trace_WP(i,d-1,calc_WP(i,d-1));
-			W->Trace_V(d,l,V->get_energy(d,l));
+			Trace_V(d,l,get_energy(d,l));
 			return;
 		}
 		tmp = calc_WP(i,d-1) + P.get(d,l) + PSP_penalty + PPS_penalty;

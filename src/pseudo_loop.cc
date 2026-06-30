@@ -1,6 +1,5 @@
 #include "pseudo_loop.hh"
 #include "h_globals.hh"
-#include "W_final.hh"
 #include <stdio.h>
 #include <string>
 #include <stdlib.h>
@@ -9,29 +8,24 @@
 #include <algorithm>
 #include <cassert>
 
-pseudo_loop::pseudo_loop(std::string seq, s_energy_matrix *V, W_final *W, short *S, short *S1, vrna_param_t *params)
+pseudo_loop::pseudo_loop(std::string seq, int dangle) : seq(seq), params_(vrna_params(NULL))
 {
-	this->seq = seq;
-	this->V = V;
-	this->W = W;
-	S_ = S;
-	S1_ = S1;
-	params_ = params;
-	make_pair_matrix();
+	n = seq.length();
+	params_->model_details.dangles = dangle;
+    S_ = encode_sequence(seq.c_str(),0);
+	S1_ = encode_sequence(seq.c_str(),1);
     allocate_space();
 }
 
-void pseudo_loop::set_fold(std::vector<int> &fres){
-		this->fres = &fres;
-	}
-
 void pseudo_loop::allocate_space()
 {
-    n = seq.length();
 
 	TriangleMatrix::new_index(index,n+1);
 	Matrix4D::construct_index(index3D,n);
 
+	fres.resize(n+1,-2);
+
+	W.resize(n+1,0);
     WBP.init(n+1,index);
 	WPP.init(n+1,index);
 	P.init(n+1,index);
@@ -139,6 +133,39 @@ void pseudo_loop::allocate_space()
 
 pseudo_loop::~pseudo_loop()
 {
+	free(params_);
+	free(S_);
+	free(S1_);
+}
+
+double pseudo_loop::ccj (){
+	for (cand_pos_t i = n; i>=1; --i){	
+		for (cand_pos_t j =i; j<=n; ++j){
+			// compute_energy (i,j);
+			compute_energies(i,j);
+			// compute_WMv_WMp(i,j);
+			// compute_energy_WM(i,j);
+		}
+	}
+	for (cand_pos_t j= TURN+1; j <= n; j++){
+		energy_t m1 = INF, m2 = INF, m3 = INF;
+		m1 = W[j-1];
+		for (cand_pos_t k=1; k<=j-TURN-1; ++k){
+			energy_t acc = (k>1) ? W[k-1]: 0;
+			m2 = std::min(m2,acc + E_ext_Stem(get_energy(k,j),get_energy(k+1,j),get_energy(k,j-1),get_energy(k+1,j-1),S_,params_,k,j,n));
+			m3 = std::min(m3,acc + P.get(k,j) + PS_penalty);
+		}
+		W[j] = std::min({m1,m2,m3});
+	}
+
+    double energy = W[n]/100.0;
+
+	// backtrack
+	backtrack();
+
+	fill_structure(fres,structure);
+	this->structure = structure.substr(1,n);
+    return energy;
 }
 
 void pseudo_loop::compute_energies(cand_pos_t i, cand_pos_t l)
@@ -251,7 +278,7 @@ void pseudo_loop::compute_WBP(cand_pos_t i, cand_pos_t l){
 	energy_t min_energy= INF, b1 = INF, b2=INF, b3 = INF,tmp =INF;
 
 	for(cand_pos_t d=i; d< l; ++d){
-		tmp = calc_WB(i,d-1) + V->get_energy(d,l) + bp_penalty + PPS_penalty;
+		tmp = calc_WB(i,d-1) + get_energy(d,l) + bp_penalty + PPS_penalty;
 		b1 = std::min(b1,tmp);
 		tmp = calc_WB(i,d-1) + P.get(d,l) + PSM_penalty + PPS_penalty;
 		b2 = std::min(b2,tmp);
@@ -267,7 +294,7 @@ void pseudo_loop::compute_WPP(cand_pos_t i, cand_pos_t l){
 	energy_t min_energy = INF, b1 = INF, b2=INF, b3 =INF, tmp = INF;
 
 	for(cand_pos_t d=i; d<l; ++d){
-		tmp = calc_WP(i,d-1) + V->get_energy(d,l) + gamma2(l,d) + PPS_penalty;
+		tmp = calc_WP(i,d-1) + get_energy(d,l) + gamma2(l,d) + PPS_penalty;
 		b1 = std::min(b1,tmp);
 		tmp = calc_WP(i,d-1) + P.get(d,l) + PSP_penalty + PPS_penalty;
 		b2 = std::min(b2,tmp);
@@ -510,6 +537,11 @@ void pseudo_loop::compute_PX(const Index4D &x, MType type){
 }
 ///////////////// Traceback ////////////////////////////////
 
+void pseudo_loop::backtrack(){
+   Trace_W(1,n,W[n]);
+   return;
+}
+
 void pseudo_loop::Trace_PX1(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l, MType type, energy_t e){
 	if (debug) std::cout << "PX1 at " << i << " and " << j << " and " << k << " and " << l << " with type: " << type << " and en: " << e << std::endl;
 	Matrix4D &PX = PX_by_mtype(type);
@@ -677,8 +709,8 @@ void pseudo_loop::Trace_PX(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,
 	if (debug) std::cout << "PX at " << i << " and " << j << " and " << k << " and " << l << " with type: " << type << " and en: " << e << std::endl;
 	const Index4D x(i,j,k,l);
 	const int ptype_closing = pair[S_[x.lend(type)]][S_[x.rend(type)]];
-	(*fres)[x.lend(type)] = x.rend(type);
-	(*fres)[x.rend(type)] = x.lend(type);
+	fres[x.lend(type)] = x.rend(type);
+	fres[x.rend(type)] = x.lend(type);
 
 	if (ptype_closing>0){
 		energy_t tmp = calc_PXmloop(x,type);
@@ -716,6 +748,361 @@ void pseudo_loop::Trace_PX(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,
 
 
 ////////////////// Util Functions ///////////////////////////
+
+/**
+ * @brief Gives the W(i,j) energy. The type of dangle model being used affects this energy. 
+ * The type of dangle is also changed to reflect this.
+ * 
+ * @param vij The V(i,j) energy
+ * @param vi1j The V(i+1,j) energy
+ * @param vij1 The V(i,j-1) energy
+ * @param vi1j1 The V(i+1,j-1) energy
+*/
+energy_t pseudo_loop::E_ext_Stem(const energy_t& vij,const energy_t& vi1j,const energy_t& vij1,const energy_t& vi1j1,const short* S, vrna_param_t* params, const cand_pos_t i,const cand_pos_t j, cand_pos_t n){
+
+	energy_t e = INF, en = INF;
+  	pair_type tt  = pair[S[i]][S[j]];
+	
+	en = vij; // i j
+
+	if (en != INF) {
+		if (params->model_details.dangles == 2){
+			base_type si1 = i>1 ? S[i-1] : -1;
+			base_type sj1 = j<n ? S[j+1] : -1;
+			en += E_ExtLoop(tt, si1, sj1, params);
+		}
+		else{
+			en += E_ExtLoop(tt, -1, -1, params);
+		}
+		e = std::min(e, en);
+	}
+	if(params->model_details.dangles  == 1){
+        tt  = pair[S[i+1]][S[j]];
+		en = (j-i-1>TURN) ? vi1j : INF; //i+1 j
+
+		if (en != INF) {
+			base_type si1 = S[i];
+			en += E_ExtLoop(tt, si1, -1, params);
+		}
+		e = std::min(e,en);
+        
+        tt  = pair[S[i]][S[j-1]];
+		en = (j-1-i>TURN) ? vij1 : INF; // i j-1
+		if (en != INF) {
+			base_type sj1 = S[j];
+			en += E_ExtLoop(tt, -1, sj1, params);
+		}
+		e = std::min(e,en);
+
+        tt  = pair[S[i+1]][S[j-1]];
+		en = (j-1-i-1>TURN) ? vi1j1 : INF; // i+1 j-1
+		if (en != INF) {
+			base_type si1 = S[i];
+			base_type sj1 = S[j];
+			en += E_ExtLoop(tt, si1, sj1, params);
+		}
+		e = std::min(e,en);
+	}
+	return e;
+}
+
+/**
+ * @brief Gives the WM(i,j) energy. The type of dangle model being used affects this energy. 
+ * The type of dangle is also changed to reflect this.
+ * 
+ * I am adding +1 to all S as I haven't shifted the variables over to 1->n instead of 0->n-1
+ * 
+ * @param vij The V(i,j) energy
+ * @param vi1j The V(i+1,j) energy
+ * @param vij1 The V(i,j-1) energy
+ * @param vi1j1 The V(i+1,j-1) energy
+*/
+energy_t pseudo_loop::E_MLStem(const energy_t& vij,const energy_t& vi1j,const energy_t& vij1,const energy_t& vi1j1,const short* S, vrna_param_t* params,cand_pos_t i, cand_pos_t j, cand_pos_t n){
+
+	energy_t e = INF,en=INF;
+
+	pair_type type = pair[S[i]][S[j]];
+
+	
+	en = vij; // i j
+	if (en != INF) {
+		if (params->model_details.dangles == 2){
+			base_type mm5 = i>1 ? S[i-1] : -1;
+			base_type mm3 = j<n ? S[j+1] : -1;
+			en += E_MLstem(type, mm5, mm3, params);
+		}
+		else{
+			en += E_MLstem(type, -1, -1, params);
+		}
+		e = std::min(e, en);
+	}
+	
+	if(params->model_details.dangles == 1){
+		const base_type mm5 = S[i], mm3 = S[j];
+
+
+		en = (j-i-1 >TURN) ? vi1j : INF; // i+1 j
+		if (en != INF) {
+			en += params->MLbase;
+
+			type = pair[S[i+1]][S[j]];
+			en += E_MLstem(type, mm5, -1, params);
+
+			e = std::min(e, en);
+		}
+    	
+
+		en = (j-1-i>TURN) ? vij1 : INF; // i j-1
+		if (en != INF) {
+			en += params->MLbase;
+
+			type = pair[S[i]][S[j-1]];
+			en += E_MLstem(type, -1, mm3, params);
+
+			e = std::min(e, en);
+		}
+    	
+		en = (j-1-i-1>TURN) ? vi1j1 : INF; // i+1 j-1
+		if (en != INF) {
+			en += 2 * params->MLbase;
+
+			type = pair[S[i+1]][S[j-1]];
+			en += E_MLstem(type, mm5, mm3, params);
+	
+			e = std::min(e, en);
+		}
+	}
+
+
+    return e;
+}
+
+/**
+* @brief Computes the multiloop V contribution. This gives back essentially VM(i,j).
+* 
+* Added plus 1 to all S's as I haven't changed it over to 1->n from 0->n-1
+* 
+* @param dmli1 Row of WM2 from one iteration ago
+* @param dmli2 Row of WM2 from two iterations ago 
+*/
+energy_t pseudo_loop::E_MbLoop(const energy_t WM2ij, const energy_t WM2ip1j, const energy_t WM2ijm1, const energy_t WM2ip1jm1, const short* S, vrna_param_t* params, cand_pos_t i, cand_pos_t j){
+
+	energy_t e = INF,en = INF;
+  	pair_type tt  = pair[S[j]][S[i]];
+	
+	/* double dangles */
+	switch(params->model_details.dangles){
+		case 2:
+			e = WM2ij;
+
+			if (e != INF) {
+
+				base_type si1 = S[i+1];
+				base_type sj1 = S[j-1];
+
+				e += E_MLstem(tt, sj1, si1, params) + params->MLclosing;
+			}
+
+			break;
+
+		case 1:
+			/**
+			* ML pair D0
+			*  new closing pair (i,j) with mb part [i+1,j-1]  
+			*/
+			e = WM2ij;
+
+			if (e != INF) {
+				e += E_MLstem(tt, -1, -1, params) + params->MLclosing;
+			}
+      		/** 
+			* ML pair 5
+			* new closing pair (i,j) with mb part [i+2,j-1] 
+			*/
+			en = WM2ip1j;
+
+			if (en != INF) {
+
+				base_type si1 =  S[i+1];
+
+				en += E_MLstem(tt, -1, si1, params) + params->MLclosing + params->MLbase;	
+			}
+      		e   = std::min(e, en);
+			
+			/** 
+			* ML pair 3
+			* new closing pair (i,j) with mb part [i+1, j-2] 
+			*/
+			en = WM2ijm1;
+
+			if (en != INF) {
+				base_type sj1 = S[j-1];
+
+				en += E_MLstem(tt, sj1, -1, params) + params->MLclosing + params->MLbase;
+			}
+			e   = std::min(e, en);
+			/** 
+			* ML pair 53
+			* new closing pair (i,j) with mb part [i+2.j-2]
+			*/
+			en = WM2ip1jm1;			
+
+			if (en != INF) {
+
+				base_type si1 = S[i+1];
+				base_type sj1 = S[j-1];
+
+				en += E_MLstem(tt, sj1, si1, params) + params->MLclosing + 2 * params->MLbase;
+			}
+			e = std::min(e, en);
+      		break;
+		case 0:
+			e = WM2ij;
+
+			if (e != INF) {
+				e += E_MLstem(tt, -1, -1, params) + params->MLclosing;
+			}
+			break; 
+	}
+	return e;
+}
+void pseudo_loop::compute_WMv_WMp(cand_pos_t i, cand_pos_t j){
+	if(j-i+1<4) return;
+
+	WMv.set(i,j) = std::min(E_MLStem(get_energy(i,j),get_energy(i+1,j),get_energy(i,j-1),get_energy(i+1,j-1),S_,params_,i,j,n),WMv.get(i,j-1) + params_->MLbase);
+	WMp.set(i,j) = std::min(P.get(i,j)+PSM_penalty+b_penalty,WMp.get(i,j-1) + params_->MLbase);
+}
+
+void pseudo_loop::compute_energy_WM (cand_pos_t i, cand_pos_t j)
+// compute de MFE of a partial multi-loop closed at (i,j), the restricted case
+{
+    if(j-i+1<4) return;
+	energy_t m1 = INF,m2=INF,m3=INF,m4=INF,m5=INF;
+	
+	for (cand_pos_t k=j-TURN-1; k >= i; --k)
+	{
+		energy_t wm_kj = E_MLStem(get_energy(k,j),get_energy(k+1,j),get_energy(k,j-1),get_energy(k+1,j-1),S_,params_,k,j,n);
+		energy_t wmb_kj = P.get(k,j)+PSM_penalty+b_penalty;
+		m1 = std::min(m1,static_cast<energy_t>((k-i)*params_->MLbase) + wm_kj);
+		m2 = std::min(m2,static_cast<energy_t>((k-i)*params_->MLbase) + wmb_kj);
+		m3 =  std::min(m3,WM.get(i,k-1) + wm_kj);
+		m4 =  std::min(m4,WM.get(i,k-1) + wmb_kj);
+
+	}
+	m5 = std::min(m5,WM.get(i,j-1) + params_->MLbase);
+	WM.set(i,j) = std::min({m1,m2,m3,m4,m5});  
+}
+
+energy_t pseudo_loop::compute_energy_VM(cand_pos_t i, cand_pos_t j)
+// compute the MFE of a multi-loop closed at (i,j), the restricted case
+{
+    energy_t min = INF;
+    for (cand_pos_t k = i+1; k <= j-3; ++k)
+    {
+        energy_t WM2ij = WM.get(i+1,k-1) + WMv.get(k,j-1);
+		WM2ij = std::min(WM2ij,WM.get(i+1,k-1) + WMp.get(k,j-1));
+		WM2ij = std::min(WM2ij,static_cast<energy_t>((k-i-1)*params_->MLbase) + WMp.get(k,j-1));
+
+        energy_t WM2ip1j = WM.get(i+2,k-1) + WMv.get(k,j-1);
+		WM2ip1j = std::min(WM2ip1j,WM.get(i+2,k-1) + WMp.get(k-1,j-1));
+		WM2ip1j = std::min(WM2ip1j,static_cast<energy_t>((k-(i+1)-1)*params_->MLbase) + WMp.get(k,j-1));
+
+        energy_t WM2ijm1 = WM.get(i+1,k-1) + WMv.get(k,j-2);
+		WM2ijm1 = std::min(WM2ijm1, WM.get(i+1,k-1) + WMp.get(k,j-2));
+		WM2ijm1 = std::min(WM2ijm1,static_cast<energy_t>((k-i-1)*params_->MLbase) + WMp.get(k,j-2));
+
+        energy_t WM2ip1jm1 = WM.get(i+2,k-1) + WMv.get(k,j-2);
+		WM2ip1jm1 = std::min(WM2ip1jm1,WM.get(i+2,k-1) + WMp.get(k,j-2));
+		WM2ip1jm1 = std::min(WM2ip1jm1,static_cast<energy_t>((k-(i+1)-1)*params_->MLbase) + WMp.get(k,j-2));
+
+        min = std::min(min,E_MbLoop(WM2ij,WM2ip1j,WM2ijm1,WM2ip1jm1,S_,params_,i,j));
+    }
+    return min;
+}
+
+/**
+ * @brief This code returns the hairpin energy for a given base pair.
+ * @param i The left index in the base pair
+ * @param j The right index in the base pair
+*/
+energy_t pseudo_loop::HairpinE(const std::string& seq, cand_pos_t i, cand_pos_t j) {
+	
+	const int ptype_closing = pair[S_[i]][S_[j]];
+
+	if (ptype_closing==0) return INF;
+
+	return E_Hairpin(j-i-1,ptype_closing,S1_[i+1],S1_[j-1],&seq.c_str()[i-1], const_cast<vrna_param_t*>(params_));
+}
+
+/**
+ * @brief non-restricted version
+*/
+energy_t pseudo_loop::compute_internal(cand_pos_t i, cand_pos_t j){
+	energy_t v_iloop = INF;
+	cand_pos_t max_k = std::min(j-TURN-2,i+MAXLOOP+1);
+	const int ptype_closing = pair[S_[i]][S_[j]];
+	for ( cand_pos_t k=i+1; k<=max_k; ++k) {
+		cand_pos_t min_l=std::max(k+TURN+1 + MAXLOOP+2, k+j-i) - MAXLOOP-2;
+		for (int l=j-1; l>=min_l; --l) {
+			energy_t v_iloop_kl = E_IntLoop(k-i-1,j-l-1,ptype_closing,rtype[pair[S_[k]][S_[l]]],S1_[i+1],S1_[j-1],S1_[k-1],S1_[l+1],const_cast<vrna_param_t*>(params_)) + get_energy(k,l);
+			v_iloop = std::min(v_iloop,v_iloop_kl);	
+		} 
+	}
+	return v_iloop;
+}
+
+energy_t pseudo_loop::compute_stack(cand_pos_t i, cand_pos_t j){
+
+	const int ptype_closing = pair[S_[i]][S_[j]];
+	cand_pos_t k = i+1;
+    cand_pos_t l = j-1;
+    return E_IntLoop(k-i-1,j-l-1,ptype_closing,rtype[pair[S_[k]][S_[l]]],S1_[i+1],S1_[j-1],S1_[k-1],S1_[l+1],const_cast<vrna_param_t*>(params_)) + get_energy(k,l);
+}
+
+void pseudo_loop::compute_energy (cand_pos_t i, cand_pos_t j)
+// compute the V(i,j) value, if the structure must be restricted
+{
+    energy_t min, min_en[3];
+    cand_pos_t k, min_rank;
+    char type;
+
+    min_rank = -1;
+    min = INF/2;
+    min_en[0] = INF;
+    min_en[1] = INF;
+    min_en[2] = INF;
+
+
+
+	min_en[0] = HairpinE(seq,i,j);
+
+	min_en[1] = compute_internal(i,j);
+	min_en[2] = compute_energy_VM(i,j);
+    
+
+    for (k=0; k<3; k++)
+    {
+        if (min_en[k] < min)
+        {
+            min = min_en[k];
+            min_rank = k;
+        }
+    }
+
+    switch (min_rank)
+    {
+        case  0: type = HAIRP; break;
+        case  1: type = INTER; break;
+        case  2: type = MULTI; break;
+        default: type = NONE;
+    }
+
+    if (min < INF/2) {
+        int ij = index[i]+j-i;
+        V[ij].energy = min;
+        V[ij].type = type;
+    }
+}
 
 energy_t pseudo_loop::compute_int(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l){
 

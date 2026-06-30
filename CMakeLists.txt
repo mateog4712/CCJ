@@ -16,7 +16,6 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -DNDEBUG") # conside -NDEBUG if I want to disable asserts for performance gain
 
 SET(SOURCE
-  src/W_final.cc 
   src/pseudo_loop.cc 
   src/pseudo_loop_gen.cc
   src/CCJ.cc

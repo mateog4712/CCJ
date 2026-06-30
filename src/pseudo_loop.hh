@@ -5,8 +5,12 @@
 #include "constants.hh"
 #include <stdio.h>
 #include <string.h>
-#include "s_energy_matrix.hh"
 #include "matrices.hh"
+
+#include "ViennaRNA/loops.hh"
+#include "ViennaRNA/pair_mat.hh"
+#include "ViennaRNA/params/io.hh"
+#define debug 0
 
 #ifdef NDEBUG
 	#define UNREACHABLE() __builtin_unreachable()
@@ -18,35 +22,31 @@
 		} while(0)
 #endif
 
-class W_final;
+
 class pseudo_loop{
 
 public:
 	// constructor
-	pseudo_loop(std::string seq, s_energy_matrix *V, W_final *W, short *S, short *S1, vrna_param_t *params);
+	pseudo_loop(std::string seq, int dangle);
 
 	// destructor
 	~pseudo_loop();
 
+	double ccj ();
     void compute_energies(cand_pos_t i, cand_pos_t j);
-
-	void set_fold(std::vector<int> &fres);
 	
-	energy_t get_energy(cand_pos_t i, cand_pos_t j){return P.get(i,j);}
+	char get_type (cand_pos_t i, cand_pos_t j) { cand_pos_t ij = index[i]+j-i; return V[ij].type;}
+    energy_t get_energy (cand_pos_t i, cand_pos_t j) { if (i>=j) return INF; cand_pos_t ij = index[i]+j-i; return V[ij].energy; }
 
 	TriangleMatrix P;					// the main loop for pseudoloops and bands
-	void Trace_P(cand_pos_t i, cand_pos_t l, energy_t e);
+	std::string structure;
 private:
 
 	cand_pos_t n;
 	std::string res;
 	std::string seq;
 
-    s_energy_matrix *V;		        // the V object
-	W_final *W;		        // the W object
-
-	std::string structure;
-	std::vector<int> *fres;
+	std::vector<int> fres;
 	vrna_param_t *params_;
 
 	std::vector<cand_pos_t> index;				// the array to keep the index of two dimensional arrays like WPP and WBP
@@ -54,7 +54,11 @@ private:
 
 	short *S_;
 	short *S1_;
-
+	std::vector<energy_t> W; // size n+1 so left as non-Trianglematrix
+	std::vector<free_energy_node> V;
+	TriangleMatrix WM;
+	TriangleMatrix WMv;
+	TriangleMatrix WMp;
 	TriangleMatrix WPP;	// similar to WP but has at least one base pair
 	TriangleMatrix WBP;	// similar to WB but has at least one base pair
 	
@@ -215,6 +219,14 @@ private:
 
 
 	// Traceback //
+	void backtrack();
+	void Trace_W(cand_pos_t i, cand_pos_t j, energy_t e);
+	void Trace_P(cand_pos_t i, cand_pos_t l, energy_t e);
+	void Trace_V(cand_pos_t i, cand_pos_t j, energy_t e);
+	void Trace_WM(cand_pos_t i, cand_pos_t j, energy_t e);
+	void Trace_WMv(cand_pos_t i, cand_pos_t j, energy_t e);
+	void Trace_WMp(cand_pos_t i, cand_pos_t j, energy_t e);
+
 	void Trace_WB(cand_pos_t i, cand_pos_t l, energy_t e);
 	void Trace_WBP(cand_pos_t i, cand_pos_t l, energy_t e);
 	void Trace_WP(cand_pos_t i, cand_pos_t l, energy_t e);
@@ -277,9 +289,19 @@ private:
     // function to allocate space for the arrays
     void allocate_space();
 
+	void compute_energy (cand_pos_t i, cand_pos_t j);
+	energy_t HairpinE(const std::string& seq, cand_pos_t i, cand_pos_t j);
+	energy_t compute_stack(cand_pos_t i, cand_pos_t j);
+	energy_t compute_internal(cand_pos_t i, cand_pos_t j);
+	void compute_energy_WM (cand_pos_t i, cand_pos_t j);
+	energy_t compute_energy_VM (cand_pos_t i, cand_pos_t j);
+	energy_t E_MLStem(const energy_t& vij,const energy_t& vi1j,const energy_t& vij1,const energy_t& vi1j1,const short* S, vrna_param_t* params,cand_pos_t i, cand_pos_t j, cand_pos_t n);
+	energy_t E_MbLoop(const energy_t WM2ij, const energy_t WM2ip1j, const energy_t WM2ijm1, const energy_t WM2ip1jm1, const short* S, vrna_param_t* params, cand_pos_t i, cand_pos_t j);
+	void compute_WMv_WMp(cand_pos_t i, cand_pos_t j);
 	energy_t get_e_stP(cand_pos_t i, cand_pos_t j);
 	energy_t get_e_intP(cand_pos_t i,cand_pos_t ip, cand_pos_t jp, cand_pos_t j);
 	energy_t compute_int(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l);
+	energy_t E_ext_Stem(const energy_t& vij,const energy_t& vi1j,const energy_t& vij1,const energy_t& vi1j1,const short* S, vrna_param_t* params, const cand_pos_t i,const cand_pos_t j, cand_pos_t n);
 
 	// penalty for closing pair i.l or l.i of a pseudoloop
 	static constexpr energy_t gamma2(cand_pos_t i, cand_pos_t l){

@@ -1,7 +1,7 @@
 
 // a simple driver for CCJ
 #include "cmdline.hh"
-#include "W_final.hh"
+#include "pseudo_loop.hh"
 #include "part_func.hh"
 #include "h_globals.hh"
 //
@@ -175,7 +175,7 @@ void seqtoRNA(std::string &sequence){
 }
 
 std::string ccj(std::string seq,double &energy, int dangle){
-	W_final min_fold(seq, dangle);
+	pseudo_loop min_fold(seq, dangle);
 	energy = min_fold.ccj();
     std::string structure = min_fold.structure;
     return structure;
