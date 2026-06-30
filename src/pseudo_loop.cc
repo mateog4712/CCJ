@@ -26,6 +26,11 @@ void pseudo_loop::allocate_space()
 	fres.resize(n+1,-2);
 
 	W.resize(n+1,0);
+	cand_pos_t total_length = ((n+1) *(n+2))/2;
+	V.resize(total_length);
+	WM.init(n+1,index);
+	WMv.init(n+1,index);
+	WMp.init(n+1,index);
     WBP.init(n+1,index);
 	WPP.init(n+1,index);
 	P.init(n+1,index);
