@@ -12,6 +12,7 @@ pseudo_loop::pseudo_loop(std::string seq, int dangle) : seq(seq), params_(vrna_p
 {
 	n = seq.length();
 	params_->model_details.dangles = dangle;
+	make_pair_matrix();
     S_ = encode_sequence(seq.c_str(),0);
 	S1_ = encode_sequence(seq.c_str(),1);
     allocate_space();
@@ -24,6 +25,7 @@ void pseudo_loop::allocate_space()
 	Matrix4D::construct_index(index3D,n);
 
 	fres.resize(n+1,-2);
+	structure = std::string (n+1,'.');
 
 	W.resize(n+1,0);
 	cand_pos_t total_length = ((n+1) *(n+2))/2;
@@ -146,10 +148,10 @@ pseudo_loop::~pseudo_loop()
 double pseudo_loop::ccj (){
 	for (cand_pos_t i = n; i>=1; --i){	
 		for (cand_pos_t j =i; j<=n; ++j){
-			// compute_energy (i,j);
+			compute_energy (i,j);
 			compute_energies(i,j);
-			// compute_WMv_WMp(i,j);
-			// compute_energy_WM(i,j);
+			compute_WMv_WMp(i,j);
+			compute_energy_WM(i,j);
 		}
 	}
 	for (cand_pos_t j= TURN+1; j <= n; j++){
@@ -1080,11 +1082,9 @@ void pseudo_loop::compute_energy (cand_pos_t i, cand_pos_t j)
 
 
 	min_en[0] = HairpinE(seq,i,j);
-
 	min_en[1] = compute_internal(i,j);
 	min_en[2] = compute_energy_VM(i,j);
     
-
     for (k=0; k<3; k++)
     {
         if (min_en[k] < min)

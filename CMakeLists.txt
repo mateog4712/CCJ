@@ -20,7 +20,6 @@ SET(SOURCE
   src/pseudo_loop_gen.cc
   src/CCJ.cc
   src/cmdline.cc
-  src/s_energy_matrix.cc
   src/part_func.cc
   src/dot_plot.cc
   src/stoch_backtrack.cc
