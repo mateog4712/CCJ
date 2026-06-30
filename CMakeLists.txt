@@ -18,6 +18,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -DNDEBUG") # conside -NDEBUG if I
 SET(SOURCE
   src/pseudo_loop.cc 
   src/pseudo_loop_gen.cc
+  src/pseudo_loop_trace.cc
   src/CCJ.cc
   src/cmdline.cc
   src/part_func.cc

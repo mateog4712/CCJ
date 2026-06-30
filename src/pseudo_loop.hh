@@ -42,6 +42,9 @@ public:
 	std::string structure;
 private:
 
+ 	// function to allocate space for the arrays
+    void allocate_space();
+
 	cand_pos_t n;
 	std::string res;
 	std::string seq;
@@ -285,13 +288,8 @@ private:
 	void Trace_PfromLMreRdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e);
 	void Trace_PfromLMorOdoubleprime(cand_pos_t i,cand_pos_t j, cand_pos_t k, cand_pos_t l, energy_t e);
 
-
-    // function to allocate space for the arrays
-    void allocate_space();
-
 	void compute_energy (cand_pos_t i, cand_pos_t j);
 	energy_t HairpinE(const std::string& seq, cand_pos_t i, cand_pos_t j);
-	energy_t compute_stack(cand_pos_t i, cand_pos_t j);
 	energy_t compute_internal(cand_pos_t i, cand_pos_t j);
 	void compute_energy_WM (cand_pos_t i, cand_pos_t j);
 	energy_t compute_energy_VM (cand_pos_t i, cand_pos_t j);
