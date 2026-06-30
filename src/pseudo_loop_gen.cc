@@ -11,7 +11,7 @@
 void pseudo_loop::compute_WMv_WMp(cand_pos_t i, cand_pos_t j){
 	if(j-i+1<4) return;
 
-	WMv.set(i,j) = std::min(E_MLStem(get_energy(i,j),get_energy(i+1,j),get_energy(i,j-1),get_energy(i+1,j-1),S_,params_,i,j,n),WMv.get(i,j-1) + params_->MLbase);
+	WMv.set(i,j) = std::min(E_MLStem(get_energy(i,j),get_energy(i+1,j),get_energy(i,j-1),get_energy(i+1,j-1),i,j),WMv.get(i,j-1) + params_->MLbase);
 	WMp.set(i,j) = std::min(P.get(i,j)+PSM_penalty+b_penalty,WMp.get(i,j-1) + params_->MLbase);
 }
 
@@ -23,7 +23,7 @@ void pseudo_loop::compute_energy_WM (cand_pos_t i, cand_pos_t j)
 	
 	for (cand_pos_t k=j-TURN-1; k >= i; --k)
 	{
-		energy_t wm_kj = E_MLStem(get_energy(k,j),get_energy(k+1,j),get_energy(k,j-1),get_energy(k+1,j-1),S_,params_,k,j,n);
+		energy_t wm_kj = E_MLStem(get_energy(k,j),get_energy(k+1,j),get_energy(k,j-1),get_energy(k+1,j-1),k,j);
 		energy_t wmb_kj = P.get(k,j)+PSM_penalty+b_penalty;
 		m1 = std::min(m1,static_cast<energy_t>((k-i)*params_->MLbase) + wm_kj);
 		m2 = std::min(m2,static_cast<energy_t>((k-i)*params_->MLbase) + wmb_kj);
@@ -57,7 +57,7 @@ energy_t pseudo_loop::compute_energy_VM(cand_pos_t i, cand_pos_t j)
 		WM2ip1jm1 = std::min(WM2ip1jm1,WM.get(i+2,k-1) + WMp.get(k,j-2));
 		WM2ip1jm1 = std::min(WM2ip1jm1,static_cast<energy_t>((k-(i+1)-1)*params_->MLbase) + WMp.get(k,j-2));
 
-        min = std::min(min,E_MbLoop(WM2ij,WM2ip1j,WM2ijm1,WM2ip1jm1,S_,params_,i,j));
+        min = std::min(min,E_MbLoop(WM2ij,WM2ip1j,WM2ijm1,WM2ip1jm1,i,j));
     }
     return min;
 }

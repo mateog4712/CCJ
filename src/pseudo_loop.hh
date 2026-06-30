@@ -293,13 +293,13 @@ private:
 	energy_t compute_internal(cand_pos_t i, cand_pos_t j);
 	void compute_energy_WM (cand_pos_t i, cand_pos_t j);
 	energy_t compute_energy_VM (cand_pos_t i, cand_pos_t j);
-	energy_t E_MLStem(const energy_t& vij,const energy_t& vi1j,const energy_t& vij1,const energy_t& vi1j1,const short* S, vrna_param_t* params,cand_pos_t i, cand_pos_t j, cand_pos_t n);
-	energy_t E_MbLoop(const energy_t WM2ij, const energy_t WM2ip1j, const energy_t WM2ijm1, const energy_t WM2ip1jm1, const short* S, vrna_param_t* params, cand_pos_t i, cand_pos_t j);
 	void compute_WMv_WMp(cand_pos_t i, cand_pos_t j);
 	energy_t get_e_stP(cand_pos_t i, cand_pos_t j);
 	energy_t get_e_intP(cand_pos_t i,cand_pos_t ip, cand_pos_t jp, cand_pos_t j);
 	energy_t compute_int(cand_pos_t i, cand_pos_t j, cand_pos_t k, cand_pos_t l);
-	energy_t E_ext_Stem(const energy_t& vij,const energy_t& vi1j,const energy_t& vij1,const energy_t& vi1j1,const short* S, vrna_param_t* params, const cand_pos_t i,const cand_pos_t j, cand_pos_t n);
+	energy_t E_ext_Stem(const energy_t& vij,const energy_t& vi1j,const energy_t& vij1,const energy_t& vi1j1, const cand_pos_t i,const cand_pos_t j);
+	energy_t E_MLStem(const energy_t& vij,const energy_t& vi1j,const energy_t& vij1,const energy_t& vi1j1,cand_pos_t i, cand_pos_t j);
+	energy_t E_MbLoop(const energy_t WM2ij, const energy_t WM2ip1j, const energy_t WM2ijm1, const energy_t WM2ip1jm1, cand_pos_t i, cand_pos_t j);
 
 	// penalty for closing pair i.l or l.i of a pseudoloop
 	static constexpr energy_t gamma2(cand_pos_t i, cand_pos_t l){

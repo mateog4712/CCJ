@@ -159,7 +159,7 @@ double pseudo_loop::ccj (){
 		m1 = W[j-1];
 		for (cand_pos_t k=1; k<=j-TURN-1; ++k){
 			energy_t acc = (k>1) ? W[k-1]: 0;
-			m2 = std::min(m2,acc + E_ext_Stem(get_energy(k,j),get_energy(k+1,j),get_energy(k,j-1),get_energy(k+1,j-1),S_,params_,k,j,n));
+			m2 = std::min(m2,acc + E_ext_Stem(get_energy(k,j),get_energy(k+1,j),get_energy(k,j-1),get_energy(k+1,j-1),k,j));
 			m3 = std::min(m3,acc + P.get(k,j) + PS_penalty);
 		}
 		W[j] = std::min({m1,m2,m3});
@@ -755,27 +755,27 @@ void pseudo_loop::Trace_PX(cand_pos_t i,cand_pos_t j,cand_pos_t k, cand_pos_t l,
  * The type of dangle is also changed to reflect this.
  * 
 */
-energy_t pseudo_loop::E_ext_Stem(const energy_t& vij,const energy_t& vi1j,const energy_t& vij1,const energy_t& vi1j1,const short* S, vrna_param_t* params, const cand_pos_t i,const cand_pos_t j, cand_pos_t n){
+energy_t pseudo_loop::E_ext_Stem(const energy_t& vij,const energy_t& vi1j,const energy_t& vij1,const energy_t& vi1j1, const cand_pos_t i,const cand_pos_t j){
 
 	energy_t e = INF;
 
     auto consider = [&](energy_t v, bool valid, pair_type tt, base_type s5, base_type s3) {
         if (!valid || v == INF) return;
-        e = std::min(e, v + E_ExtLoop(tt, s5, s3, params));
+        e = std::min(e, v + E_ExtLoop(tt, s5, s3, params_));
     };
-	base_type si1  = i > 1 ? S[i-1] : -1;
-    base_type sj1  = j < n ? S[j+1] : -1;
-    base_type si = S[i];
-    base_type sj = S[j];
+	base_type si1  = i > 1 ? S_[i-1] : -1;
+    base_type sj1  = j < n ? S_[j+1] : -1;
+    base_type si = S_[i];
+    base_type sj = S_[j];
 
-	bool dangle2 = params->model_details.dangles == 2;
-    bool dangle1 = params->model_details.dangles == 1;
+	bool dangle2 = params_->model_details.dangles == 2;
+    bool dangle1 = params_->model_details.dangles == 1;
 
-	consider(vij, true, pair[S[i]][S[j]], dangle2 ? si1 : -1, dangle2 ? sj1 : -1);
+	consider(vij, true, pair[S_[i]][S_[j]], dangle2 ? si1 : -1, dangle2 ? sj1 : -1);
 	if (dangle1) {
-        consider(vi1j, j-i-1 > TURN, pair[S[i+1]][S[j]], si, -1);
-        consider(vij1, j-1-i > TURN, pair[S[i]][S[j-1]], -1, sj);
-        consider(vi1j1, j-1-i-1 > TURN, pair[S[i+1]][S[j-1]], si, sj);
+        consider(vi1j, j-i-1 > TURN, pair[S_[i+1]][S_[j]], si, -1);
+        consider(vij1, j-1-i > TURN, pair[S_[i]][S_[j-1]], -1, sj);
+        consider(vi1j1, j-1-i-1 > TURN, pair[S_[i+1]][S_[j-1]], si, sj);
     }
 	return e;
 }
@@ -785,28 +785,28 @@ energy_t pseudo_loop::E_ext_Stem(const energy_t& vij,const energy_t& vi1j,const 
  * The type of dangle is also changed to reflect this.
  * 
 */
-energy_t pseudo_loop::E_MLStem(const energy_t& vij,const energy_t& vi1j,const energy_t& vij1,const energy_t& vi1j1,const short* S, vrna_param_t* params,cand_pos_t i, cand_pos_t j, cand_pos_t n){
+energy_t pseudo_loop::E_MLStem(const energy_t& vij,const energy_t& vi1j,const energy_t& vij1,const energy_t& vi1j1,cand_pos_t i, cand_pos_t j){
 
 	energy_t e = INF;
 
     auto consider = [&](energy_t v, bool valid, pair_type type, base_type s5, base_type s3, int ml_count) {
         if (!valid || v == INF) return;
-        e = std::min(e, v + E_MLstem(type, s5, s3, params) + ml_count * params->MLbase);
+        e = std::min(e, v + E_MLstem(type, s5, s3, params_) + ml_count * params_->MLbase);
     };
 
-	base_type si1  = i > 1 ? S[i-1] : -1;
-    base_type sj1  = j < n ? S[j+1] : -1;
-    base_type si = S[i];
-    base_type sj = S[j];
+	base_type si1  = i > 1 ? S_[i-1] : -1;
+    base_type sj1  = j < n ? S_[j+1] : -1;
+    base_type si = S_[i];
+    base_type sj = S_[j];
 
-	bool dangle2 = params->model_details.dangles == 2;
-    bool dangle1 = params->model_details.dangles == 1;
+	bool dangle2 = params_->model_details.dangles == 2;
+    bool dangle1 = params_->model_details.dangles == 1;
 
-	consider(vij, true, pair[S[i]][S[j]], dangle2 ? si1 : -1, dangle2 ? sj1 : -1, 0);
+	consider(vij, true, pair[S_[i]][S_[j]], dangle2 ? si1 : -1, dangle2 ? sj1 : -1, 0);
 	if (dangle1) {
-		consider(vi1j,  j-i-1 > TURN, pair[S[i+1]][S[j]], si, -1, 1);
-        consider(vij1,  j-1-i > TURN, pair[S[i]][S[j-1]], -1, sj, 1);
-        consider(vi1j1, j-1-i-1 > TURN, pair[S[i+1]][S[j-1]], si, sj, 2);
+		consider(vi1j,  j-i-1 > TURN, pair[S_[i+1]][S_[j]], si, -1, 1);
+        consider(vij1,  j-1-i > TURN, pair[S_[i]][S_[j-1]], -1, sj, 1);
+        consider(vi1j1, j-1-i-1 > TURN, pair[S_[i+1]][S_[j-1]], si, sj, 2);
 	}
     return e;
 }
@@ -815,20 +815,20 @@ energy_t pseudo_loop::E_MLStem(const energy_t& vij,const energy_t& vi1j,const en
 * @brief Computes the multiloop V contribution. This gives back essentially VM(i,j).
 * 
 */
-energy_t pseudo_loop::E_MbLoop(const energy_t WM2ij, const energy_t WM2ip1j, const energy_t WM2ijm1, const energy_t WM2ip1jm1, const short* S, vrna_param_t* params, cand_pos_t i, cand_pos_t j){
+energy_t pseudo_loop::E_MbLoop(const energy_t WM2ij, const energy_t WM2ip1j, const energy_t WM2ijm1, const energy_t WM2ip1jm1, cand_pos_t i, cand_pos_t j){
 	energy_t e = INF;
 
-    pair_type tt = pair[S[j]][S[i]];
-    base_type si1 = S[i+1];
-    base_type sj1 = S[j-1];
+    pair_type tt = pair[S_[j]][S_[i]];
+    base_type si1 = S_[i+1];
+    base_type sj1 = S_[j-1];
 
 	auto consider = [&](energy_t v, base_type s5, base_type s3, int ml_count) {
         if (v == INF) return;
-        e = std::min(e, v + E_MLstem(tt, s5, s3, params) + params->MLclosing + ml_count * params->MLbase);
+        e = std::min(e, v + E_MLstem(tt, s5, s3, params_) + params_->MLclosing + ml_count * params_->MLbase);
     };
 
-	bool dangle2 = params->model_details.dangles == 2;
-    bool dangle1 = params->model_details.dangles == 1;
+	bool dangle2 = params_->model_details.dangles == 2;
+    bool dangle1 = params_->model_details.dangles == 1;
 
 	consider(WM2ij, dangle2 ? si1 : -1, dangle2 ? sj1 : -1, 0);
 	if(dangle1){
