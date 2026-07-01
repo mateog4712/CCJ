@@ -34,6 +34,13 @@ inline void fill_structure(std::vector<int> &fres,std::string &structure) {
 			bands.emplace_back(i, fres[i], -1);
 		}
     }
+    // Sort by descending span as those with larger spans are more likely to cross things, but still not guaranteed
+    auto by_span_descending = [](const Band &a, const Band &b) {
+    int span_a = a.j - a.i, span_b = b.j - b.i;
+    if (span_a != span_b) return span_a > span_b;
+    return a.i < b.i;
+    };
+    std::sort(bands.begin(), bands.end(), by_span_descending);
 	for(cand_pos_t i = 0; i<(cand_pos_t) bands.size();++i){
 		std::vector<int> cross = {0,0,0};
 		for(cand_pos_t j=0; j<i;++j){
